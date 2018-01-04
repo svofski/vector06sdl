@@ -529,7 +529,7 @@ int i8080_execute(int opcode) {
 
         case 0x22:            /* shld addr */
             cpu_cycles = 16;
-            v_cycles = 16;
+            v_cycles = 20;
             WR_WORD(RD_WORD(PC), HL);
             PC += 2;
             break;
@@ -583,7 +583,7 @@ int i8080_execute(int opcode) {
 
         case 0x2A:            /* lhld addr */
             cpu_cycles = 16;
-            v_cycles = 16;
+            v_cycles = 20;
             HL = RD_WORD(RD_WORD(PC));
             PC += 2;
             break;
@@ -713,8 +713,8 @@ int i8080_execute(int opcode) {
             break;
 
         case 0x40:            /* mov b, b */
-            cpu_cycles = 4;
-            v_cycles = 4;
+            cpu_cycles = 5;
+            v_cycles = 8;
             break;
 
         case 0x41:            /* mov b, c */
@@ -1176,14 +1176,14 @@ int i8080_execute(int opcode) {
 
         case 0x8E:            /* adc m */
             cpu_cycles = 7;
-	v_cycles = 8;
+            v_cycles = 8;
             work8 = RD_BYTE(HL);
             ADC(work8);
             break;
 
         case 0x8F:            /* adc a */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             ADC(A);
             break;
 
@@ -1219,265 +1219,265 @@ int i8080_execute(int opcode) {
 
         case 0x95:            /* sub l */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             SUB(L);
             break;
 
         case 0x96:            /* sub m */
             cpu_cycles = 7;
-	v_cycles = 8;
+            v_cycles = 8;
             work8 = RD_BYTE(HL);
             SUB(work8);
             break;
 
         case 0x97:            /* sub a */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             SUB(A);
             break;
 
         case 0x98:            /* sbb b */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             SBB(B);
             break;
 
         case 0x99:            /* sbb c */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             SBB(C);
             break;
 
         case 0x9A:            /* sbb d */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             SBB(D);
             break;
 
         case 0x9B:            /* sbb e */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             SBB(E);
             break;
 
         case 0x9C:            /* sbb h */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             SBB(H);
             break;
 
         case 0x9D:            /* sbb l */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             SBB(L);
             break;
 
         case 0x9E:            /* sbb m */
             cpu_cycles = 7;
-	v_cycles = 8;
+            v_cycles = 8;
             work8 = RD_BYTE(HL);
             SBB(work8);
             break;
 
         case 0x9F:            /* sbb a */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             SBB(A);
             break;
 
         case 0xA0:            /* ana b */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             ANA(B);
             break;
 
         case 0xA1:            /* ana c */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             ANA(C);
             break;
 
         case 0xA2:            /* ana d */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             ANA(D);
             break;
 
         case 0xA3:            /* ana e */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             ANA(E);
             break;
 
         case 0xA4:            /* ana h */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             ANA(H);
             break;
 
         case 0xA5:            /* ana l */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             ANA(L);
             break;
 
         case 0xA6:            /* ana m */
             cpu_cycles = 7;
-	v_cycles = 8;
+            v_cycles = 8;
             work8 = RD_BYTE(HL);
             ANA(work8);
             break;
 
         case 0xA7:            /* ana a */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             ANA(A);
             break;
 
         case 0xA8:            /* xra b */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             XRA(B);
             break;
 
         case 0xA9:            /* xra c */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             XRA(C);
             break;
 
         case 0xAA:            /* xra d */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             XRA(D);
             break;
 
         case 0xAB:            /* xra e */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             XRA(E);
             break;
 
         case 0xAC:            /* xra h */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             XRA(H);
             break;
 
         case 0xAD:            /* xra l */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             XRA(L);
             break;
 
         case 0xAE:            /* xra m */
             cpu_cycles = 7;
-	v_cycles = 8;
+            v_cycles = 8;
             work8 = RD_BYTE(HL);
             XRA(work8);
             break;
 
         case 0xAF:            /* xra a */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             XRA(A);
             break;
 
         case 0xB0:            /* ora b */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             ORA(B);
             break;
 
         case 0xB1:            /* ora c */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             ORA(C);
             break;
 
         case 0xB2:            /* ora d */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             ORA(D);
             break;
 
         case 0xB3:            /* ora e */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             ORA(E);
             break;
 
         case 0xB4:            /* ora h */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             ORA(H);
             break;
 
         case 0xB5:            /* ora l */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             ORA(L);
             break;
 
         case 0xB6:            /* ora m */
             cpu_cycles = 7;
-	v_cycles = 8;
+            v_cycles = 8;
             work8 = RD_BYTE(HL);
             ORA(work8);
             break;
 
         case 0xB7:            /* ora a */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             ORA(A);
             break;
 
         case 0xB8:            /* cmp b */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             CMP(B);
             break;
 
         case 0xB9:            /* cmp c */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             CMP(C);
             break;
 
         case 0xBA:            /* cmp d */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             CMP(D);
             break;
 
         case 0xBB:            /* cmp e */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             CMP(E);
             break;
 
         case 0xBC:            /* cmp h */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             CMP(H);
             break;
 
         case 0xBD:            /* cmp l */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             CMP(L);
             break;
 
         case 0xBE:            /* cmp m */
             cpu_cycles = 7;
-	v_cycles = 8;
+            v_cycles = 8;
             work8 = RD_BYTE(HL);
             CMP(work8);
             break;
 
         case 0xBF:            /* cmp a */
             cpu_cycles = 4;
-		v_cycles = 4;
+            v_cycles = 4;
             CMP(A);
             break;
 
@@ -1551,7 +1551,7 @@ int i8080_execute(int opcode) {
             v_cycles = 8;
             if (TST(Z_FLAG)) {
                 cpu_cycles = 11;
-                v_cycles = 12;
+                v_cycles = 16;
                 POP(PC);
             }
             break;
@@ -1603,7 +1603,7 @@ int i8080_execute(int opcode) {
 
         case 0xCF:            /* rst 1 */
             cpu_cycles = 11;
-            v_cycles = 12;
+            v_cycles = 16;
             RST(0x0008);
             break;
 
