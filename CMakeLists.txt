@@ -37,9 +37,10 @@ include_directories(${Boost_INCLUDE_DIRS})
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 find_package(SDL2 REQUIRED)
-include_directories(${SDL2_INCLUDE_DIR})
+find_package(SDL2_image REQUIRED)
+include_directories(${SDL2_INCLUDE_DIR} ${SDL2_IMAGE_INCLUDE_DIRS})
 
-target_link_libraries(v06x ${SDL2_LIBRARY} ${Boost_LIBRARIES})
+target_link_libraries(v06x ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARIES} ${Boost_LIBRARIES})
 
 # Have boots.bin copied first to avoid using long paths
 # objcopy generates absurd names if paths are used

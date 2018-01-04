@@ -22,8 +22,14 @@ private:
 
 public:
     Soundnik(TimerWrapper & tw) : timerwrapper(tw), mute(false)
-    {
+    {}
+
+    void init() {
         SDL_AudioSpec want, have;
+
+        if (Options.nosound) {
+            return;
+        }
 
         SDL_memset(&want, 0, sizeof(want)); /* or SDL_zero(want) */
         want.freq = 48000;
@@ -54,7 +60,6 @@ public:
                 have.samples, have.channels, have.format, have.size);
 
         SDL_PauseAudioDevice(this->audiodev, 0);
-        //SDL_PauseAudio(0);
     }
 
     static void callback(void * userdata, uint8_t * stream, int len)

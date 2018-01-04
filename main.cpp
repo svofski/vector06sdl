@@ -19,7 +19,6 @@ Soundnik soundnik(tw);
 IO io(memory, keyboard, timer);
 TV tv;
 PixelFiller filler(memory, io, tv);
-
 Board board(memory, io, filler, soundnik);
 
 void load_rom()
@@ -43,7 +42,10 @@ int main(int argc, char ** argv)
     options(argc, argv);
 
     atexit(SDL_Quit);
+
     tv.init();
+    soundnik.init();
+
     keyboard.onreset = [](bool blkvvod) {
         board.reset(blkvvod);
     };
@@ -59,7 +61,13 @@ int main(int argc, char ** argv)
         board.loop_frame();
         tv.render();
 
-        if (keyboard.terminate) {
+        if (Options.save_frames.size() && i == Options.save_frames[0])
+        {
+            tv.save_frame(Options.path_for_frame(i));
+            Options.save_frames.erase(Options.save_frames.begin());
+        }
+
+        if (keyboard.terminate || i == Options.max_frame) {
             break;
         }
     }
