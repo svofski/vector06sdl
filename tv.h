@@ -25,8 +25,18 @@ public:
 
     void init()
     {
-        SDL_CreateWindowAndRenderer(0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP,
+//        SDL_CreateWindowAndRenderer(0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP,
+//                &this->window, &this->renderer);
+        SDL_Init(SDL_INIT_VIDEO);
+        SDL_DisplayMode display_mode;
+        SDL_GetCurrentDisplayMode(0, &display_mode);
+
+        printf("Current display mode: %dx%d\n", display_mode.w, display_mode.h);
+
+        SDL_CreateWindowAndRenderer(display_mode.w, display_mode.h, 
+                SDL_WINDOW_SHOWN /*|SDL_WINDOW_FULLSCREEN_DESKTOP*/,
                 &this->window, &this->renderer);
+        SDL_SetWindowFullscreen(this->window, SDL_WINDOW_FULLSCREEN);
         this->tex_width = SCREEN_WIDTH;
         this->tex_height = SCREEN_HEIGHT;
         texture = SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_ABGR8888,

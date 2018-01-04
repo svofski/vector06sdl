@@ -17,7 +17,7 @@ extern "C" uint8_t * _binary_boots_bin_start;
 extern "C" uint8_t * _binary_boots_bin_end;
 extern "C" size_t    _binary_boots_bin_size;
 
-#define boots_bin (&_binary_boots_bin_start)
+#define boots_bin (_binary_boots_bin_start)
 #define boots_bin_len (&_binary_boots_bin_size)
 
 #endif
@@ -57,7 +57,7 @@ public:
         if (blkvvod) {
             //uint8_t * src = (uint8_t *) &_binary_boots_bin_start;
             //size_t size = (size_t)(&_binary_boots_bin_size);
-            uint8_t * src = (uint8_t *) boots_bin;
+            uint8_t * src = (uint8_t *) &boots_bin;
             size_t size = (size_t) boots_bin_len;
             vector<uint8_t> boot(size);
             for (int i = 0; i < size; ++i) {
@@ -142,6 +142,9 @@ public:
                         break;
                     case SDL_KEYUP:
                         this->io.the_keyboard().key_up(event.key);
+                        break;
+                    case SDL_QUIT:
+                        this->io.the_keyboard().terminate = true;
                         break;
                     default:
                         break;
