@@ -4,6 +4,21 @@ PROJECT(v06x)
 
 set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release Debug NoConfig)
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+	message("This is Windows. Assuming MinGW from https://nuwen.net/mingw.html")
+	set(EXTRA_LIBS -limm32 -lwinmm -lversion)
+	set(BFDNAME -O pe-x86-64 -B i386:x86-64)
+else()
+	message("Assuming this is Linux on Raspberry Pi, but will get smarter later")
+	if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
+		set(BFDNAME -O elf32-littlearm -B arm)
+		add_definitions(-mfpu=neon-vfpv4 -mfloat-abi=hard)
+	else()
+		message("You need to figure out -O and -B options for objcopy")
+	endif()	
+endif()
+
+
 set(SOURCE_FILES main.cpp board.cpp i8080.cpp options.cpp)
 add_executable(v06x ${SOURCE_FILES} boots.o)
 
@@ -17,17 +32,17 @@ include_directories(${SDL2_INCLUDE_DIR})
 
 target_link_libraries(v06x ${SDL2_LIBRARY} ${Boost_LIBRARIES})
 
+find_program(OBJCOPY objcopy)
+message("objcopy is ${OBJCOPY}")
+
 # Have boots.bin copied first to avoid using long paths
 # objcopy generates absurd names if paths are used
 set(BOOT_BIN ${CMAKE_CURRENT_SOURCE_DIR}/boot/boots.bin)
-ADD_CUSTOM_COMMAND(
-    OUTPUT boots.bin
-    DEPENDS ${BOOT_BIN}
-    COMMAND cp ${BOOT_BIN} boots.bin)
+file(COPY ${BOOT_BIN} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 ADD_CUSTOM_COMMAND(
     OUTPUT boots.o
-    COMMAND objcopy -I binary -O elf32-littlearm -B arm boots.bin boots.o
-    DEPENDS boots.bin
+    COMMAND objcopy -I binary ${BFDNAME} boots.bin boots.o
+    #DEPENDS boots.bin
     )
 
-target_link_libraries(v06x ${BOOT_O})
+target_link_libraries(v06x ${BOOT_O} ${EXTRA_LIBS})
