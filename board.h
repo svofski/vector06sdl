@@ -6,12 +6,21 @@
 #include "filler.h"
 #include "sound.h"
 
+
+#if USED_XXD
+// boots.o made using xxd already has okay symbols
+extern "C" unsigned char * boots_bin;
+extern "C" unsigned int boots_bin_len;
+#else
+
 extern "C" uint8_t * _binary_boots_bin_start;
 extern "C" uint8_t * _binary_boots_bin_end;
 extern "C" size_t    _binary_boots_bin_size;
 
-//extern Memory * global_memory();
-//extern IO * global_io();
+#define boots_bin (&_binary_boots_bin_start)
+#define boots_bin_len (&_binary_boots_bin_size)
+
+#endif
 
 void i8080_hal_bind(Memory & _mem, IO & _io);
 void create_timer();
@@ -46,8 +55,10 @@ public:
     void reset(bool blkvvod)    // true: power-on reset, false: boot loaded prog
     {
         if (blkvvod) {
-            uint8_t * src = (uint8_t *) &_binary_boots_bin_start;
-            size_t size = (size_t)(&_binary_boots_bin_size);
+            //uint8_t * src = (uint8_t *) &_binary_boots_bin_start;
+            //size_t size = (size_t)(&_binary_boots_bin_size);
+            uint8_t * src = (uint8_t *) boots_bin;
+            size_t size = (size_t) boots_bin_len;
             vector<uint8_t> boot(size);
             for (int i = 0; i < size; ++i) {
                 boot[i] = src[i];

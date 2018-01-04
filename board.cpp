@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 #include "i8080.h"
 #include "i8080_hal.h"
 #include "memory.h"
@@ -56,7 +57,7 @@ void i8080_hal_iff(int on)
 
 uint32_t timer_callback(uint32_t interval, void * param)
 {
-    static uint32_t frame_number;
+    static ptrdiff_t frame_number;
     SDL_Event event;
     SDL_UserEvent userevent;
 

@@ -33,12 +33,14 @@ public:
                 this->onreset(false);
                 break;
             case SDL_SCANCODE_PAUSE:
-                this->terminate = this->us;
+                // on windows ctrl+break seems to magically become scroll lock, wtf
+                this->terminate = true; // this->us;
                 break;
             default:
                 apply_key(e.keysym.scancode, false);
                 break;
         }
+        return true;
     }
 
     bool key_up(SDL_KeyboardEvent e)
@@ -51,6 +53,7 @@ public:
                 apply_key(e.keysym.scancode, true);
                 break;
         }
+        return true;
     }
 
     void apply_key(SDL_Scancode code, bool keyup) {

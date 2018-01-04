@@ -73,7 +73,7 @@ public:
                 result = 0xff;
                 break;
             case 0x01:
-                if (this->CW & 0x80 == 0) { // BSR
+                if ((this->CW & 0x80) == 0) { // BSR
                     result = this->PC;
                 } else {     /* PC.low in  ? */
                     auto pclow = (this->CW & 0x01) ? 0x0b : (this->PC & 0x0f);

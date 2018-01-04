@@ -152,12 +152,12 @@ public:
                 if (this->enabled && cycles > 0) {
                     for (;--cycles >= 0;) {
                         this->value -= 
-                            (this->value == this->loadvalue && (this->value&1 == 1)) ? 
+                            ((this->value == this->loadvalue) && ((this->value&1) == 1)) ? 
                             this->out == 0 ? 3 : 1 : 2; 
                         if (this->value <= 0) {
                             this->out ^= 1;
 
-                            int reload = this->loadvalue == 0 ? 
+                            int reload = (this->loadvalue == 0) ? 
                                 (this->bcd ? 10000 : 0x10000) : this->loadvalue;
                             this->value += reload;
                             //this->value = this->loadvalue;
@@ -247,6 +247,7 @@ public:
             result |= (x % 10) << (i * 4);
             x /= 10;
         }
+        return result;
     }
 
     uint16_t frombcd(uint16_t x) {
@@ -255,6 +256,7 @@ public:
             result += (x & 15) * 10 * i;
             x >>= 4;
         }
+        return result;
     }
 
     int read_value()
