@@ -75,6 +75,10 @@ uint32_t timer_callback(uint32_t interval, void * param)
 
 void create_timer()
 {
+    SDL_Init(SDL_INIT_TIMER);
     uint32_t period = 1000 / 50;
-    SDL_AddTimer(period, timer_callback, NULL);
+    SDL_TimerID sometimer = SDL_AddTimer(period, timer_callback, NULL);
+    if (sometimer == 0) {
+        printf("SDL_AddTimer %s\n", SDL_GetError());
+    }
 }
