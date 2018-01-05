@@ -45,6 +45,9 @@ int main(int argc, char ** argv)
 
     tv.init();
     soundnik.init();
+    if (Options.bootpalette) {
+        io.yellowblue();
+    }
 
     keyboard.onreset = [](bool blkvvod) {
         board.reset(blkvvod);

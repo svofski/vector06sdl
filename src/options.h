@@ -12,6 +12,7 @@ struct _options
     std::vector<int> save_frames;
     bool novideo;
     bool nosound;
+    bool bootpalette;
 
     std::string path_for_frame(int n);
 };

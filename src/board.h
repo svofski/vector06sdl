@@ -67,7 +67,7 @@ public:
             printf("Board::reset() attached boot, size=%zu\n", size);
         } else {
             this->memory.detach_boot();
-            printf("Board::reset() detached boot");
+            printf("Board::reset() detached boot\n");
             //this->dump_memory(0x100, 0x100);
         }
 

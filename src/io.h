@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdio.h>
+#include <string.h>
 #include <functional>
 #include "keyboard.h"
 #include "8253.h"
@@ -56,12 +57,22 @@ public:
 public:
     IO(Memory & _memory, Keyboard & _keyboard, I8253 & _timer) 
         : kvaz(_memory), keyboard(_keyboard), timer(_timer),
-        iff(false), CW(0), PA(0), PB(0), PC(0), CW2(0), PA2(0), PB2(0), PC2(0)
+        iff(false), CW(0), PA(0xff), PB(0xff), PC(0xff), CW2(0), PA2(0xff), PB2(0xff), PC2(0xff)
     {
         for (int i = 0; i < sizeof(palette)/sizeof(palette[0]); ++i) {
             palette[i] = 0xff000000;
         }
         outport = outbyte = palettebyte = -1;
+    }
+
+    void yellowblue()
+    {
+        static uint32_t yeblette[] = {
+            4286578688, 4286578688, 4278231200, 4278231200,
+            4286578688, 4286578688, 4278231200, 4278231200,
+            4286578688, 4286578688, 4278231200, 4278231200,
+            4286578688, 4286578688, 4278231200, 4278231200};
+        memcpy(palette, yeblette, sizeof(palette));
     }
 
     int input(int port)

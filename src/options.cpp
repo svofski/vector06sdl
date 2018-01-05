@@ -28,6 +28,7 @@ void options(int argc, char ** argv)
         ("save-frame", po::value<std::vector<int>>(), "save frame with these numbers (multiple)")
         ("novideo", "do not output video")
         ("nosound", "stay silent")
+        ("bootpalette", "init palette to yellow/blue colours before running a rom")
         ;
         
     po::variables_map vm;
@@ -66,6 +67,11 @@ void options(int argc, char ** argv)
         if (vm.count("nosound")) {
             Options.nosound = true;
             printf("Will not make a sound\n");
+        }
+
+        if (vm.count("bootpalette")) {
+            Options.bootpalette = true;
+            printf("The palette will be initialized to yellow/blue\n");
         }
     }
     catch(po::error & err) {
