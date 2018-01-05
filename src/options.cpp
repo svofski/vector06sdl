@@ -11,8 +11,6 @@ _options Options =
     .rom_org = 256,
     .wavfile = "",
     .max_frame = -1,
-    .novideo = false,
-    .nosound = false
 };
 
 void options(int argc, char ** argv)

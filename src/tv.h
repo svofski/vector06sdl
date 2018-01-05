@@ -5,7 +5,9 @@
 #include "SDL.h"
 #include "options.h"
 
+#if HAS_IMAGE
 extern "C" DECLSPEC int SDLCALL IMG_SavePNG(SDL_Surface *surface, const char *file);
+#endif
 
 class TV
 {
@@ -45,6 +47,7 @@ public:
                 SDL_WINDOW_SHOWN /*|SDL_WINDOW_FULLSCREEN_DESKTOP*/,
                 &this->window, &this->renderer);
         SDL_SetWindowFullscreen(this->window, SDL_WINDOW_FULLSCREEN);
+
         this->tex_width = SCREEN_WIDTH;
         this->tex_height = SCREEN_HEIGHT;
         this->texture = SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_ABGR8888,
@@ -55,6 +58,7 @@ public:
 
     void save_frame(std::string path)
     {
+#if HAS_IMAGE
         SDL_Surface * s = SDL_CreateRGBSurfaceWithFormatFrom(this->bmp, 
                 SCREEN_WIDTH, SCREEN_HEIGHT, 32, 4*SCREEN_WIDTH, 
                 SDL_PIXELFORMAT_ABGR8888);
@@ -62,6 +66,7 @@ public:
         IMG_SavePNG(s, path.c_str());
 
         SDL_FreeSurface(s);
+#endif
     }
 
     uint32_t* pixels() const {
