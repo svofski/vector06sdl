@@ -90,7 +90,15 @@ public:
     void toggle_fullscreen()
     {
         int windowflags = SDL_GetWindowFlags(this->window);
-	int set = (windowflags ^ SDL_WINDOW_FULLSCREEN_DESKTOP) & SDL_WINDOW_FULLSCREEN_DESKTOP;
+#if __MACOSX__
+        /* on mac only this works */
+        int fs = SDL_WINDOW_FULLSCREEN;
+#else
+        /* on windows regular FULLSCREEN distorts aspect ratio disregarding
+         * logical size */
+        int fs = SDL_WINDOW_FULLSCREEN_DESKTOP;
+#endif
+	int set = (windowflags ^ fs) & fs;
         SDL_SetWindowFullscreen(this->window, set);
         SDL_RenderSetLogicalSize(this->renderer, 4, 3);
     }
