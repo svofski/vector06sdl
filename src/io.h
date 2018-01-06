@@ -42,6 +42,7 @@ public:
 
     std::function<void(int)> onborderchange;
     std::function<void(bool)> onmodechange;
+    std::function<void(bool)> onruslat;
 
 public:
     IO(Memory & _memory, Keyboard & _keyboard, I8253 & _timer, FD1793 & _fdc) 
@@ -197,9 +198,9 @@ public:
                     this->realoutput(2, 0);
                     this->realoutput(3, 0);
                 }
-                //if (((this->PC & 8) != ruslat) && this->onruslat) {
-                //    this->onruslat((this->PC & 8) == 0);
-                //}
+                if (((this->PC & 8) != ruslat) && this->onruslat) {
+                    this->onruslat((this->PC & 8) == 0);
+                }
                 // if (debug) {
                 //     console.log("output commit cw = ", this->CW.toString(16));
                 // }
@@ -209,9 +210,9 @@ public:
                 ruslat = this->PC & 8;
                 this->PC = w8;
                 //this->ontapeoutchange(this->PC & 1);
-                //if (((this->PC & 8) != ruslat) && this->onruslat) {
-                //    this->onruslat((this->PC & 8) == 0);
-                //}
+                if (((this->PC & 8) != ruslat) && this->onruslat) {
+                    this->onruslat((this->PC & 8) == 0);
+                }
                 break;
             case 0x02:
                 this->PIA1_last = w8;

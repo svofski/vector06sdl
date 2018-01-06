@@ -84,6 +84,17 @@ int main(int argc, char ** argv)
         board.reset(blkvvod);
     };
 
+    if (Options.autostart) {
+        int seq = 0;
+        io.onruslat = [&seq](bool ruslat) {
+            seq = (seq << 1) | (ruslat ? 1 : 0);
+            if ((seq & 15) == 6) {
+                board.reset(false);
+                io.onruslat = nullptr;
+            }
+        };
+    }
+
     board.reset(true);
 
     if (Options.romfile.length() != 0) {

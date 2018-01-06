@@ -40,6 +40,13 @@ function scrltest {
     ) | tee -a testresult.txt
 }
 
+function testfdd {
+    $emu --autostart --fdd $rompath/$1 --max-frame $2 --save-frame $2 \
+        --novideo --nosound >> testlog.txt
+    ./pngdiff.py expected/$3 out/$4 | tee -a testresult.txt
+}
+
+
 echo>testlog.txt
 echo>testresult.txt
 
@@ -56,5 +63,6 @@ test60 i82532.rom       i82532.rom.png      i82532_60.png
 test60 i8253_bcd.rom    i8253_bcd.rom.png   i8253_bcd_60.png
 test60 tst8253.rom      tst8253.rom.png     tst8253_60.png
 test1600 testtp.rom     testtp.rom.png      testtp_1600.png
+testfdd test.fdd 318 test_318.png test_318.png
 
 

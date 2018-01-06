@@ -24,6 +24,7 @@ void options(int argc, char ** argv)
         ("wav", po::value<std::string>(), "wav file to load (not implemented)")
         ("fdd", po::value<std::vector<std::string>>(), "fdd floppy image (multiple up to 4)")
         ("nofdc", "detach floppy disk controller")
+        ("autostart", "autostart based on RUS/LAT blinkage")
         ("max-frame", po::value<int>(), "run emulation for this many frames then exit")
         ("save-frame", po::value<std::vector<int>>(), "save frame with these numbers (multiple)")
         ("novideo", "do not output video")
@@ -87,6 +88,11 @@ void options(int argc, char ** argv)
             Options.bootpalette = true;
             printf("The palette will be initialized to yellow/blue\n");
         }
+
+        Options.autostart = vm.count("autostart") > 0;
+        if (Options.autostart) {
+            printf("Will autostart on RUS/LAT blinkage\n");
+        }
     }
     catch(po::error & err) {
         std::cerr << err.what() << std::endl;
@@ -103,7 +109,12 @@ std::string _options::path_for_frame(int n)
     if (fullname.length() == 0) {
         fullname = this->wavfile;
         if (fullname.length() == 0) {
-            fullname = std::string("boots.bin");
+            if (this->fddfile.size() > 0) {
+                fullname = this->fddfile[0];
+            }
+            if (fullname.length() == 0) {
+                fullname = std::string("boots.bin");
+            }
         }
     }
 

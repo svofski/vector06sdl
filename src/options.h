@@ -16,6 +16,7 @@ struct _options
     bool nofdc;
     bool bootpalette;
     bool log_fdd;
+    bool autostart;
 
     std::string path_for_frame(int n);
 };
