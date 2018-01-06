@@ -5,20 +5,9 @@
 #include <functional>
 #include "keyboard.h"
 #include "8253.h"
+#include "fd1793.h"
 
 class AY
-{
-public:
-    void write(int addr, int value)
-    {
-    }
-    int read(int addr)
-    {
-        return 0xff;
-    }
-};
-
-class FDC
 {
 public:
     void write(int addr, int value)
@@ -40,10 +29,10 @@ private:
     Keyboard & keyboard;
 
     AY ay;
-    FDC fdc;
 
     I8253 & timer;
     Memory & kvaz;
+    FD1793 & fdc;
 
     int outport;
     int outbyte;
@@ -55,8 +44,8 @@ public:
     std::function<void(bool)> onmodechange;
 
 public:
-    IO(Memory & _memory, Keyboard & _keyboard, I8253 & _timer) 
-        : kvaz(_memory), keyboard(_keyboard), timer(_timer),
+    IO(Memory & _memory, Keyboard & _keyboard, I8253 & _timer, FD1793 & _fdc) 
+        : kvaz(_memory), keyboard(_keyboard), timer(_timer), fdc(_fdc),
         CW(0), PA(0xff), PB(0xff), PC(0xff), CW2(0), PA2(0xff), PB2(0xff), PC2(0xff)
     {
         for (int i = 0; i < sizeof(palette)/sizeof(palette[0]); ++i) {

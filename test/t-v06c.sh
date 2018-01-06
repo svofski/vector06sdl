@@ -6,14 +6,18 @@ rompath=../testroms
 
 mkdir -p out
 
-function test_boot {
+function test_boot_cas {
+    $emu --max-frame 42 --save-frame 42 --nofdc --novideo --nosound --bootpalette >> testlog.txt
+    ./pngdiff.py expected/$2 out/$3 | tee -a testresult.txt
+}
+
+function test_boot_fdc {
     $emu --max-frame 42 --save-frame 42 --novideo --nosound --bootpalette >> testlog.txt
     ./pngdiff.py expected/$2 out/$3 | tee -a testresult.txt
 }
 
-
 function test60 {
-    $emu --rom $rompath/$1 --max-frame 60 --save-frame 60 --novideo --nosound --bootpalette >> testlog.txt
+    $emu --rom $rompath/$1 --max-frame 60 --save-frame 60 --nofdc --novideo --nosound --bootpalette >> testlog.txt
     ./pngdiff.py expected/$2 out/$3 | tee -a testresult.txt
 }
 
@@ -41,7 +45,8 @@ echo>testresult.txt
 
 ../build/tests | tee -a testresult.txt
 
-test_boot xoxoxo boot-cas.png boots_42.png
+test_boot_cas xoxoxo boot-cas.png boots_42.png
+test_boot_fdc xoxoxo boot-fdd.png boots_42.png
 test60 bord2.rom        bord2.rom.png       bord2_60.png
 test60 brdtestx.rom     brdtestx.rom.png     brdtestx_60.png
 test60 chkvi53.rom      chkvi53.rom.png     chkvi53_60.png
@@ -50,6 +55,6 @@ test60 i82531.rom       i82531.rom.png      i82531_60.png
 test60 i82532.rom       i82532.rom.png      i82532_60.png
 test60 i8253_bcd.rom    i8253_bcd.rom.png   i8253_bcd_60.png
 test60 tst8253.rom      tst8253.rom.png     tst8253_60.png
-#test1600 testtp.rom     testtp.rom.png      testtp_1600.png
+test1600 testtp.rom     testtp.rom.png      testtp_1600.png
 
 
