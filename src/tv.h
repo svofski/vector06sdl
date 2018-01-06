@@ -52,7 +52,7 @@ public:
             SDL_CreateWindowAndRenderer(display_mode.w, display_mode.h, 
                     SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE/*|SDL_WINDOW_FULLSCREEN_DESKTOP*/,
                     &this->window, &this->renderer);
-            SDL_SetWindowFullscreen(this->window, SDL_WINDOW_FULLSCREEN);
+            SDL_SetWindowFullscreen(this->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
         }
 
         this->tex_width = SCREEN_WIDTH;
@@ -68,7 +68,11 @@ public:
         switch (event.keysym.scancode) 
         {
             case SDL_SCANCODE_RETURN:
+#if __WIN32__
+                if (event.keysym.mod & KMOD_ALT) {	
+#else 
                 if (event.keysym.mod & KMOD_GUI) {
+#endif
                     this->toggle_fullscreen();
                     return true;
                 }
@@ -86,8 +90,9 @@ public:
     void toggle_fullscreen()
     {
         int windowflags = SDL_GetWindowFlags(this->window);
-        int set = (windowflags ^ SDL_WINDOW_FULLSCREEN) & SDL_WINDOW_FULLSCREEN;
+	int set = (windowflags ^ SDL_WINDOW_FULLSCREEN_DESKTOP) & SDL_WINDOW_FULLSCREEN_DESKTOP;
         SDL_SetWindowFullscreen(this->window, set);
+        SDL_RenderSetLogicalSize(this->renderer, 4, 3);
     }
 
     void save_frame(std::string path)
