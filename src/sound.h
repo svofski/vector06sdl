@@ -12,7 +12,8 @@ private:
     bool mute;
 
     static const int renderingBufferSize = 8192;
-    static const int sdlBufferSize = 2048;
+    const int sdlBufferSize = 960;
+
     float renderingBuffer[renderingBufferSize];
     static const int mask = renderingBufferSize - 1;;
     int sndCount;
@@ -82,9 +83,6 @@ public:
         if (diff < count) {
             printf("audio starved: diff=%d count=%d\n", diff, count);
         } 
-        else {
-            printf("audio ok: diff=%d count=%d\n", diff, count);
-        }
         int end = count;
         if (diff < end) end = diff;
         int i, dst;
@@ -98,6 +96,10 @@ public:
             fs[dst++] = 0;
         }
         that->sndReadCount = src;
+
+        /* sound callback is also our frame interrupt source */
+        extern uint32_t timer_callback(uint32_t interval, void * param);
+        timer_callback(0, 0);
     }
 
     void sample(float samp) 
@@ -105,13 +107,10 @@ public:
         int plus1 = (this->sndCount + 1) & this->mask;
         if (plus1 == this->sndReadCount) {
             ++this->sndReadCount;
-            printf("AUDIO OVERRUN\n");
+            //printf("AUDIO OVERRUN\n");
         }
-        //if (plus1 != this->sndReadCount) {
-            this->renderingBuffer[this->sndCount] = samp;
-            this->sndCount = plus1;
-        //} else {
-        //}
+        this->renderingBuffer[this->sndCount] = samp;
+        this->sndCount = plus1;
     }
 
     void soundStep(int step, int tapeout, int covox) 

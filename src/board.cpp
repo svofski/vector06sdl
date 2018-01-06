@@ -59,6 +59,8 @@ void i8080_hal_iff(int on)
     board->interrupt(on);
 }
 
+/* Ideally this should be timer-driven but it's hard to get consistent
+ * rate using the timer. Audio callback is a very consistent source though */
 uint32_t timer_callback(uint32_t interval, void * param)
 {
     static ptrdiff_t frame_number;
@@ -77,12 +79,19 @@ uint32_t timer_callback(uint32_t interval, void * param)
     return(interval);
 }
 
+/* If there is no audio buffer to drive the frame rate, use the timer */
 void create_timer()
 {
-    SDL_Init(SDL_INIT_TIMER);
-    uint32_t period = 1000 / 50;
-    SDL_TimerID sometimer = SDL_AddTimer(period, timer_callback, NULL);
-    if (sometimer == 0) {
-        printf("SDL_AddTimer %s\n", SDL_GetError());
+    if (Options.nosound) {
+        printf("create_timer(): nosound is set");
+        SDL_Init(SDL_INIT_TIMER);
+        uint32_t period = 1000 / 50;
+        if (Options.novideo) {
+            period = 1; // full throttle if there's no audio or video, for tests
+        }
+        SDL_TimerID sometimer = SDL_AddTimer(period, timer_callback, NULL);
+        if (sometimer == 0) {
+            printf("SDL_AddTimer %s\n", SDL_GetError());
+        }
     }
 }

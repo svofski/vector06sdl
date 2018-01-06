@@ -50,7 +50,11 @@ public:
           io(_io), filler(_filler), soundnik(_snd), 
           iff(false)
     {
-        i8080_hal_bind(_memory, _io, *this);
+    }
+
+    void init()
+    {
+        i8080_hal_bind(memory, io, *this);
         create_timer();
     }
 

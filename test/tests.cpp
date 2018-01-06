@@ -57,7 +57,7 @@ int test_tobcd()
 {
     return Test("test_tobcd()")
     (compare_u16x(0, CounterUnit::tobcd(0), "tobcd(0)"))
-    (compare_u16x(6, CounterUnit::tobcd(10000), "tobcd(10000)"))
+    (compare_u16x(0, CounterUnit::tobcd(10000), "tobcd(10000)"))
     (compare_u16x(1, CounterUnit::tobcd(1), "tobcd(1)"))
     (compare_u16x(0x1234, CounterUnit::tobcd(1234), "tobcd(1234)")) 
     (compare_u16x(0x9876, CounterUnit::tobcd(9876), "tobcd(9875)"))

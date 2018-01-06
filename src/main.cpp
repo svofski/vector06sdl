@@ -43,6 +43,7 @@ int main(int argc, char ** argv)
 
     atexit(SDL_Quit);
 
+    board.init();
     tv.init();
     soundnik.init();
     if (Options.bootpalette) {
