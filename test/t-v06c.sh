@@ -39,6 +39,8 @@ function scrltest {
 echo>testlog.txt
 echo>testresult.txt
 
+../build/tests | tee -a testresult.txt
+
 test_boot xoxoxo boot-cas.png boots_42.png
 test60 bord2.rom        bord2.rom.png       bord2_60.png
 test60 brdtestx.rom     brdtestx.rom.png     brdtestx_60.png
