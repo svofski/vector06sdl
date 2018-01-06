@@ -38,15 +38,22 @@ public:
         }
 
         SDL_Init(SDL_INIT_VIDEO);
-        SDL_DisplayMode display_mode;
-        SDL_GetCurrentDisplayMode(0, &display_mode);
+        if (Options.window) {
+            SDL_CreateWindowAndRenderer(800, 600,
+                    SDL_WINDOW_SHOWN,
+                    &this->window, &this->renderer);
+        } 
+        else {
+            SDL_DisplayMode display_mode;
+            SDL_GetCurrentDisplayMode(0, &display_mode);
 
-        printf("Current display mode: %dx%d\n", display_mode.w, display_mode.h);
+            printf("Current display mode: %dx%d\n", display_mode.w, display_mode.h);
 
-        SDL_CreateWindowAndRenderer(display_mode.w, display_mode.h, 
-                SDL_WINDOW_SHOWN /*|SDL_WINDOW_FULLSCREEN_DESKTOP*/,
-                &this->window, &this->renderer);
-        SDL_SetWindowFullscreen(this->window, SDL_WINDOW_FULLSCREEN);
+            SDL_CreateWindowAndRenderer(display_mode.w, display_mode.h, 
+                    SDL_WINDOW_SHOWN /*|SDL_WINDOW_FULLSCREEN_DESKTOP*/,
+                    &this->window, &this->renderer);
+            SDL_SetWindowFullscreen(this->window, SDL_WINDOW_FULLSCREEN);
+        }
 
         this->tex_width = SCREEN_WIDTH;
         this->tex_height = SCREEN_HEIGHT;

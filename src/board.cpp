@@ -83,7 +83,7 @@ uint32_t timer_callback(uint32_t interval, void * param)
 void create_timer()
 {
     if (Options.nosound) {
-        printf("create_timer(): nosound is set");
+        printf("create_timer(): nosound is set, will use SDL timer for frames\n");
         SDL_Init(SDL_INIT_TIMER);
         uint32_t period = 1000 / 50;
         if (Options.novideo) {

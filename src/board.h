@@ -143,6 +143,7 @@ public:
         bool frame = false;
         while(!frame) {
             if (SDL_WaitEvent(&event)) {
+                printf("event.type=%d\n", event.type);
                 switch(event.type) {
                     case SDL_USEREVENT:
                         execute_frame(true);

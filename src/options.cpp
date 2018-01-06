@@ -7,10 +7,10 @@
 
 _options Options = 
 {
-    .romfile = "",
-    .rom_org = 256,
-    .wavfile = "",
-    .max_frame = -1,
+    romfile : "",
+    rom_org : 256,
+    wavfile : "",
+    max_frame : -1,
 };
 
 void options(int argc, char ** argv)
@@ -23,12 +23,13 @@ void options(int argc, char ** argv)
         ("org", po::value <int>(), "rom origin address (default 0x100)")
         ("wav", po::value<std::string>(), "wav file to load (not implemented)")
         ("fdd", po::value<std::vector<std::string>>(), "fdd floppy image (multiple up to 4)")
-        ("nofdc", "detach floppy disk controller")
         ("autostart", "autostart based on RUS/LAT blinkage")
         ("max-frame", po::value<int>(), "run emulation for this many frames then exit")
         ("save-frame", po::value<std::vector<int>>(), "save frame with these numbers (multiple)")
         ("novideo", "do not output video")
         ("nosound", "stay silent")
+        ("nofdc", "detach floppy disk controller")
+        ("window", "run in a window, not fullscreen")
         ("bootpalette", "init palette to yellow/blue colours before running a rom")
         ("log-fdd", "print too much debug info from the floppy emulator")
         ;
@@ -92,6 +93,11 @@ void options(int argc, char ** argv)
         Options.autostart = vm.count("autostart") > 0;
         if (Options.autostart) {
             printf("Will autostart on RUS/LAT blinkage\n");
+        }
+
+        Options.window = vm.count("window") > 0;
+        if (Options.window) {
+            printf("Will run in a window\n");
         }
     }
     catch(po::error & err) {
