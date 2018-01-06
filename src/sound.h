@@ -12,7 +12,7 @@ private:
     bool mute;
 
     static const int renderingBufferSize = 8192;
-    const int sdlBufferSize = 960;
+    int sdlBufferSize = 960;
 
     float renderingBuffer[renderingBufferSize];
     static const int mask = renderingBufferSize - 1;;
@@ -37,6 +37,9 @@ public:
         want.freq = 48000;
         want.format = AUDIO_F32;
         want.channels = 2;
+
+        this->sdlBufferSize = want.freq / 50;
+
         want.samples = sdlBufferSize;
         want.callback = Soundnik::callback;  // you wrote this function elsewhere.
         want.userdata = (void *)this;
@@ -51,7 +54,29 @@ public:
         if ((this->audiodev = SDL_OpenAudioDevice(NULL, 0, &want, &have, 
                 SDL_AUDIO_ALLOW_FORMAT_CHANGE)) == 0) {
             printf("SDL audio error: %s", SDL_GetError());
+            Options.nosound = true;
+            return;
         };
+
+        if (have.samples == sdlBufferSize / 2) {
+            // strange thing but we get a half buffer, try to get 2x
+            SDL_CloseAudioDevice(this->audiodev);
+
+            printf("SDL audio: retrying to open device with 2x buffer size\n");
+            want.samples = sdlBufferSize * 2;
+
+            if ((this->audiodev = SDL_OpenAudioDevice(NULL, 0, &want, &have, 
+                            SDL_AUDIO_ALLOW_FORMAT_CHANGE)) == 0) {
+                printf("SDL audio error: %s", SDL_GetError());
+                Options.nosound = true;
+                return;
+            };
+
+            if (have.samples < sdlBufferSize) {
+                printf("SDL audio cannot get the right buffer size, giving up\n");
+                Options.nosound = true;
+            }
+        }
 
         this->sampleRate = have.freq;
         // one second = 50 frames

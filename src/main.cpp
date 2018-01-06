@@ -43,9 +43,9 @@ int main(int argc, char ** argv)
 
     atexit(SDL_Quit);
 
+    soundnik.init();    // this may switch the audio output off
     board.init();
     tv.init();
-    soundnik.init();
     if (Options.bootpalette) {
         io.yellowblue();
     }
