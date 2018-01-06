@@ -65,7 +65,7 @@ Soundnik soundnik(tw);
 IO io(memory, keyboard, timer, fdc);//Options.nofdc ? fdc_dummy : fdc);
 TV tv;
 PixelFiller filler(memory, io, tv);
-Board board(memory, io, filler, soundnik);
+Board board(memory, io, filler, soundnik, tv);
 
 int main(int argc, char ** argv)
 {

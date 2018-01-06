@@ -7,10 +7,10 @@
 
 _options Options = 
 {
-    romfile : "",
-    rom_org : 256,
-    wavfile : "",
-    max_frame : -1,
+    .romfile = "",
+    .rom_org = 256,
+    .wavfile = "",
+    .max_frame = -1,
 };
 
 void options(int argc, char ** argv)

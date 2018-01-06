@@ -5,6 +5,7 @@
 #include "i8080.h"
 #include "filler.h"
 #include "sound.h"
+#include "tv.h"
 
 
 #if USED_XXD
@@ -43,11 +44,13 @@ private:
     IO & io;
     PixelFiller & filler;
     Soundnik & soundnik;
+    TV & tv;
 
 public:
-    Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd) 
+    Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd, 
+            TV & _tv) 
         : memory(_memory),
-          io(_io), filler(_filler), soundnik(_snd), 
+          io(_io), filler(_filler), soundnik(_snd), tv(_tv),
           iff(false)
     {
     }
@@ -143,17 +146,21 @@ public:
         bool frame = false;
         while(!frame) {
             if (SDL_WaitEvent(&event)) {
-                printf("event.type=%d\n", event.type);
                 switch(event.type) {
                     case SDL_USEREVENT:
                         execute_frame(true);
                         frame = true;
                         break;
                     case SDL_KEYDOWN:
-                        this->io.the_keyboard().key_down(event.key);
+                        if (!this->tv.handle_keyboard_event(event.key)) {
+                            this->io.the_keyboard().key_down(event.key);
+                        }
                         break;
                     case SDL_KEYUP:
                         this->io.the_keyboard().key_up(event.key);
+                        break;
+                    case SDL_WINDOWEVENT:
+                        this->tv.handle_window_event(event);
                         break;
                     case SDL_QUIT:
                         this->io.the_keyboard().terminate = true;

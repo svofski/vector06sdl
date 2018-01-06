@@ -40,7 +40,7 @@ public:
         SDL_Init(SDL_INIT_VIDEO);
         if (Options.window) {
             SDL_CreateWindowAndRenderer(800, 600,
-                    SDL_WINDOW_SHOWN,
+                    SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE,
                     &this->window, &this->renderer);
         } 
         else {
@@ -50,7 +50,7 @@ public:
             printf("Current display mode: %dx%d\n", display_mode.w, display_mode.h);
 
             SDL_CreateWindowAndRenderer(display_mode.w, display_mode.h, 
-                    SDL_WINDOW_SHOWN /*|SDL_WINDOW_FULLSCREEN_DESKTOP*/,
+                    SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE/*|SDL_WINDOW_FULLSCREEN_DESKTOP*/,
                     &this->window, &this->renderer);
             SDL_SetWindowFullscreen(this->window, SDL_WINDOW_FULLSCREEN);
         }
@@ -61,6 +61,33 @@ public:
                 SDL_TEXTUREACCESS_STATIC, this->tex_width, this->tex_height);
 
         SDL_RenderSetLogicalSize(this->renderer, 4, 3);
+    }
+
+    bool handle_keyboard_event(SDL_KeyboardEvent & event)
+    {
+        switch (event.keysym.scancode) 
+        {
+            case SDL_SCANCODE_RETURN:
+                if (event.keysym.mod & KMOD_GUI) {
+                    this->toggle_fullscreen();
+                    return true;
+                }
+                break;
+            default:
+                break;
+        }
+        return false;
+    }
+
+    void handle_window_event(SDL_Event & event)
+    {
+    }
+
+    void toggle_fullscreen()
+    {
+        int windowflags = SDL_GetWindowFlags(this->window);
+        int set = (windowflags ^ SDL_WINDOW_FULLSCREEN) & SDL_WINDOW_FULLSCREEN;
+        SDL_SetWindowFullscreen(this->window, set);
     }
 
     void save_frame(std::string path)

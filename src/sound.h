@@ -100,6 +100,8 @@ public:
 
     static void callback(void * userdata, uint8_t * stream, int len)
     {
+        static float last_value;
+
         Soundnik * that = (Soundnik *)userdata;
         int diff = (that->sndCount - that->sndReadCount) & that->mask;
         float * fs = (float *)stream;
@@ -112,13 +114,14 @@ public:
         if (diff < end) end = diff;
         int i, dst;
         for (i = 0, dst = 0; i < end; ++i) {
-            fs[dst++] = that->renderingBuffer[src]; // Left
-            fs[dst++] = that->renderingBuffer[src]; // Right
+            last_value = that->renderingBuffer[src];
+            fs[dst++] = last_value; // Left
+            fs[dst++] = last_value; // Right
             src = (src + 1) & that->mask;
         }
         for (; i < count; ++i) {
-            fs[dst++] = 0;
-            fs[dst++] = 0;
+            fs[dst++] = last_value;
+            fs[dst++] = last_value;
         }
         that->sndReadCount = src;
 
