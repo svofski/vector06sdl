@@ -4,6 +4,7 @@
 
 #include "memory.h"
 #include "io.h"
+#include "tv.h"
 
 class PixelFiller
 {

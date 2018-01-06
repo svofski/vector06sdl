@@ -22,7 +22,9 @@ extern "C" size_t    _binary_boots_bin_size;
 
 #endif
 
-void i8080_hal_bind(Memory & _mem, IO & _io);
+class Board;
+
+void i8080_hal_bind(Memory & _mem, IO & _io, Board & _board);
 void create_timer();
 
 class Board
@@ -35,6 +37,7 @@ private:
     int last_opcode;
 
     bool irq;
+    bool iff;
 
     Memory & memory;
     IO & io;
@@ -44,11 +47,10 @@ private:
 public:
     Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd) 
         : memory(_memory),
-          io(_io),
-          filler(_filler),
-          soundnik(_snd)
+          io(_io), filler(_filler), soundnik(_snd), 
+          iff(false)
     {
-        i8080_hal_bind(_memory, _io);
+        i8080_hal_bind(_memory, _io, *this);
         create_timer();
     }
 
@@ -76,9 +78,14 @@ public:
         i8080_init();
     }
 
+    void interrupt(bool on)
+    {
+        this->iff = on;
+    }
+
     void check_interrupt()
     {
-        if (this->irq && this->io.iff) {
+        if (this->irq && this->iff) {
             this->irq = false;
             if (this->last_opcode == 0x76) {
                 i8080_jump(i8080_pc() + 1);
@@ -112,7 +119,7 @@ public:
                     this->commit_time_pal, update_screen);
 
             //printf("instr_time=%d clk=%d\n", instr_time, clk);
-            this->irq = this->io.iff && this->filler.irq;
+            this->irq = this->iff && this->filler.irq;
             int wrap = this->instr_time - (clk >> 2);
             int step = this->instr_time - wrap;
             for (int g = step/2; --g >= 0;) {

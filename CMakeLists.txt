@@ -71,7 +71,8 @@ else()
 endif()
 message("objcopy is ${OBJCOPY}")
 
-
-
-
 target_link_libraries(v06x ${BOOT_O} ${EXTRA_LIBS})
+
+set(TEST_SOURCE_FILES test/tests.cpp)
+include_directories(src)
+add_executable(tests ${TEST_SOURCE_FILES} boots.o)

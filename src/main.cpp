@@ -60,9 +60,16 @@ int main(int argc, char ** argv)
         board.reset(false);
     }
 
+    soundnik.pause(0);
+
     for(int i = 0;; ++i) {
         board.loop_frame();
         tv.render();
+
+//        if (i == 64) {
+//            printf("Unpausing audio\n");
+//            soundnik.pause(0);
+//        }
 
         if (Options.save_frames.size() && i == Options.save_frames[0])
         {

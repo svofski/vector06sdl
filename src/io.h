@@ -49,7 +49,7 @@ private:
     int outbyte;
     int palettebyte;
 public:
-    bool iff;
+//    bool iff;
 
     std::function<void(int)> onborderchange;
     std::function<void(bool)> onmodechange;
@@ -57,7 +57,7 @@ public:
 public:
     IO(Memory & _memory, Keyboard & _keyboard, I8253 & _timer) 
         : kvaz(_memory), keyboard(_keyboard), timer(_timer),
-        iff(false), CW(0), PA(0xff), PB(0xff), PC(0xff), CW2(0), PA2(0xff), PB2(0xff), PC2(0xff)
+        CW(0), PA(0xff), PB(0xff), PC(0xff), CW2(0), PA2(0xff), PB2(0xff), PC2(0xff)
     {
         for (int i = 0; i < sizeof(palette)/sizeof(palette[0]); ++i) {
             palette[i] = 0xff000000;
@@ -158,11 +158,11 @@ public:
         return result;
     }
 
-    void interrupt(bool enable)
-    {
-        //printf("io.interrupt(): enable=%s", enable ? "true" : "false");
-        this->iff = enable;
-    }
+//    void interrupt(bool enable)
+//    {
+//        //printf("io.interrupt(): enable=%s", enable ? "true" : "false");
+//        this->iff = enable;
+//    }
 
     void output(int port, int w8) {
         this->outport = port;

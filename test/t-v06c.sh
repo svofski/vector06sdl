@@ -7,36 +7,37 @@ rompath=../testroms
 mkdir -p out
 
 function test_boot {
-    $emu --max-frame 42 --save-frame 42 --novideo --nosound --bootpalette
-    ./pngdiff.py expected/$2 out/$3 >> testlog.txt
+    $emu --max-frame 42 --save-frame 42 --novideo --nosound --bootpalette >> testlog.txt
+    ./pngdiff.py expected/$2 out/$3 | tee -a testresult.txt
 }
 
 
 function test60 {
-    $emu --rom $rompath/$1 --max-frame 60 --save-frame 60 --novideo --nosound --bootpalette
-    ./pngdiff.py expected/$2 out/$3 >>testlog.txt
+    $emu --rom $rompath/$1 --max-frame 60 --save-frame 60 --novideo --nosound --bootpalette >> testlog.txt
+    ./pngdiff.py expected/$2 out/$3 | tee -a testresult.txt
 }
 
 function test1600 {
-    $emu --rom $rompath/$1 --max-frame 1600 --save-frame 1600 --novideo --nosound --bootpalette
-    ./pngdiff.py expected/$2 out/$3 >>testlog.txt
+    $emu --rom $rompath/$1 --max-frame 1600 --save-frame 1600 --novideo --nosound --bootpalette >> testlog.txt
+    ./pngdiff.py expected/$2 out/$3 | tee -a testresult.txt
 }
 
 
 function scrltest {
     $emu --rom $rompath/scrltst2.rom --max-frame 120 \
         --save-frame 40 --save-frame 98 --save-frame 101 --save-frame 110 \
-        --save-frame 113 --novideo --nosound --bootpalette
+        --save-frame 113 --novideo --nosound --bootpalette >> testlog.txt
     (
     ./pngdiff.py expected/scrltest_40.png  out/scrltest_40.png
     ./pngdiff.py expected/scrltest_98.png  out/scrltest_98.png  
     ./pngdiff.py expected/scrltest_101.png out/scrltest_101.png 
     ./pngdiff.py expected/scrltest_110.png out/scrltest_110.png 
     ./pngdiff.py expected/scrltest_113.png out/scrltest_113.png 
-    ) >>testlog.txt
+    ) | tee -a testresult.txt
 }
 
 echo>testlog.txt
+echo>testresult.txt
 
 test_boot xoxoxo boot-cas.png boots_42.png
 test60 bord2.rom        bord2.rom.png       bord2_60.png

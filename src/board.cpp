@@ -4,15 +4,18 @@
 #include "i8080_hal.h"
 #include "memory.h"
 #include "io.h"
+#include "board.h"
 #include "SDL.h"
 
 static Memory * memory;
 static IO * io;
+static Board * board;
 
-void i8080_hal_bind(Memory & _mem, IO & _io)
+void i8080_hal_bind(Memory & _mem, IO & _io, Board & _board)
 {
     memory = &_mem;
     io = &_io;
+    board = &_board;
 }
 
 int i8080_hal_memory_read_byte(int addr)
@@ -52,7 +55,8 @@ void i8080_hal_io_output(int port, int value)
 void i8080_hal_iff(int on)
 {
     //printf("i8080_hal_iff %d\n", on);
-    io->interrupt(on);
+    //io->interrupt(on);
+    board->interrupt(on);
 }
 
 uint32_t timer_callback(uint32_t interval, void * param)

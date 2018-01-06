@@ -240,8 +240,7 @@ public:
         }
     }
 
-    uint16_t tobcd(uint16_t x) {
-        //return Number("0x" + x.toString());
+    static uint16_t tobcd(uint16_t x) {
         int result = 0;
         for (int i = 0; i < 4; ++i) {
             result |= (x % 10) << (i * 4);
@@ -250,11 +249,13 @@ public:
         return result;
     }
 
-    uint16_t frombcd(uint16_t x) {
+    static uint16_t frombcd(uint16_t x) {
         int result = 0;
         for (int i = 0; i < 4; ++i) {
-            result += (x & 15) * 10 * i;
-            x >>= 4;
+            int digit = (x & 0xf000) >> 12;
+            if (digit > 9) digit = 9;
+            result = result * 10 + digit;
+            x <<= 4;
         }
         return result;
     }

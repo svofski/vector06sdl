@@ -12,6 +12,7 @@ private:
     bool mute;
 
     static const int renderingBufferSize = 8192;
+    static const int sdlBufferSize = 2048;
     float renderingBuffer[renderingBufferSize];
     static const int mask = renderingBufferSize - 1;;
     int sndCount;
@@ -35,7 +36,7 @@ public:
         want.freq = 48000;
         want.format = AUDIO_F32;
         want.channels = 2;
-        want.samples = renderingBufferSize/4;
+        want.samples = sdlBufferSize;
         want.callback = Soundnik::callback;  // you wrote this function elsewhere.
         want.userdata = (void *)this;
 
@@ -52,28 +53,49 @@ public:
         };
 
         this->sampleRate = have.freq;
-        this->soundRatio = this->sampleRate / 1497600.0; // (50 * 59904/2)
+        // one second = 50 frames
+        // raster time in 12 MHz pixelclocks = 768 columns by 312 lines
+        // timer clocks = pixel clock / 8
+        this->soundRatio = this->sampleRate / (float)(50 * 768 * 312 / 8); 
+        //this->soundRatio *= 1.16;
 
-        printf("SDL audio dev: %d, sample rate=%d, soundRatio=%f"
+        printf("SDL audio dev: %d, sample rate=%d, soundRatio=%f "
                 "have.samples=%d have.channels=%d have.format=%d have.size=%d\n", 
                 this->audiodev, this->sampleRate, this->soundRatio,
                 have.samples, have.channels, have.format, have.size);
 
-        SDL_PauseAudioDevice(this->audiodev, 0);
+    }
+
+    void pause(int pause)
+    {
+        SDL_PauseAudioDevice(this->audiodev, pause);
+        this->soundAccu = this->sndReadCount = this->sndCount = 0;
     }
 
     static void callback(void * userdata, uint8_t * stream, int len)
     {
         Soundnik * that = (Soundnik *)userdata;
         int diff = (that->sndCount - that->sndReadCount) & that->mask;
-        //printf("callback, diff=%d len=%d\n", diff, len);
         float * fs = (float *)stream;
         int src = that->sndReadCount;
-        int count = len / 4 / 2;
-        for (int i = 0, dst = 0; i < count; ++i) {
+        int count = len / sizeof(float) / 2;
+        if (diff < count) {
+            printf("audio starved: diff=%d count=%d\n", diff, count);
+        } 
+        else {
+            printf("audio ok: diff=%d count=%d\n", diff, count);
+        }
+        int end = count;
+        if (diff < end) end = diff;
+        int i, dst;
+        for (i = 0, dst = 0; i < end; ++i) {
             fs[dst++] = that->renderingBuffer[src]; // Left
             fs[dst++] = that->renderingBuffer[src]; // Right
             src = (src + 1) & that->mask;
+        }
+        for (; i < count; ++i) {
+            fs[dst++] = 0;
+            fs[dst++] = 0;
         }
         that->sndReadCount = src;
     }
@@ -81,10 +103,15 @@ public:
     void sample(float samp) 
     {
         int plus1 = (this->sndCount + 1) & this->mask;
-        if (plus1 != this->sndReadCount) {
+        if (plus1 == this->sndReadCount) {
+            ++this->sndReadCount;
+            printf("AUDIO OVERRUN\n");
+        }
+        //if (plus1 != this->sndReadCount) {
             this->renderingBuffer[this->sndCount] = samp;
             this->sndCount = plus1;
-        }
+        //} else {
+        //}
     }
 
     void soundStep(int step, int tapeout, int covox) 
