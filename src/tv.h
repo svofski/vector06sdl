@@ -52,7 +52,13 @@ public:
             SDL_CreateWindowAndRenderer(display_mode.w, display_mode.h, 
                     SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE/*|SDL_WINDOW_FULLSCREEN_DESKTOP*/,
                     &this->window, &this->renderer);
-            SDL_SetWindowFullscreen(this->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+            SDL_SetWindowFullscreen(this->window, 
+#if __MACOSX__
+                    SDL_WINDOW_FULLSCREEN
+#else
+                    SDL_WINDOW_FULLSCREEN_DESKTOP
+#endif
+                    );
         }
 
         this->tex_width = SCREEN_WIDTH;
