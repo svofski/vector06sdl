@@ -50,9 +50,6 @@ public:
         };
 
         int top = this->ayr[ch << 1] | (this->ayr[1 | (ch << 1)] << 8);
-        //if (++this->ayr[ch + 16] >= (this->ayr[ch << 1] | this->ayr[1 | ch << 1] << 8)) 
-        //    this->ayr[ch + 16] = 0,
-        //    this->tons ^= 1 << ch;
         if (++this->ayr[ch + 16] >= (this->ayr[ch << 1] | this->ayr[1 | (ch << 1)] << 8)) {
             this->ayr[ch + 16] = 0;
             this->tons ^= 1 << ch;
@@ -67,10 +64,6 @@ public:
         int mix = ((tone_ena_l | tone_src) & (noise_ena_l | noise_gen_op)) & 1;
 
         float result = (float)mix * amp[mode_l ? this->envv : ((this->ayr[8 + ch] & 0x0f))];
-        //float result = (float)mix * amp[(this->ayr[8 + ch] & 0x0f)];
-        //float result = (float)mix * amp[this->envv];
-        //printf("%d\n", this->envv);
-        //float result = tone_src;
         return result;
     }
 
