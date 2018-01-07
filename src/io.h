@@ -5,19 +5,8 @@
 #include <functional>
 #include "keyboard.h"
 #include "8253.h"
+#include "ay.h"
 #include "fd1793.h"
-
-class AY
-{
-public:
-    void write(int addr, int value)
-    {
-    }
-    int read(int addr)
-    {
-        return 0xff;
-    }
-};
 
 class IO {
 private:
@@ -28,25 +17,22 @@ private:
 
     Keyboard & keyboard;
 
-    AY ay;
-
     I8253 & timer;
     Memory & kvaz;
     FD1793 & fdc;
+    AY & ay;
 
     int outport;
     int outbyte;
     int palettebyte;
 public:
-//    bool iff;
-
     std::function<void(int)> onborderchange;
     std::function<void(bool)> onmodechange;
     std::function<void(bool)> onruslat;
 
 public:
-    IO(Memory & _memory, Keyboard & _keyboard, I8253 & _timer, FD1793 & _fdc) 
-        : kvaz(_memory), keyboard(_keyboard), timer(_timer), fdc(_fdc),
+    IO(Memory & _memory, Keyboard & _keyboard, I8253 & _timer, FD1793 & _fdc, AY & _ay) 
+        : kvaz(_memory), keyboard(_keyboard), timer(_timer), fdc(_fdc), ay(_ay),
         CW(0), PA(0xff), PB(0xff), PC(0xff), CW2(0), PA2(0xff), PB2(0xff), PC2(0xff)
     {
         for (int i = 0; i < sizeof(palette)/sizeof(palette[0]); ++i) {

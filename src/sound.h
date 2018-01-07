@@ -1,13 +1,14 @@
 #pragma once
 
 #include "8253.h"
+#include "ay.h"
 #include "SDL.h"
 
 class Soundnik
 {
 private:
     TimerWrapper & timerwrapper;
-    //AYWrapper & aywrapper;
+    AYWrapper & aywrapper;
     SDL_AudioDeviceID audiodev;
     bool mute;
 
@@ -23,7 +24,8 @@ private:
     float soundAccu, soundRatio;
 
 public:
-    Soundnik(TimerWrapper & tw) : timerwrapper(tw), mute(false)
+    Soundnik(TimerWrapper & tw, AYWrapper & aw) : timerwrapper(tw), 
+        aywrapper(aw), mute(false)
     {}
 
     void init() {
@@ -152,7 +154,7 @@ public:
 
         //// ay step should execute, but the sound can be sampled only 
         //// when needed, no filtering necessary
-        //this->aywrapper.step2(step);
+        this->aywrapper.step2(step);
 
         // it's okay if sound is not used this time, the state is kept in the filters
         //sound = this->butt2.filter(this->butt1.filter(sound));
@@ -161,7 +163,8 @@ public:
         if (this->soundAccu >= 1.0) {
             this->soundAccu -= 1.0;
             sound += covox / 256;
-            //sound += this->aywrapper.last - 0.5;
+            //printf("%f\n", this->aywrapper.value());
+            sound += this->aywrapper.value() - 0.5;
             sound = (sound - 1.5) * 0.3;
             if (sound > 1.0) { 
                 sound = 1.0; 

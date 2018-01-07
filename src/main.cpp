@@ -10,6 +10,7 @@
 #include "keyboard.h"
 #include "8253.h"
 #include "sound.h"
+#include "ay.h"
 
 static size_t islength(std::ifstream & is)
 {
@@ -61,8 +62,10 @@ FD1793 fdc_dummy;
 Keyboard keyboard;
 I8253 timer;
 TimerWrapper tw(timer);
-Soundnik soundnik(tw);
-IO io(memory, keyboard, timer, fdc);//Options.nofdc ? fdc_dummy : fdc);
+AY ay;
+AYWrapper aw(ay);
+Soundnik soundnik(tw, aw);
+IO io(memory, keyboard, timer, fdc, ay);//Options.nofdc ? fdc_dummy : fdc);
 TV tv;
 PixelFiller filler(memory, io, tv);
 Board board(memory, io, filler, soundnik, tv);
