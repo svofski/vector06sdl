@@ -145,11 +145,10 @@ public:
         SDL_Event event;
         bool frame = false;
         while(!frame) {
-            if (SDL_WaitEvent(&event)) {
+            execute_frame(true);
+            frame = true;
+            while (SDL_PollEvent(&event)) {
                 switch(event.type) {
-                    case SDL_USEREVENT:
-                        execute_frame(true);
-                        frame = true;
                         break;
                     case SDL_KEYDOWN:
                         if (!this->tv.handle_keyboard_event(event.key)) {
@@ -171,7 +170,40 @@ public:
             }
         }
     }
-
+//
+//    void loop_frame()
+//    {
+//        SDL_Event event;
+//        bool frame = false;
+//        while(!frame) {
+//            if (SDL_WaitEvent(&event)) {
+//                printf("event.type=%d\n");
+//                switch(event.type) {
+//                    case SDL_USEREVENT:
+//                        execute_frame(true);
+//                        frame = true;
+//                        break;
+//                    case SDL_KEYDOWN:
+//                        if (!this->tv.handle_keyboard_event(event.key)) {
+//                            this->io.the_keyboard().key_down(event.key);
+//                        }
+//                        break;
+//                    case SDL_KEYUP:
+//                        this->io.the_keyboard().key_up(event.key);
+//                        break;
+//                    case SDL_WINDOWEVENT:
+//                        this->tv.handle_window_event(event);
+//                        break;
+//                    case SDL_QUIT:
+//                        this->io.the_keyboard().terminate = true;
+//                        break;
+//                    default:
+//                        break;
+//                }
+//            }
+//        }
+//    }
+//
     void dump_memory(int start, int count)
     {
         for (int i = start; i < start + count; ++i) {

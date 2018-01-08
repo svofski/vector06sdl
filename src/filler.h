@@ -104,6 +104,11 @@ public:
                         bmp[this->bmpofs++] = this->io.Palette(index & 0x0c);
                     } else {
                         uint32_t p = this->io.Palette(index);
+                        //if (this->raster_line & 1) {
+                        //    p = 0xff000000;
+                        //} else {
+                        //    p = 0xffffffff;
+                        //}
                         bmp[this->bmpofs++] = p;
                         bmp[this->bmpofs++] = p;
                     }
