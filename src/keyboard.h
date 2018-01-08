@@ -97,8 +97,10 @@ public:
                     if (col != -1) {
                         if (keyup) {
                             this->matrix[col] &= ~bit;
+                            //printf("UP: this->matrix[%d] = %02x\n", col, this->matrix[col]);
                         } else {
                             this->matrix[col] |= bit;
+                            //printf("DN: this->matrix[%d] = %02x\n", col, this->matrix[col]);
                         }
                     }
                 } 
@@ -194,14 +196,14 @@ private:
             SDL_SCANCODE_1,             0x202,	
             SDL_SCANCODE_0,             0x201,
 
-            SDL_SCANCODE_F5,            0x080, 
-            SDL_SCANCODE_F4,            0x040, 
-            SDL_SCANCODE_F3,            0x020, 
-            SDL_SCANCODE_F2,            0x010, 
-            SDL_SCANCODE_F1,            0x008,
-            SDL_SCANCODE_ESCAPE,        0x004, 
-            SDL_SCANCODE_F8,            0x002, // СТР
-            SDL_SCANCODE_F7,            0x001, // ^\ ?
+            SDL_SCANCODE_F5,            0x180, 
+            SDL_SCANCODE_F4,            0x140, 
+            SDL_SCANCODE_F3,            0x120, 
+            SDL_SCANCODE_F2,            0x110, 
+            SDL_SCANCODE_F1,            0x108,
+            SDL_SCANCODE_ESCAPE,        0x104, 
+            SDL_SCANCODE_F8,            0x102, // СТР
+            SDL_SCANCODE_F7,            0x101, // ^\ ?
 
             SDL_SCANCODE_DOWN,          0x080, 
             SDL_SCANCODE_RIGHT,         0x040, 
