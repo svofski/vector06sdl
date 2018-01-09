@@ -36,7 +36,9 @@ private:
         return result;
     }
 
-    template <typename srctype>
+    template <typename srctype, 
+                typename enable_if<is_same<srctype, uint8_t>::value, srctype>::type = 0
+             >
     void merge_stereo(const void * _src, size_t count)
     {
         const srctype * src = (srctype *) _src;
@@ -44,6 +46,22 @@ private:
             int y = (src[i++] - 128) * 256;
             if (this->NumChannels == 2) {
                 y += (src[i++] - 128) * 256;
+                y /= 2;
+            }
+            this->Data[o++] = y;
+        }
+    }
+
+    template <typename srctype, 
+                typename enable_if<!is_same<srctype, uint8_t>::value, srctype>::type = 0
+             >
+    void merge_stereo(const void * _src, size_t count)
+    {
+        const srctype * src = (srctype *) _src;
+        for (size_t i = 0, o = 0; i < count;) {
+            int y = src[i++];
+            if (this->NumChannels == 2) {
+                y += src[i++];
                 y /= 2;
             }
             this->Data[o++] = y;
