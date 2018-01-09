@@ -48,6 +48,11 @@ void options(int argc, char ** argv)
             printf("Specified ROM file: %s\n", Options.romfile.c_str());
         }
 
+        if (vm.count("wav")) {
+            Options.wavfile = vm["wav"].as<std::string>();
+            printf("Specified WAV file: %s\n", Options.wavfile.c_str());
+        }
+
         if (vm.count("max-frame")) {
             Options.max_frame = vm["max-frame"].as<int>();
             printf("Will exit after frame #%d\n", Options.max_frame);

@@ -143,12 +143,13 @@ public:
         this->sndCount = plus1;
     }
 
-    void soundStep(int step, int tapeout, int covox) 
+    void soundStep(int step, int tapeout, int covox, int tapein) 
     {
         static float sound = 0;
         
         float newsound = this->timerwrapper.step(step / 2);
         newsound += tapeout - 0.5;
+        newsound += tapein * 0.1 - 0.05;
 
         sound = (sound + newsound) / 2;
 
