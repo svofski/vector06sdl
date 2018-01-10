@@ -45,13 +45,13 @@ private:
     PixelFiller & filler;
     Soundnik & soundnik;
     TV & tv;
+    WavPlayer & tape_player;
 
 public:
     Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd, 
-            TV & _tv) 
-        : memory(_memory),
-          io(_io), filler(_filler), soundnik(_snd), tv(_tv),
-          iff(false)
+            TV & _tv, WavPlayer & _tape_player) 
+        : memory(_memory), io(_io), filler(_filler), soundnik(_snd), tv(_tv), 
+          tape_player(_tape_player), iff(false)
     {
     }
 
@@ -107,10 +107,11 @@ public:
 
     void execute_frame(bool update_screen)
     {
-        int cycles_count = 0;
+        static int frame_no = 0;
+        ++frame_no;
         this->filler.reset();
 
-        //for (;cycles_count < 59904;) {
+        // 59904 
         this->between = 0;
         for (; !this->filler.brk;) {
             this->check_interrupt();
@@ -129,8 +130,12 @@ public:
             this->irq = this->iff && this->filler.irq;
             int wrap = this->instr_time - (clk >> 2);
             int step = this->instr_time - wrap;
+            if (frame_no > 60) {
+                this->tape_player.advance(step);
+            }
             for (int g = step/2; --g >= 0;) {
-                this->soundnik.soundStep(2, this->io.TapeOut(), this->io.Covox());
+                this->soundnik.soundStep(2, this->io.TapeOut(), this->io.Covox(),
+                        this->tape_player.sample());
             }
             this->between += step;
             this->instr_time = wrap;

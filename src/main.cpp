@@ -11,6 +11,7 @@
 #include "8253.h"
 #include "sound.h"
 #include "ay.h"
+#include "wav.h"
 
 static size_t islength(std::ifstream & is)
 {
@@ -48,6 +49,20 @@ void load_one_disk(FD1793 & fdc, int index, std::string & path)
     }
 }
 
+void load_wav(Wav & wav, std::string & path)
+{
+    std::ifstream is(path, std::ifstream::binary);
+    if (is) {
+        size_t length = islength(is);
+
+        std::vector<uint8_t> wav_data;
+        wav_data.resize(length);
+        is.read((char *) wav_data.data(), length);
+        
+        wav.set_bytes(wav_data);
+    }
+}
+
 void load_disks(FD1793 & fdc)
 {
     for (int i = 0; i < Options.fddfile.size(); ++i) {
@@ -59,16 +74,18 @@ void load_disks(FD1793 & fdc)
 Memory memory;
 FD1793_Real fdc;
 FD1793 fdc_dummy;
+Wav wav;
+WavPlayer tape_player(wav);
 Keyboard keyboard;
 I8253 timer;
 TimerWrapper tw(timer);
 AY ay;
 AYWrapper aw(ay);
 Soundnik soundnik(tw, aw);
-IO io(memory, keyboard, timer, fdc, ay);//Options.nofdc ? fdc_dummy : fdc);
+IO io(memory, keyboard, timer, fdc, ay, tape_player);//Options.nofdc ? fdc_dummy : fdc);
 TV tv;
 PixelFiller filler(memory, io, tv);
-Board board(memory, io, filler, soundnik, tv);
+Board board(memory, io, filler, soundnik, tv, tape_player);
 
 int main(int argc, char ** argv)
 {
@@ -103,6 +120,9 @@ int main(int argc, char ** argv)
     if (Options.romfile.length() != 0) {
         load_rom(memory);
         board.reset(false);
+    }
+    else if (Options.wavfile.length() != 0) {
+        load_wav(wav, Options.wavfile);
     }
     else {
         load_disks(fdc);

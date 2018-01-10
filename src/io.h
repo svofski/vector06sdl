@@ -7,6 +7,7 @@
 #include "8253.h"
 #include "ay.h"
 #include "fd1793.h"
+#include "wav.h"
 
 class IO {
 private:
@@ -21,6 +22,7 @@ private:
     Memory & kvaz;
     FD1793 & fdc;
     AY & ay;
+    WavPlayer & tape_player;
 
     int outport;
     int outbyte;
@@ -31,8 +33,10 @@ public:
     std::function<void(bool)> onruslat;
 
 public:
-    IO(Memory & _memory, Keyboard & _keyboard, I8253 & _timer, FD1793 & _fdc, AY & _ay) 
+    IO(Memory & _memory, Keyboard & _keyboard, I8253 & _timer, FD1793 & _fdc, 
+            AY & _ay, WavPlayer & _tape_player) 
         : kvaz(_memory), keyboard(_keyboard), timer(_timer), fdc(_fdc), ay(_ay),
+        tape_player(_tape_player),
         CW(0), PA(0xff), PB(0xff), PC(0xff), CW2(0), PA2(0xff), PB2(0xff), PC2(0xff)
     {
         for (int i = 0; i < sizeof(palette)/sizeof(palette[0]); ++i) {
@@ -66,7 +70,7 @@ public:
                     auto pclow = (this->CW & 0x01) ? 0x0b : (this->PC & 0x0f);
                     /* PC.high in ? */
                     auto pcupp = (this->CW & 0x08) ? 
-                        (0x10 | 
+                         ((this->tape_player.sample() << 4) |
                          (this->keyboard.ss ? 0 : (1 << 5)) |
                          (this->keyboard.us ? 0 : (1 << 6)) |
                          (this->keyboard.rus ? 0 : (1 << 7))) : (this->PC & 0xf0);
