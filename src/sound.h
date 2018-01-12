@@ -16,12 +16,12 @@ private:
     int sdlBufferSize = 960;
 
     float renderingBuffer[renderingBufferSize];
-    static const int mask = renderingBufferSize - 1;;
+    static const int mask = renderingBufferSize - 1;
     int sndCount;
     int sndReadCount;
     int sampleRate;
 
-    float soundAccu, soundRatio;
+    int sound_accu_int, sound_accu_top;
 
 public:
     Soundnik(TimerWrapper & tw, AYWrapper & aw) : timerwrapper(tw), 
@@ -84,20 +84,21 @@ public:
         // one second = 50 frames
         // raster time in 12 MHz pixelclocks = 768 columns by 312 lines
         // timer clocks = pixel clock / 8
-        this->soundRatio = this->sampleRate / (float)(50 * 768 * 312 / 8); 
-        //this->soundRatio *= 1.16;
+        int timer_cycles_per_second = 50*768*312/8; // 1497600
+        this->sound_accu_top = 100 * timer_cycles_per_second / this->sampleRate; // 3210
+        this->sound_accu_int = 0;
 
-        printf("SDL audio dev: %d, sample rate=%d, soundRatio=%f "
+        printf("SDL audio dev: %d, sample rate=%d "
                 "have.samples=%d have.channels=%d have.format=%d have.size=%d\n", 
-                this->audiodev, this->sampleRate, this->soundRatio,
+                this->audiodev, this->sampleRate, 
                 have.samples, have.channels, have.format, have.size);
-
     }
 
     void pause(int pause)
     {
         SDL_PauseAudioDevice(this->audiodev, pause);
-        this->soundAccu = this->sndReadCount = this->sndCount = 0;
+        this->sndReadCount = this->sndCount = 0;
+        this->sound_accu_int = 0;
     }
 
     static void callback(void * userdata, uint8_t * stream, int len)
@@ -160,9 +161,9 @@ public:
         // it's okay if sound is not used this time, the state is kept in the filters
         //sound = this->butt2.filter(this->butt1.filter(sound));
 
-        this->soundAccu += this->soundRatio;
-        if (this->soundAccu >= 1.0) {
-            this->soundAccu -= 1.0;
+        this->sound_accu_int += 100;
+        if (this->sound_accu_int >= this->sound_accu_top) {
+            this->sound_accu_int -= this->sound_accu_top;
             sound += covox / 256;
             //printf("%f\n", this->aywrapper.value());
             sound += this->aywrapper.value() - 0.5;
