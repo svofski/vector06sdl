@@ -67,11 +67,11 @@ public:
         return result;
     }
 
-    float estep() 
+    int estep() 
     {
         if (this->envx >> 4) {
             if (this->ay13 & 1) // ENV.HOLD
-                return 7.5 * (((this->ay13 >> 1) ^ this->ay13) & 2);
+                return 15 * (((this->ay13 >> 1) ^ this->ay13) & 2) / 2;
             this->envx = 0;
             this->ay13 ^= (this->ay13 << 1) & 4;
         }
@@ -90,7 +90,7 @@ public:
             this->noiv = this->noir & 1;
             this->noir = (this->noir ^ (this->noiv * 0x24000)) >> 1;
         }
-        return (this->cstep(0) + this->cstep(1) + this->cstep(2)) / 3.0;
+        return 0.3333 * (this->cstep(0) + this->cstep(1) + this->cstep(2));
     }
 
     void aymute()
@@ -177,10 +177,11 @@ public:
     float step2(int instr_time) 
     {
         this->ayAccu += 7 * instr_time;
-        float aysamp = 0, avg = 0;
+        float aysamp = 0;
+        int avg = 0;
         for (; this->ayAccu >= 96; this->ayAccu -= 96) {
             aysamp += this->ay.step();
-            avg += 1;
+            ++avg;
         }
         this->last = avg > 0 ? aysamp/avg : this->last;
         return this->last;
