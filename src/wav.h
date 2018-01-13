@@ -2,6 +2,7 @@
 
 #include <inttypes.h>
 #include <vector>
+#include <functional>
 
 using namespace std;
 
@@ -9,13 +10,14 @@ class Wav
 {
 private:
     vector<int16_t> Data;
-
 public:
     uint16_t NumChannels;
     uint32_t SampleRate;
     uint32_t ByteRate;
     uint16_t BlockAlign;
     uint16_t BitsPerSample;
+
+    std::function<void(void)> onloaded;
 
 private:
     template <typename valtype> 
@@ -139,6 +141,9 @@ public:
                         return false;
                         break;
                 }
+                if (this->onloaded) {
+                    this->onloaded();
+                }
                 return true;
             }
         }
@@ -163,10 +168,15 @@ private:
     size_t playhead;
     int ratio;
     int frac;
+    bool loaded;
 
 public:
     WavPlayer(Wav & _wav) : wav(_wav)
     {
+        WavPlayer & that = *this;
+        wav.onloaded = [&that]() {
+            that.loaded = true;
+        };
     }
 
     void init()
@@ -182,21 +192,26 @@ public:
 
     void advance(int instruction_time)
     {
-        if (this->playhead < this->wav.size()) {
-            if (this->ratio == 0) {
-                this->init();
+        if (this->loaded) {
+            if(this->playhead < this->wav.size()) {
+                if (this->ratio == 0) {
+                    this->init();
+                }
+                this->frac += instruction_time;
+                if (this->frac > this->ratio) {
+                    this->frac -= this->ratio;
+                    ++this->playhead;
+                }
             }
-            this->frac += instruction_time;
-            if (this->frac > this->ratio) {
-                this->frac -= this->ratio;
-                ++this->playhead;
+            else {
+                this->loaded = false;
             }
         }
     }
 
     int sample() const
     {
-        if (playhead < this->wav.size()) {
+        if (this->loaded && playhead < this->wav.size()) {
             return wav.sample_at(playhead) > 0 ? 1 : 0;
         }
         return 0;
