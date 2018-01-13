@@ -91,7 +91,7 @@ public:
                     SDL_WINDOW_FULLSCREEN);
                     //SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
             this->renderer = SDL_CreateRenderer(this->window, -1, 
-                    SDL_RENDERER_ACCELERATED /*| SDL_RENDERER_PRESENTVSYNC*/);
+                    SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
             //SDL_CreateWindowAndRenderer(display_mode.w, display_mode.h, 
             //        SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE/*|SDL_WINDOW_FULLSCREEN_DESKTOP*/,

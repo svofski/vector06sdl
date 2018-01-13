@@ -198,8 +198,8 @@ public:
         if (_raster_line == 312) {
             _raster_line = 0;
             _visible = false; // blanking starts
-            printf("fill1: %d fill2: %d sum=%d\n", fill1_count, fill2_count,
-                    fill1_count + fill2_count);
+            //printf("fill1: %d fill2: %d sum=%d\n", fill1_count, fill2_count,
+            //        fill1_count + fill2_count);
             fill1_count = fill2_count = 0;
             return true;
         }
