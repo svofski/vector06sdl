@@ -109,7 +109,10 @@ public:
                         //} else {
                         //    p = 0xffffffff;
                         //}
-                        bmp[this->bmpofs++] = p;
+                        bmp[this->bmpofs++] = 
+                            (clk == commit_time_pal + 4) ?
+                                0xffffffff :
+                                p;
                         bmp[this->bmpofs++] = p;
                     }
                 }
