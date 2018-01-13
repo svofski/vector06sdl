@@ -84,15 +84,15 @@ public:
 
     int fill(int clocks, int commit_time, int commit_time_pal, bool updateScreen) 
     {
-        if (commit_time || commit_time_pal || this->vborder || !this->visible ||
+        if (commit_time || commit_time_pal || this->vborder || 
                 this->raster_line == 22 + 18 || 
                 this->raster_pixel <= (768-512)/2 + clocks ||
-                this->raster_pixel + clocks >= 768-(768-512)/2 - 64)
+                this->raster_pixel + clocks >= 768-(768-512)/2)
         {
-            fill1_count++;
+            fill1_count += clocks;
             return fill1(clocks, commit_time, commit_time_pal, updateScreen);
         } else {
-            fill2_count++;
+            fill2_count += clocks;
             if (this->mode512) {
                 return fill3(clocks);
             } else {
@@ -101,6 +101,99 @@ public:
         }
     }
 
+#if ZEALOUS_LOCALITY
+    int fill1(int clocks, int commit_time, int commit_time_pal, bool updateScreen) 
+    {
+        uint32_t * bmp = this->tv.pixels();
+        int clk;
+
+        int ofs = this->bmpofs;
+        int raster_pixel_loc = this->raster_pixel;
+        int raster_line_loc = this->raster_line;
+        bool vborder_loc = this->vborder;
+        bool visible_loc = this->visible;
+        bool mode512_loc = this->mode512;
+
+        //if (commit_time) {
+        //    printf("c=%d p=%d\n", commit_time, commit_time_pal);
+        //}
+
+        // clocks=16/32/48/64/80/96..
+        for (clk = 0; clk < clocks && !this->brk; clk += 2) {
+            // offset for matching border/palette writes and the raster -- test:bord2
+            const int rpixel = raster_pixel_loc - 24;
+            const bool border = vborder_loc || 
+                /* hborder */ (rpixel < (768-512)/2) || (rpixel >= (768 - (768-512)/2));
+            const int index = this->getColorIndex(rpixel, border);
+            if (clk == commit_time) {
+                this->io.commit(); // regular i/o writes (border index); test: bord2
+                mode512_loc = this->mode512;        
+            }
+            if (clk == commit_time_pal) {
+                this->io.commit_palette(index); // palette writes; test: bord2
+            }
+            if (visible_loc) {
+                const int bmp_x = raster_pixel_loc - CENTER_OFFSET; // horizontal offset
+                if (bmp_x >= 0 && bmp_x < SCREEN_WIDTH) {
+                    if (mode512_loc && !border) {
+                        bmp[ofs++] = this->io.Palette(index & 0x03);
+                        bmp[ofs++] = this->io.Palette(index & 0x0c);
+                    } else {
+                        uint32_t p = this->io.Palette(index);
+                        bmp[ofs++] = p;
+                        bmp[ofs++] = p;
+                    }
+                }
+            }
+            // 22 vsync + 18 border + 256 picture + 16 border = 312 lines
+            raster_pixel_loc += 2;
+            if (raster_pixel_loc == 768) {
+                this->brk = this->advanceLine(raster_pixel_loc, raster_line_loc,
+                        vborder_loc, visible_loc,
+                        updateScreen);
+            }
+            // load scroll register at this precise moment -- test:scrltst2
+            if (raster_line_loc == 22 + 18 && raster_pixel_loc == 150) {
+                this->fb_row = this->io.ScrollStart();
+            }
+            // irq time -- test:bord2
+            else if (raster_line_loc == 0 && raster_pixel_loc == 176) {
+                this->irq = true;
+            }
+        } 
+
+        this->bmpofs = ofs;
+        this->raster_pixel = raster_pixel_loc;
+        this->raster_line = raster_line_loc;
+        this->vborder = vborder_loc;
+        this->visible = visible_loc;
+        return clk;
+    }
+
+    bool advanceLine(int & _raster_pixel, int & _raster_line, 
+            bool & _vborder, bool & _visible, bool updateScreen) {
+        _raster_pixel = 0;
+        _raster_line += 1;
+        this->fb_row -= 1;
+        if (!_vborder && this->fb_row < 0) {
+            this->fb_row = 0xff;
+        }
+        // update vertical border only when line changes
+        _vborder = (_raster_line < 40) || (_raster_line >= (40 + 256));
+        // turn on pixel copying after blanking area
+        _visible = _visible || 
+            (updateScreen && _raster_line == FIRST_VISIBLE_LINE);
+        if (_raster_line == 312) {
+            _raster_line = 0;
+            _visible = false; // blanking starts
+            printf("fill1: %d fill2: %d sum=%d\n", fill1_count, fill2_count,
+                    fill1_count + fill2_count);
+            fill1_count = fill2_count = 0;
+            return true;
+        }
+        return false;
+    }
+#else
     int fill1(int clocks, int commit_time, int commit_time_pal, bool updateScreen) {
         uint32_t * bmp = this->tv.pixels();
         int clk;
@@ -165,6 +258,8 @@ public:
             this->brk = true;
         }
     }
+#endif
+
     /* simple fill, no out instructions underway, mode 256 */
     int fill2(int clocks)
     {
