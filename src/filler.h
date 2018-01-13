@@ -80,46 +80,60 @@ public:
         return modeless;
     }
 
-    int fill(int clocks, int commit_time, int commit_time_pal, bool updateScreen) {
+    int fill1_count, fill2_count;
+
+    int fill(int clocks, int commit_time, int commit_time_pal, bool updateScreen) 
+    {
+        if (commit_time || commit_time_pal || this->vborder || !this->visible ||
+                this->raster_pixel < (768-512)/2 + clocks ||
+                this->raster_pixel + clocks >= 768-(768-512)/2 - 64)
+        {
+            fill1_count++;
+            return fill1(clocks, commit_time, commit_time_pal, updateScreen);
+        } else {
+            fill2_count++;
+            if (this->mode512) {
+                return fill3(clocks);
+            } else {
+                return fill2(clocks);
+            }
+        }
+    }
+
+    int fill1(int clocks, int commit_time, int commit_time_pal, bool updateScreen) 
+    {
         uint32_t * bmp = this->tv.pixels();
         int clk;
 
-        register int ofs = this->bmpofs;
-        register int raster_pixel_loc = this->raster_pixel;
-        register int raster_line_loc = this->raster_line;
+        int ofs = this->bmpofs;
+        int raster_pixel_loc = this->raster_pixel;
+        int raster_line_loc = this->raster_line;
+        bool vborder_loc = this->vborder;
+        bool visible_loc = this->visible;
+        bool mode512_loc = this->mode512;
 
+        // clocks=16/32/48/64/80/96..
         for (clk = 0; clk < clocks && !this->brk; clk += 2) {
             // offset for matching border/palette writes and the raster -- test:bord2
             const int rpixel = raster_pixel_loc - 24;
-            const bool border = this->vborder || 
+            const bool border = vborder_loc || 
                 /* hborder */ (rpixel < (768-512)/2) || (rpixel >= (768 - (768-512)/2));
             const int index = this->getColorIndex(rpixel, border);
             if (clk == commit_time) {
                 this->io.commit(); // regular i/o writes (border index); test: bord2
+                mode512_loc = this->mode512;        
             }
             if (clk == commit_time_pal) {
                 this->io.commit_palette(index); // palette writes; test: bord2
             }
-            if (this->visible) {
+            if (visible_loc) {
                 const int bmp_x = raster_pixel_loc - CENTER_OFFSET; // horizontal offset
                 if (bmp_x >= 0 && bmp_x < SCREEN_WIDTH) {
-                    if (this->mode512 && !border) {
+                    if (mode512_loc && !border) {
                         bmp[ofs++] = this->io.Palette(index & 0x03);
                         bmp[ofs++] = this->io.Palette(index & 0x0c);
                     } else {
                         uint32_t p = this->io.Palette(index);
-                        // test pattern for texture scaling
-                        //if (this->raster_line & 1) {
-                        //    p = 0xff000000;
-                        //} else {
-                        //    p = 0xffffffff;
-                        //}
-
-                        // Emulate vertical stripes when writing palette reg
-                        //bmp[this->bmpofs++] = 
-                        //    (clk == commit_time_pal + 4) ?
-                        //        0xffffffff :
-                        //        p;
                         bmp[ofs++] = p;
                         bmp[ofs++] = p;
                     }
@@ -129,6 +143,7 @@ public:
             raster_pixel_loc += 2;
             if (raster_pixel_loc == 768) {
                 this->brk = this->advanceLine(raster_pixel_loc, raster_line_loc,
+                        vborder_loc, visible_loc,
                         updateScreen);
             }
             // load scroll register at this precise moment -- test:scrltst2
@@ -144,28 +159,142 @@ public:
         this->bmpofs = ofs;
         this->raster_pixel = raster_pixel_loc;
         this->raster_line = raster_line_loc;
+        this->vborder = vborder_loc;
+        this->visible = visible_loc;
         return clk;
     }
 
-    bool advanceLine(int & _raster_pixel, int & _raster_line, bool updateScreen) {
+    bool advanceLine(int & _raster_pixel, int & _raster_line, 
+            bool & _vborder, bool & _visible, bool updateScreen) {
         _raster_pixel = 0;
         _raster_line += 1;
         this->fb_row -= 1;
-        if (!this->vborder && this->fb_row < 0) {
+        if (!_vborder && this->fb_row < 0) {
             this->fb_row = 0xff;
         }
         // update vertical border only when line changes
-        this->vborder = (_raster_line < 40) || (_raster_line >= (40 + 256));
+        _vborder = (_raster_line < 40) || (_raster_line >= (40 + 256));
         // turn on pixel copying after blanking area
-        this->visible = this->visible || 
+        _visible = _visible || 
             (updateScreen && _raster_line == FIRST_VISIBLE_LINE);
         if (_raster_line == 312) {
             _raster_line = 0;
-            this->visible = false; // blanking starts
+            _visible = false; // blanking starts
+            //printf("fill1: %d fill2: %d\n", fill1_count, fill2_count);
+            fill1_count = fill2_count = 0;
             return true;
         }
         return false;
     }
+
+    /* simple fill, no out instructions underway, mode 256 */
+    int fill2(int clocks)
+    {
+        uint32_t * const bmp = this->tv.pixels();
+        int clk;
+
+        int ofs = this->bmpofs;
+
+        // clocks=16/32/48/64/80/96..
+
+        int rpixel = this->raster_pixel - 24;
+        this->raster_pixel += clocks;
+
+        int index;
+        uint32_t p;
+        for (clk = 0; clk < clocks; clk += 16) {
+            //
+            index = this->getColorIndex(rpixel, false);
+            p = this->io.Palette(index);
+            bmp[ofs++] = p; bmp[ofs++] = p; rpixel += 2;
+            //
+            index = this->getColorIndex(rpixel, false);
+            p = this->io.Palette(index);
+            bmp[ofs++] = p; bmp[ofs++] = p; rpixel += 2;
+            //
+            index = this->getColorIndex(rpixel, false);
+            p = this->io.Palette(index);
+            bmp[ofs++] = p; bmp[ofs++] = p; rpixel += 2;
+            //
+            index = this->getColorIndex(rpixel, false);
+            p = this->io.Palette(index);
+            bmp[ofs++] = p; bmp[ofs++] = p; rpixel += 2;
+            //
+            index = this->getColorIndex(rpixel, false);
+            p = this->io.Palette(index);
+            bmp[ofs++] = p; bmp[ofs++] = p; rpixel += 2;
+            //
+            index = this->getColorIndex(rpixel, false);
+            p = this->io.Palette(index);
+            bmp[ofs++] = p; bmp[ofs++] = p; rpixel += 2;
+            //
+            index = this->getColorIndex(rpixel, false);
+            p = this->io.Palette(index);
+            bmp[ofs++] = p; bmp[ofs++] = p; rpixel += 2;
+            //
+            index = this->getColorIndex(rpixel, false);
+            p = this->io.Palette(index);
+            bmp[ofs++] = p; bmp[ofs++] = p; rpixel += 2;
+        } 
+
+        this->bmpofs = ofs;
+        return clk;
+    }
+
+    /* simple fill, no out instructions underway, mode 512 */
+    int fill3(int clocks)
+    {
+        uint32_t * const bmp = this->tv.pixels();
+        int clk;
+
+        int ofs = this->bmpofs;
+
+        // clocks=16/32/48/64/80/96..
+
+        int rpixel = this->raster_pixel - 24;
+        this->raster_pixel += clocks;
+
+        int index;
+        for (clk = 0; clk < clocks; clk += 16) {
+            //
+            index = this->getColorIndex(rpixel, false); rpixel += 2;
+            bmp[ofs++] = this->io.Palette(index & 0x03);
+            bmp[ofs++] = this->io.Palette(index & 0x0c);
+            //
+            index = this->getColorIndex(rpixel, false); rpixel += 2;
+            bmp[ofs++] = this->io.Palette(index & 0x03);
+            bmp[ofs++] = this->io.Palette(index & 0x0c);
+            //
+            index = this->getColorIndex(rpixel, false); rpixel += 2;
+            bmp[ofs++] = this->io.Palette(index & 0x03);
+            bmp[ofs++] = this->io.Palette(index & 0x0c);
+            //
+            index = this->getColorIndex(rpixel, false); rpixel += 2;
+            bmp[ofs++] = this->io.Palette(index & 0x03);
+            bmp[ofs++] = this->io.Palette(index & 0x0c);
+            //
+            index = this->getColorIndex(rpixel, false); rpixel += 2;
+            bmp[ofs++] = this->io.Palette(index & 0x03);
+            bmp[ofs++] = this->io.Palette(index & 0x0c);
+            //
+            index = this->getColorIndex(rpixel, false); rpixel += 2;
+            bmp[ofs++] = this->io.Palette(index & 0x03);
+            bmp[ofs++] = this->io.Palette(index & 0x0c);
+            //
+            index = this->getColorIndex(rpixel, false); rpixel += 2;
+            bmp[ofs++] = this->io.Palette(index & 0x03);
+            bmp[ofs++] = this->io.Palette(index & 0x0c);
+            //
+            index = this->getColorIndex(rpixel, false); rpixel += 2;
+            bmp[ofs++] = this->io.Palette(index & 0x03);
+            bmp[ofs++] = this->io.Palette(index & 0x0c);
+        } 
+
+        this->bmpofs = ofs;
+        return clk;
+    }
+
+
 
     int getColorIndex(int rpixel, bool border) {
         if (border) {

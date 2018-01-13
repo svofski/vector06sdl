@@ -80,9 +80,9 @@ public:
 
             printf("Current display mode: %dx%d\n", display_mode.w, display_mode.h);
 
-            int options = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
+            //int options = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
             //if (Options.vsync) {
-                options |= SDL_RENDERER_PRESENTVSYNC;
+            //    options |= SDL_RENDERER_PRESENTVSYNC;
             //}
 
             //this->window = SDL_CreateWindow("Вектор-06ц", 0, 0, display_mode.w,

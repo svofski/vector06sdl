@@ -139,8 +139,17 @@ public:
             }
             this->between += step;
             this->instr_time = wrap;
+            /* commit time is always 32, commit_time_pal is always 16 */
+            /* not sure if it's even possible for a commit not to finish in one
+             * fill operation, but keeping this for the time being */
             this->commit_time -= clk;
+            if (this->commit_time < 0) {
+                this->commit_time = 0;
+            }
             this->commit_time_pal -= clk;
+            if (this->commit_time_pal < 0) {
+                this->commit_time_pal = 0;
+            }
         }
         //printf("between = %d\n", this->between);
     }
