@@ -120,7 +120,7 @@ public:
             if (last_opcode == 0xd3) {
                 this->commit_time = this->instr_time - 5;
                 this->commit_time = this->commit_time * 4 + 4;
-                this->commit_time_pal = this->commit_time - 16;
+                this->commit_time_pal = this->commit_time - 20;
             }
 
             int clk = this->filler.fill(this->instr_time << 2, this->commit_time,
