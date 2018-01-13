@@ -14,14 +14,21 @@ class CounterUnit
     int out;
     int value;
     int mode_int;
-    int bcd;
-    bool armed;
 
     uint8_t write_lsb;
     uint8_t write_msb;
     uint16_t loadvalue;
-    bool load;
-    bool enabled;
+
+    union {
+        uint32_t flags;
+        struct {
+            bool armed:1;
+            bool load:1;
+            bool enabled:1;
+            bool bcd:1;
+        };
+    };
+
     int delay;
 
 public:
@@ -86,7 +93,7 @@ public:
         }
         if (!cycles) return this->out;
 
-        int scale = 1;
+        int result = this->out;
 
         switch (this->mode_int) {
             case 0: // Interrupt on terminal count
@@ -96,13 +103,14 @@ public:
                     this->armed = true;
                     this->load = false;
                     this->out = 0; 
+                    result = 0;
                 }
                 if (this->enabled) {
                     this->value -= cycles;
                     if (this->value <= 0) {
                         if (this->armed) {
                             this->out = 1;
-                            scale = -this->value + 1;
+                            result = -this->value + 1;
                             this->armed = false;
                         }
                         this->value += this->bcd ? 10000 : 65536;
@@ -164,6 +172,7 @@ public:
                         }
                     }
                 }
+                result = this->out;
                 break;
             case 4: // Software triggered strobe
                 break;
@@ -173,8 +182,7 @@ public:
                 break;
         }
 
-        //return this->out * cycles;//this->out * incycles;
-        return this->out * scale;
+        return result;
     }
 
     void write_value(uint8_t w8) {
@@ -328,8 +336,8 @@ public:
         }
     }
 
-    void write(int addr, uint8_t w8) {
-        //console.log("8253 write " + addr + " = " + w8.toString(16));
+    void write(int addr, uint8_t w8) 
+    {
         switch (addr & 3) {
             case 0x03:
                 return this->write_cw(w8);
@@ -338,7 +346,8 @@ public:
         }
     }
 
-    int read(int addr) {
+    int read(int addr)
+    {
         switch (addr & 3) {
             case 0x03:
                 return this->control_word;
