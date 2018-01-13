@@ -104,15 +104,19 @@ public:
                         bmp[this->bmpofs++] = this->io.Palette(index & 0x0c);
                     } else {
                         uint32_t p = this->io.Palette(index);
+                        // test pattern for texture scaling
                         //if (this->raster_line & 1) {
                         //    p = 0xff000000;
                         //} else {
                         //    p = 0xffffffff;
                         //}
-                        bmp[this->bmpofs++] = 
-                            (clk == commit_time_pal + 4) ?
-                                0xffffffff :
-                                p;
+
+                        // Emulate vertical stripes when writing palette reg
+                        //bmp[this->bmpofs++] = 
+                        //    (clk == commit_time_pal + 4) ?
+                        //        0xffffffff :
+                        //        p;
+                        bmp[this->bmpofs++] = p;
                         bmp[this->bmpofs++] = p;
                     }
                 }
@@ -120,7 +124,7 @@ public:
             // 22 vsync + 18 border + 256 picture + 16 border = 312 lines
             this->raster_pixel += 2;
             if (this->raster_pixel == 768) {
-                this->advanceLine(updateScreen);
+                this->brk = this->advanceLine(updateScreen);
             }
             // load scroll register at this precise moment -- test:scrltst2
             if (this->raster_line == 22 + 18 && this->raster_pixel == 150) {
@@ -134,7 +138,7 @@ public:
         return clk;
     }
 
-    void advanceLine(bool updateScreen) {
+    bool advanceLine(bool updateScreen) {
         this->raster_pixel = 0;
         this->raster_line += 1;
         this->fb_row -= 1;
@@ -149,8 +153,9 @@ public:
         if (this->raster_line == 312) {
             this->raster_line = 0;
             this->visible = false; // blanking starts
-            this->brk = true;
+            return true;
         }
+        return false;
     }
 
     int getColorIndex(int rpixel, bool border) {
