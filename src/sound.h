@@ -146,13 +146,11 @@ public:
 
     void soundStep(int step, int tapeout, int covox, int tapein) 
     {
-        static float sound = 0;
-        
-        float newsound = this->timerwrapper.step(step / 2);
-        newsound += tapeout - 0.5;
-        newsound += tapein * 0.1 - 0.05;
-
-        sound = (sound + newsound) / 2;
+        static int int_sound = 0;
+        int newsound = this->timerwrapper.step(step / 2) * 256;
+        newsound += tapeout * 256 - 128;
+        newsound += tapein * 256 - 128;
+        int_sound = (int_sound + newsound) / 2;
 
         //// ay step should execute, but the sound can be sampled only 
         //// when needed, no filtering necessary
@@ -164,8 +162,7 @@ public:
         this->sound_accu_int += 100;
         if (this->sound_accu_int >= this->sound_accu_top) {
             this->sound_accu_int -= this->sound_accu_top;
-            sound += covox / 256;
-            //printf("%f\n", this->aywrapper.value());
+            float sound = (int_sound + covox)/1024.0;
             sound += this->aywrapper.value() - 0.5;
             sound = (sound - 1.5) * 0.3;
             if (sound > 1.0) { 
