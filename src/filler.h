@@ -84,8 +84,10 @@ public:
 
     int fill(int clocks, int commit_time, int commit_time_pal, bool updateScreen) 
     {
-        if (commit_time || commit_time_pal || this->vborder || 
+        if (commit_time || commit_time_pal || //this->vborder || 
                 this->raster_line == 22 + 18 || 
+                this->raster_line == 0 ||
+                this->raster_line == 311 ||
                 this->raster_pixel <= (768-512)/2 + clocks ||
                 this->raster_pixel + clocks >= 768-(768-512)/2)
         {
@@ -93,9 +95,19 @@ public:
             return fill1(clocks, commit_time, commit_time_pal, updateScreen);
         } else {
             fill2_count += clocks;
-            if (this->mode512) {
+            if (!this->visible) {
+                this->raster_pixel += clocks;
+                return clocks;
+            }
+            else if (this->vborder) {
+                //printf("vborder line %d bmpofs=%d clocks=%d\n", this->raster_line,
+                //        this->bmpofs, clocks);
+                return fill4(clocks);
+            }
+            else if (this->mode512) {
                 return fill3(clocks);
-            } else {
+            } 
+            else {
                 return fill2(clocks);
             }
         }
@@ -198,11 +210,17 @@ public:
         uint32_t * bmp = this->tv.pixels();
         int clk;
 
+        //if (this->vborder && this->visible) {
+        //    printf("1vborder line=%d bmpofs=%d clocks=%d\n", this->raster_line, this->bmpofs,
+        //            clocks);
+        //}
+
         for (clk = 0; clk < clocks && !this->brk; clk += 2) {
             // offset for matching border/palette writes and the raster -- test:bord2
             const int rpixel = this->raster_pixel - 24;
             bool border = this->vborder || 
                 /* hborder */ (rpixel < (768-512)/2) || (rpixel >= (768 - (768-512)/2));
+    
             int index = this->getColorIndex(rpixel, border);
             if (clk == commit_time) {
                 this->io.commit(); // regular i/o writes (border index); test: bord2
@@ -367,6 +385,37 @@ public:
         return clk;
     }
 
+    int fill4(int clocks)
+    {
+        uint32_t * const bmp = this->tv.pixels();
+        int clk;
+
+        int ofs = this->bmpofs;
+
+        // clocks=16/32/48/64/80/96..
+
+        this->raster_pixel += clocks;
+
+        int bmp_x = this->raster_pixel - CENTER_OFFSET;
+        //printf("fill4: bmp_x=%d, bmp_x+16=%d visible=%d\n", bmp_x, bmp_x+16,
+        //        this->visible);
+        int index;
+        uint32_t p = this->io.Palette(this->getColorIndex(0, true));
+        uint64_t p64 = p | (uint64_t)p<<32;
+        for (clk = 0; clk < clocks; clk += 16) {
+            *(uint64_t*)&bmp[ofs] = p64; ofs += 2;
+            *(uint64_t*)&bmp[ofs] = p64; ofs += 2;
+            *(uint64_t*)&bmp[ofs] = p64; ofs += 2;
+            *(uint64_t*)&bmp[ofs] = p64; ofs += 2;
+            *(uint64_t*)&bmp[ofs] = p64; ofs += 2;
+            *(uint64_t*)&bmp[ofs] = p64; ofs += 2;
+            *(uint64_t*)&bmp[ofs] = p64; ofs += 2;
+            *(uint64_t*)&bmp[ofs] = p64; ofs += 2;
+        } 
+
+        this->bmpofs = ofs;
+        return clk;
+    }
 
 
     int getColorIndex(int rpixel, bool border) {
