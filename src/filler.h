@@ -84,12 +84,16 @@ public:
         uint32_t * bmp = this->tv.pixels();
         int clk;
 
+        register int ofs = this->bmpofs;
+        register int raster_pixel_loc = this->raster_pixel;
+        register int raster_line_loc = this->raster_line;
+
         for (clk = 0; clk < clocks && !this->brk; clk += 2) {
             // offset for matching border/palette writes and the raster -- test:bord2
-            const int rpixel = this->raster_pixel - 24;
-            bool border = this->vborder || 
+            const int rpixel = raster_pixel_loc - 24;
+            const bool border = this->vborder || 
                 /* hborder */ (rpixel < (768-512)/2) || (rpixel >= (768 - (768-512)/2));
-            int index = this->getColorIndex(rpixel, border);
+            const int index = this->getColorIndex(rpixel, border);
             if (clk == commit_time) {
                 this->io.commit(); // regular i/o writes (border index); test: bord2
             }
@@ -97,11 +101,11 @@ public:
                 this->io.commit_palette(index); // palette writes; test: bord2
             }
             if (this->visible) {
-                const int bmp_x = this->raster_pixel - CENTER_OFFSET; // horizontal offset
+                const int bmp_x = raster_pixel_loc - CENTER_OFFSET; // horizontal offset
                 if (bmp_x >= 0 && bmp_x < SCREEN_WIDTH) {
                     if (this->mode512 && !border) {
-                        bmp[this->bmpofs++] = this->io.Palette(index & 0x03);
-                        bmp[this->bmpofs++] = this->io.Palette(index & 0x0c);
+                        bmp[ofs++] = this->io.Palette(index & 0x03);
+                        bmp[ofs++] = this->io.Palette(index & 0x0c);
                     } else {
                         uint32_t p = this->io.Palette(index);
                         // test pattern for texture scaling
@@ -116,42 +120,47 @@ public:
                         //    (clk == commit_time_pal + 4) ?
                         //        0xffffffff :
                         //        p;
-                        bmp[this->bmpofs++] = p;
-                        bmp[this->bmpofs++] = p;
+                        bmp[ofs++] = p;
+                        bmp[ofs++] = p;
                     }
                 }
             }
             // 22 vsync + 18 border + 256 picture + 16 border = 312 lines
-            this->raster_pixel += 2;
-            if (this->raster_pixel == 768) {
-                this->brk = this->advanceLine(updateScreen);
+            raster_pixel_loc += 2;
+            if (raster_pixel_loc == 768) {
+                this->brk = this->advanceLine(raster_pixel_loc, raster_line_loc,
+                        updateScreen);
             }
             // load scroll register at this precise moment -- test:scrltst2
-            if (this->raster_line == 22 + 18 && this->raster_pixel == 150) {
+            if (raster_line_loc == 22 + 18 && raster_pixel_loc == 150) {
                 this->fb_row = this->io.ScrollStart();
             }
             // irq time -- test:bord2
-            else if (this->raster_line == 0 && this->raster_pixel == 176) {
+            else if (raster_line_loc == 0 && raster_pixel_loc == 176) {
                 this->irq = true;
             }
         } 
+
+        this->bmpofs = ofs;
+        this->raster_pixel = raster_pixel_loc;
+        this->raster_line = raster_line_loc;
         return clk;
     }
 
-    bool advanceLine(bool updateScreen) {
-        this->raster_pixel = 0;
-        this->raster_line += 1;
+    bool advanceLine(int & _raster_pixel, int & _raster_line, bool updateScreen) {
+        _raster_pixel = 0;
+        _raster_line += 1;
         this->fb_row -= 1;
         if (!this->vborder && this->fb_row < 0) {
             this->fb_row = 0xff;
         }
         // update vertical border only when line changes
-        this->vborder = (this->raster_line < 40) || (this->raster_line >= (40 + 256));
+        this->vborder = (_raster_line < 40) || (_raster_line >= (40 + 256));
         // turn on pixel copying after blanking area
         this->visible = this->visible || 
-            (updateScreen && this->raster_line == FIRST_VISIBLE_LINE);
-        if (this->raster_line == 312) {
-            this->raster_line = 0;
+            (updateScreen && _raster_line == FIRST_VISIBLE_LINE);
+        if (_raster_line == 312) {
+            _raster_line = 0;
             this->visible = false; // blanking starts
             return true;
         }
