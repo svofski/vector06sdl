@@ -277,7 +277,7 @@ public:
 
     int read_value()
     {
-        int value;
+        int value = 0;
         switch (this->latch_mode) {
             case 0:
                 // impossibru

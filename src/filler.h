@@ -36,7 +36,7 @@ public:
         memory(_mem), io(_io), tv(_tv)
     {
         this->mode512 = false;
-        this->mem32 = (uint32_t *) _mem.buffer();
+        this->mem32 = (uint32_t *) this->memory.buffer();
         this->pixel32 = 0;  // 4 bytes of bit planes
         this->border_index = 0;
 
@@ -304,7 +304,7 @@ public:
         this->vborder = (this->raster_line < 40) || (this->raster_line >= (40 + 256));
         // turn on pixel copying after blanking area
         this->visible = this->visible || 
-            (updateScreen && this->raster_line == FIRST_VISIBLE_LINE);
+            (updateScreen && this->raster_line == this->first_visible_line);
         if (this->raster_line == 312) {
             this->raster_line = 0;
             this->visible = false; // blanking starts
