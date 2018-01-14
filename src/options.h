@@ -9,6 +9,8 @@ struct _options
     int rom_org;
     std::string wavfile;
     int max_frame;
+    bool vsync;
+    int screen_height;
     bool novideo;
     bool nosound;
     bool nofdc;

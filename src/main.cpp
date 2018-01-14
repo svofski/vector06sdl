@@ -91,6 +91,7 @@ int main(int argc, char ** argv)
 {
     options(argc, argv);
 
+    filler.init();
     soundnik.init();    // this may switch the audio output off
     board.init();
     tv.init();

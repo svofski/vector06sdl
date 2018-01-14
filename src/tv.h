@@ -60,7 +60,7 @@ public:
 
     void init()
     {
-        this->bmp = new uint32_t[SCREEN_WIDTH * SCREEN_HEIGHT];
+        this->bmp = new uint32_t[SCREEN_WIDTH * Options.screen_height];
 
         if (Options.novideo) {
             return;
@@ -69,33 +69,23 @@ public:
         SDL_Init(SDL_INIT_VIDEO);
         probe();
 
-        if (Options.window) {
-            SDL_CreateWindowAndRenderer(800, 600,
-                    SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE,
-                    &this->window, &this->renderer);
-        } 
-        else {
-            SDL_DisplayMode display_mode;
-            SDL_GetCurrentDisplayMode(0, &display_mode);
+        SDL_DisplayMode display_mode;
+        SDL_GetCurrentDisplayMode(0, &display_mode);
 
-            printf("Current display mode: %dx%d\n", display_mode.w, display_mode.h);
+        printf("Current display mode: %dx%d\n", display_mode.w, display_mode.h);
 
-            //int options = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
-            //if (Options.vsync) {
-            //    options |= SDL_RENDERER_PRESENTVSYNC;
-            //}
+        int window_options = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
+        int renderer_options = SDL_RENDERER_ACCELERATED;
+        if (Options.vsync) {
+            renderer_options |= SDL_RENDERER_PRESENTVSYNC;
+        }
 
-            //this->window = SDL_CreateWindow("Вектор-06ц", 0, 0, display_mode.w,
-            //        display_mode.h, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
-            this->window = SDL_CreateWindow("Вектор-06ц", 0, 0, 656, 288,
-                    SDL_WINDOW_FULLSCREEN);
-                    //SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
-            this->renderer = SDL_CreateRenderer(this->window, -1, 
-                    SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+        this->window = SDL_CreateWindow("Вектор-06ц", 0, 0, 800, 600,
+                window_options);
+        this->renderer = SDL_CreateRenderer(this->window, -1, 
+                renderer_options);
 
-            //SDL_CreateWindowAndRenderer(display_mode.w, display_mode.h, 
-            //        SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE/*|SDL_WINDOW_FULLSCREEN_DESKTOP*/,
-            //        &this->window, &this->renderer);
+        if (!Options.window) {
             SDL_SetWindowFullscreen(this->window, 
 #if __MACOSX__
                     SDL_WINDOW_FULLSCREEN
@@ -106,7 +96,7 @@ public:
         }
 
         this->tex_width = SCREEN_WIDTH;
-        this->tex_height = SCREEN_HEIGHT;
+        this->tex_height = Options.screen_height;
         this->texture = SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_ABGR8888,
                 SDL_TEXTUREACCESS_STATIC, this->tex_width, this->tex_height);
 
@@ -157,7 +147,7 @@ public:
     {
 #if HAS_IMAGE
         SDL_Surface * s = SDL_CreateRGBSurfaceWithFormatFrom(this->bmp, 
-                SCREEN_WIDTH, SCREEN_HEIGHT, 32, 4*SCREEN_WIDTH, 
+                SCREEN_WIDTH, Options.screen_height, 32, 4*SCREEN_WIDTH, 
                 SDL_PIXELFORMAT_ABGR8888);
 
         IMG_SavePNG(s, path.c_str());

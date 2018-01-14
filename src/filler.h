@@ -18,6 +18,7 @@ private:
     bool visible;       // visible area flag
     int bmpofs;         // bitmap offset for current pixel
     int border_index;
+    int first_visible_line;
 
     uint32_t pixel32;
     uint32_t * mem32;
@@ -49,6 +50,11 @@ public:
         this->io.onmodechange = [this](bool mode) {
             this->mode512 = mode;
         };
+    }
+
+    void init()
+    {
+        this->first_visible_line = 312 - Options.screen_height;
     }
 
     void reset()
@@ -194,7 +200,7 @@ public:
         _vborder = (_raster_line < 40) || (_raster_line >= (40 + 256));
         // turn on pixel copying after blanking area
         _visible = _visible || 
-            (updateScreen && _raster_line == FIRST_VISIBLE_LINE);
+            (updateScreen && _raster_line == this->first_visible_line);
         if (_raster_line == 312) {
             _raster_line = 0;
             _visible = false; // blanking starts

@@ -3,6 +3,7 @@
 #include "boost/program_options.hpp"
 #include "boost/filesystem.hpp"
 
+#include "globaldefs.h"
 #include "options.h"
 
 _options Options = 
@@ -11,6 +12,8 @@ _options Options =
     .rom_org = 256,
     .wavfile = "",
     .max_frame = -1,
+    .vsync = false,
+    .screen_height = DEFAULT_SCREEN_HEIGHT,
 };
 
 void options(int argc, char ** argv)
@@ -23,6 +26,7 @@ void options(int argc, char ** argv)
         ("org", po::value <int>(), "rom origin address (default 0x100)")
         ("wav", po::value<std::string>(), "wav file to load (not implemented)")
         ("fdd", po::value<std::vector<std::string>>(), "fdd floppy image (multiple up to 4)")
+        ("log-fdd", "print too much debug info from the floppy emulator")
         ("autostart", "autostart based on RUS/LAT blinkage")
         ("max-frame", po::value<int>(), "run emulation for this many frames then exit")
         ("save-frame", po::value<std::vector<int>>(), "save frame with these numbers (multiple)")
@@ -31,7 +35,8 @@ void options(int argc, char ** argv)
         ("nofdc", "detach floppy disk controller")
         ("window", "run in a window, not fullscreen")
         ("bootpalette", "init palette to yellow/blue colours before running a rom")
-        ("log-fdd", "print too much debug info from the floppy emulator")
+        ("vsync", "use display vsync for screen updates (use on Raspberry Pi sdtv_mode 18)")
+        ("display-lines", po::value<int>(), "number of visible lines (use 270 on Raspberry Pi sdtv_mode 18)")
         ;
         
     po::variables_map vm;
@@ -108,6 +113,15 @@ void options(int argc, char ** argv)
         Options.window = vm.count("window") > 0;
         if (Options.window) {
             printf("Will run in a window\n");
+        }
+
+        Options.vsync = vm.count("vsync") > 0;
+        if (Options.vsync) {
+            printf("Will use VSYNC\n");
+        }
+
+        if (vm.count("display-lines") > 0) {
+            Options.screen_height = vm["display-lines"].as<int>();
         }
     }
     catch(po::error & err) {
