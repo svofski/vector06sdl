@@ -85,7 +85,7 @@ public:
 
     int Count(int incycles) 
     {
-        int cycles = incycles;
+        int cycles = 1; //incycles;
         if (this->delay && cycles) {
             if (this->delay <= cycles) {
                 /* we have enough cycles to end delay */
@@ -108,7 +108,6 @@ public:
                     this->value = this->loadvalue;
                     this->enabled = true;
                     this->armed = true;
-                    this->load = false;
                     this->out = 0; 
                     result = 0;
                 }
@@ -129,7 +128,6 @@ public:
                     //this->value = this->loadvalue; -- quirk!
                     this->enabled = true;
                 }
-                this->load = false;
                 if (this->enabled && cycles > 0) {
                     this->value -= cycles;
                     if (this->value <= 0) {
@@ -145,7 +143,6 @@ public:
                     this->value = this->loadvalue;
                     this->enabled = true;
                 }
-                this->load = false;
                 if (this->enabled && cycles > 0) {
                     this->value -= cycles;
                     if (this->value <= 0) {
@@ -163,8 +160,8 @@ public:
                     this->value = this->loadvalue;
                     this->enabled = true;
                 }
-                this->load = false;
                 if (this->enabled && cycles > 0) {
+                    //if (cycles > 1) printf("cycles=%d\n", cycles);
                     for (;--cycles >= 0;) {
                         this->value -= 
                             ((this->value == this->loadvalue) && ((this->value&1) == 1)) ? 
@@ -189,6 +186,7 @@ public:
                 break;
         }
 
+        this->load = false;
         return result;
     }
 
