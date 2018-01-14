@@ -82,7 +82,7 @@ public:
             return false;
         }
 
-        uint32_t globsize = token<uint32_t>(raw, sptr);
+        uint32_t globsize = token<uint32_t>(raw, sptr); (void)globsize;
 
         string wave = token<string>(raw, sptr);
         if (wave != "WAVE") {
@@ -155,7 +155,7 @@ public:
         return this->Data[pos];
     }
 
-    int size() const 
+    size_t size() const 
     {
         return this->Data.size();
     }

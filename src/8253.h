@@ -86,7 +86,6 @@ public:
     int Count(int incycles) 
     {
         int cycles = incycles;
-        int delay1 = this->delay;
         while (this->delay && cycles) {
             --this->delay;
             --cycles;

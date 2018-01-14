@@ -75,7 +75,7 @@ public:
     void init_from_vector(vector<uint8_t> & from, uint32_t start_addr)
     {
         memset(this->bytes, 0, sizeof(bytes));
-        for (int i = 0; i < from.size(); ++i) {
+        for (unsigned i = 0; i < from.size(); ++i) {
             int addr = start_addr + i;
             this->write(addr, from[i], false);
         }

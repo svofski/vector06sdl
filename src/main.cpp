@@ -65,7 +65,7 @@ void load_wav(Wav & wav, std::string & path)
 
 void load_disks(FD1793 & fdc)
 {
-    for (int i = 0; i < Options.fddfile.size(); ++i) {
+    for (unsigned i = 0; i < Options.fddfile.size(); ++i) {
         load_one_disk(fdc, i, Options.fddfile[i]);
     }
 }

@@ -233,16 +233,17 @@ public:
     //  - restore (03) command
     //  - steps until !TRO0 goes low (track 0)
     //
-    FD1793_Real() : _pr(0), _side(0), _dsk(_disks[0]), _intrq(0), _data(0), 
-         _track(0), _sector(0), _command(0), _commandtr(0), _status(0), 
-         LINGER_BEFORE(0), LINGER_AFTER(2), _lingertime(2+1), _stepdir(1)
+    FD1793_Real() : _dsk(_disks[0])
     {
+        LINGER_AFTER = 2;
+        _lingertime = 3;
+        _stepdir = 1;
     }
 
     void init()
     {
         this->_log = Options.log_fdd;
-        for (int i = 0; i < sizeof(_disks)/sizeof(_disks[0]); ++i) {
+        for (unsigned i = 0; i < sizeof(_disks)/sizeof(_disks[0]); ++i) {
             _disks[i].init();
         }
     }
@@ -439,9 +440,9 @@ public:
             case 0x08: // read sector, m = 0
             case 0x09: // read sector, m = 1
                 {
-                int rsSideCompareFlag = (param & 2) >> 1;
-                int rsDelay = (param & 4) >> 2;
-                int rsSideSelect = (param & 8) >> 3;
+                //int rsSideCompareFlag = (param & 2) >> 1;
+                //int rsDelay = (param & 4) >> 2;
+                //int rsSideSelect = (param & 8) >> 3;
                 this->_commandtr = CMD_READSEC;
                 this->_status |= ST_BUSY;
                 this->_dsk.seek(this->_track, this->_sector, this->_side);

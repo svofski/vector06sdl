@@ -49,7 +49,6 @@ public:
             0.5704, 0.6873, 0.8482, 1
         };
 
-        int top = this->ayr[ch << 1] | (this->ayr[1 | (ch << 1)] << 8);
         if (++this->ayr[ch + 16] >= (this->ayr[ch << 1] | this->ayr[1 | (ch << 1)] << 8)) {
             this->ayr[ch + 16] = 0;
             this->tons ^= 1 << ch;

@@ -137,7 +137,7 @@ private:
         // 4 │ G   F   E   D   C   B   A   @
         // 3 │ /   .   =   ,   ;   :   9   8
         // 2 │ 7   6   5   4   3   2   1   0
-        // 1 │F5  F4  F3  F2  F1  AP2 CTP ^\
+        // 1 │F5  F4  F3  F2  F1  AP2 CTP ^\ -
         // 0 │DN  RT  UP  LT  ЗАБ ВК  ПС  TAB	
 
         static int keymap_tab[] = {
@@ -215,7 +215,7 @@ private:
             SDL_SCANCODE_TAB,           0x001,
         };
 
-        for (int i = 0; i < sizeof(keymap_tab)/sizeof(keymap_tab[0]); i += 2) {
+        for (unsigned i = 0; i < sizeof(keymap_tab)/sizeof(keymap_tab[0]); i += 2) {
             SDL_Scancode scan = (SDL_Scancode) keymap_tab[i];
             uint32_t colbit = keymap_tab[i + 1];
             keymap[scan] = colbit;

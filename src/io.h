@@ -13,16 +13,15 @@ class IO {
 private:
     uint32_t palette[16];
 
-    uint8_t CW, PA, PB, PC, PIA1_last;
-    uint8_t CW2, PA2, PB2, PC2;
-
-    Keyboard & keyboard;
-
-    I8253 & timer;
     Memory & kvaz;
+    Keyboard & keyboard;
+    I8253 & timer;
     FD1793 & fdc;
     AY & ay;
     WavPlayer & tape_player;
+
+    uint8_t CW, PA, PB, PC, PIA1_last;
+    uint8_t CW2, PA2, PB2, PC2;
 
     int outport;
     int outbyte;
@@ -39,7 +38,7 @@ public:
         tape_player(_tape_player),
         CW(0), PA(0xff), PB(0xff), PC(0xff), CW2(0), PA2(0xff), PB2(0xff), PC2(0xff)
     {
-        for (int i = 0; i < sizeof(palette)/sizeof(palette[0]); ++i) {
+        for (unsigned i = 0; i < sizeof(palette)/sizeof(palette[0]); ++i) {
             palette[i] = 0xff000000;
         }
         outport = outbyte = palettebyte = -1;

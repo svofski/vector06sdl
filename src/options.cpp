@@ -71,7 +71,7 @@ void options(int argc, char ** argv)
         if (vm.count("save-frame")) {
             Options.save_frames = vm["save-frame"].as<std::vector<int>>();
             printf("Will save frames #");
-            for (int i = 0; i < Options.save_frames.size(); ++i) {
+            for (unsigned i = 0; i < Options.save_frames.size(); ++i) {
                 printf("%d%c", Options.save_frames[i], 
                         (i+1) == Options.save_frames.size() ? '\n' : ',');
             }

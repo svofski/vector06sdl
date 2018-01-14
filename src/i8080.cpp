@@ -328,7 +328,7 @@ static void i8080_retrieve_flags(void) {
 
 int i8080_execute(int opcode) {
     //printf("pc=%04x instr=%02x\n", PC, opcode);
-    int cpu_cycles;
+    int cpu_cycles; (void)cpu_cycles;
     int v_cycles;
     switch (opcode) {
         case 0x00:            /* nop */

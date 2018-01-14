@@ -51,8 +51,9 @@ public:
     Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd, 
             TV & _tv, WavPlayer & _tape_player) 
         : memory(_memory), io(_io), filler(_filler), soundnik(_snd), tv(_tv), 
-          tape_player(_tape_player), iff(false)
+          tape_player(_tape_player)
     {
+        iff = false;
     }
 
     void init()
@@ -69,7 +70,7 @@ public:
             uint8_t * src = (uint8_t *) &boots_bin;
             size_t size = (size_t) boots_bin_len;
             vector<uint8_t> boot(size);
-            for (int i = 0; i < size; ++i) {
+            for (unsigned i = 0; i < size; ++i) {
                 boot[i] = src[i];
             }
             this->memory.attach_boot(boot);

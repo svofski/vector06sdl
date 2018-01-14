@@ -33,10 +33,9 @@ public:
 
 public:
     PixelFiller(Memory & _mem, IO & _io, TV & _tv): 
-        memory(_mem), io(_io), tv(_tv),
-        mode512(false)
+        memory(_mem), io(_io), tv(_tv)
     {
-        //this->bmp = bmp;
+        this->mode512 = false;
         this->mem32 = (uint32_t *) _mem.buffer();
         this->pixel32 = 0;  // 4 bytes of bit planes
         this->border_index = 0;
@@ -427,15 +426,8 @@ public:
         int clk;
 
         int ofs = this->bmpofs;
-
-        // clocks=16/32/48/64/80/96..
-
         this->raster_pixel += clocks;
 
-        int bmp_x = this->raster_pixel - CENTER_OFFSET;
-        //printf("fill4: bmp_x=%d, bmp_x+16=%d visible=%d\n", bmp_x, bmp_x+16,
-        //        this->visible);
-        int index;
         uint32_t p = this->io.Palette(this->getColorIndex(0, true));
         uint64_t p64 = p | (uint64_t)p<<32;
         for (clk = 0; clk < clocks; clk += 16) {
