@@ -86,9 +86,17 @@ public:
     int Count(int incycles) 
     {
         int cycles = incycles;
-        while (this->delay && cycles) {
-            --this->delay;
-            --cycles;
+        if (this->delay && cycles) {
+            if (this->delay <= cycles) {
+                /* we have enough cycles to end delay */
+                cycles -= this->delay;
+                this->delay = 0;
+            }
+            else {
+                /* not enough cycles */
+                this->delay -= cycles;
+                cycles = 0; 
+            }
         }
         if (!cycles) return this->out;
 
