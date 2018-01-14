@@ -21,6 +21,7 @@ private:
     int first_visible_line;
 
     uint32_t pixel32;
+    uint32_t pixel32_grouped;
     uint32_t * mem32;
 
     Memory & memory;
@@ -70,20 +71,49 @@ public:
         this->irq = false;
     }
 
+    uint32_t bit_permute_step(uint32_t x, uint32_t m, uint32_t shift) {
+        uint32_t t;
+        t = ((x >> shift) ^ x) & m;
+        x = (x ^ t) ^ (t << shift);
+        return x;
+    }
+
     void fetchPixels() 
     {
         size_t addr = ((this->fb_column & 0xff) << 8) | (this->fb_row & 0xff);
-        this->pixel32 = this->mem32[0x2000 + addr];
+        uint32_t x = this->pixel32 = this->mem32[0x2000 + addr];
+        x = bit_permute_step(x, 0x00550055, 9);  // Bit index swap+complement 0,3
+        x = bit_permute_step(x, 0x00003333, 18);  // Bit index swap+complement 1,4
+        x = bit_permute_step(x, 0x000f000f, 12);  // Bit index swap+complement 2,3
+        x = bit_permute_step(x, 0x000000ff, 24);  // Bit index swap+complement 3,4
+
+        this->pixel32_grouped = x;
     }
 
     int shiftOutPixels()
     {
-        uint32_t p = this->pixel32;
-        // msb of every byte in p stands for bit plane
-        uint32_t modeless = (p >> 4 & 8) | (p >> 13 & 4) | (p >> 22 & 2) | (p >> 31 & 1);
-        // shift left
-        this->pixel32 = (p << 1);// & 0xfefefefe; -- unnecessary
+//        uint32_t p = this->pixel32;
+//        // msb of every byte in p stands for bit plane
+//        uint32_t modeless = (p >> 4 & 8) | (p >> 13 & 4) | (p >> 22 & 2) | (p >> 31 & 1);
+//        // shift left
+//        this->pixel32 = (p << 1);// & 0xfefefefe; -- unnecessary
+//        return modeless;
+        uint32_t modeless = this->pixel32_grouped >> 28;
+        this->pixel32_grouped <<= 4;
         return modeless;
+    }
+
+    int getColorIndex(int rpixel, bool border) {
+        if (border) {
+            this->fb_column = 0;
+            return this->border_index;
+        } else {
+            if ((rpixel & 0x0f) == 0) {
+                this->fetchPixels();
+                ++this->fb_column;
+            }
+            return this->shiftOutPixels();
+        }
     }
 
     int fill1_count, fill2_count;
@@ -424,16 +454,4 @@ public:
     }
 
 
-    int getColorIndex(int rpixel, bool border) {
-        if (border) {
-            this->fb_column = 0;
-            return this->border_index;
-        } else {
-            if ((rpixel & 0x0f) == 0) {
-                this->fetchPixels();
-                ++this->fb_column;
-            }
-            return this->shiftOutPixels();
-        }
-    }
 };

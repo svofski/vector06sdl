@@ -6,6 +6,8 @@ set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release Debug NoConfig)
 
 message("CMAKE_SYSTEM_NAME is ${CMAKE_SYSTEM_NAME}")
 
+add_definitions(-Wall)
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     message("This is Windows. Assuming MinGW from https://nuwen.net/mingw.html")
     set(EXTRA_LIBS -limm32 -lwinmm -lversion)
@@ -18,7 +20,7 @@ else()
         message("Assuming this is Linux on Raspberry Pi")
         set(BFDNAME -O elf32-littlearm -B arm)
         add_definitions(-DZEALOUS_LOCALITY=1)
-        add_definitions(-mfpu=neon-vfpv4 -mfloat-abi=hard -mcpu=cortex-a53 -funsafe-math-optimizations)
+        add_definitions(-mfpu=neon-vfpv4 -mfloat-abi=hard -mcpu=cortex-a53 -funsafe-math-optimizations -ftree-vectorize -ftree-vectorizer-verbose=2 -fopt-info-vec)
     else()
         message("Looks like it's a desktop Linux on amd64, will use xxd")
         set(USE_XXD true) 
