@@ -10,7 +10,11 @@ struct _options
     std::string wavfile;
     int max_frame;
     bool vsync;
+    int screen_width;
     int screen_height;
+    int border_width;
+    int center_offset;
+
     bool novideo;
     bool nosound;
     bool nofdc;

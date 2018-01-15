@@ -13,7 +13,10 @@ _options Options =
     .wavfile = "",
     .max_frame = -1,
     .vsync = false,
+    .screen_width = DEFAULT_SCREEN_WIDTH,
     .screen_height = DEFAULT_SCREEN_HEIGHT,
+    .border_width = DEFAULT_BORDER_WIDTH,
+    .center_offset = DEFAULT_CENTER_OFFSET,
 };
 
 void options(int argc, char ** argv)
@@ -36,7 +39,8 @@ void options(int argc, char ** argv)
         ("window", "run in a window, not fullscreen")
         ("bootpalette", "init palette to yellow/blue colours before running a rom")
         ("vsync", "use display vsync for screen updates (use on Raspberry Pi sdtv_mode 18)")
-        ("display-lines", po::value<int>(), "number of visible lines (use 270 on Raspberry Pi sdtv_mode 18)")
+        ("yres", po::value<int>(), "number of visible lines (default 288, use 270 on Raspberry Pi sdtv_mode 18)")
+        ("border-width", po::value<int>(), "width of horizontal border (default 32)")
         ;
         
     po::variables_map vm;
@@ -120,8 +124,18 @@ void options(int argc, char ** argv)
             printf("Will use VSYNC\n");
         }
 
-        if (vm.count("display-lines") > 0) {
-            Options.screen_height = vm["display-lines"].as<int>();
+        if (vm.count("yres") > 0) {
+            Options.screen_height = vm["yres"].as<int>();
+            printf("Vertical resolution set to %d\n", Options.screen_height);
+        }
+
+        if (vm.count("border-width") > 0) {
+            Options.border_width = vm["border-width"].as<int>();
+            if (Options.border_width < 0) Options.border_width = 0;
+            if (Options.border_width > 104) Options.border_width = 104;
+            Options.screen_width = 512 + 2 * Options.border_width;
+            Options.center_offset = 152 - Options.border_width;
+            printf("Border width = %d\n", Options.border_width);
         }
     }
     catch(po::error & err) {

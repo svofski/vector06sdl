@@ -23,6 +23,8 @@ private:
     int bmpofs;         // bitmap offset for current pixel
     int border_index;
     int first_visible_line;
+    int center_offset;
+    int screen_width;
 
     uint32_t pixel32;
     uint32_t pixel32_grouped;
@@ -59,6 +61,8 @@ public:
     void init()
     {
         this->first_visible_line = 312 - Options.screen_height;
+        this->center_offset = Options.center_offset;
+        this->screen_width = Options.screen_width;
     }
 
     void reset()
@@ -145,8 +149,6 @@ public:
                 return clocks;
             }
             else if (this->vborder) {
-                //printf("vborder line %d bmpofs=%d clocks=%d\n", this->raster_line,
-                //        this->bmpofs, clocks);
                 return fill4(clocks);
             }
             else if (this->mode512) {
@@ -186,8 +188,8 @@ public:
                 this->io.commit_palette(index); // palette writes; test: bord2
             }
             if (visible_loc) {
-                const int bmp_x = raster_pixel_loc - CENTER_OFFSET; // horizontal offset
-                if (bmp_x >= 0 && bmp_x < SCREEN_WIDTH) {
+                const int bmp_x = raster_pixel_loc - this->center_offset;
+                if (bmp_x >= 0 && bmp_x < this->screen_width) {
                     if (mode512_loc && !border) {
                         bmp[ofs++] = this->io.Palette(index & 0x03);
                         bmp[ofs++] = this->io.Palette(index & 0x0c);
@@ -265,8 +267,8 @@ public:
                 this->io.commit_palette(index); // palette writes; test: bord2
             }
             if (this->visible) {
-                const int bmp_x = this->raster_pixel - CENTER_OFFSET; // horizontal offset
-                if (bmp_x >= 0 && bmp_x < SCREEN_WIDTH) {
+                const int bmp_x = this->raster_pixel - this->center_offset;
+                if (bmp_x >= 0 && bmp_x < this->screen_width) {
                     if (this->mode512 && !border) {
                         bmp[this->bmpofs++] = this->io.Palette(index & 0x03);
                         bmp[this->bmpofs++] = this->io.Palette(index & 0x0c);

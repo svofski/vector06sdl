@@ -61,7 +61,7 @@ public:
 
     void init()
     {
-        this->bmp = new uint32_t[SCREEN_WIDTH * Options.screen_height];
+        this->bmp = new uint32_t[Options.screen_width * Options.screen_height];
 
         if (Options.novideo) {
             return;
@@ -81,8 +81,15 @@ public:
             renderer_options |= SDL_RENDERER_PRESENTVSYNC;
         }
 
-        this->window = SDL_CreateWindow("Вектор-06ц", 0, 0, 800, 600,
-                window_options);
+        int window_height = Options.screen_height * 2;
+        int window_width = window_height * 5 / 4;
+
+        window_width += 2 * (Options.border_width - 32);
+
+        int aspect_height = window_width * 5 / 4;
+
+        this->window = SDL_CreateWindow("Вектор-06ц", 0, 0, 
+                window_width, window_height, window_options);
         this->renderer = SDL_CreateRenderer(this->window, -1, 
                 renderer_options);
 
@@ -96,12 +103,12 @@ public:
                     );
         }
 
-        this->tex_width = SCREEN_WIDTH;
+        this->tex_width = Options.screen_width;
         this->tex_height = Options.screen_height;
         this->texture = SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_ABGR8888,
                 SDL_TEXTUREACCESS_STATIC, this->tex_width, this->tex_height);
 
-        SDL_RenderSetLogicalSize(this->renderer, 4, 3);
+        SDL_RenderSetLogicalSize(this->renderer, window_width, window_height);
     }
 
     bool handle_keyboard_event(SDL_KeyboardEvent & event)
@@ -148,8 +155,8 @@ public:
     {
 #if HAS_IMAGE
         SDL_Surface * s = SDL_CreateRGBSurfaceWithFormatFrom(this->bmp, 
-                SCREEN_WIDTH, Options.screen_height, 32, 4*SCREEN_WIDTH, 
-                SDL_PIXELFORMAT_ABGR8888);
+                Options.screen_width, Options.screen_height, 32, 
+                4*Options.screen_width, SDL_PIXELFORMAT_ABGR8888);
 
         IMG_SavePNG(s, path.c_str());
 
