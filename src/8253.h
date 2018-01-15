@@ -86,20 +86,12 @@ public:
     int Count(int incycles) 
     {
         int cycles = 1; //incycles;
-        if (this->delay && cycles) {
-            if (this->delay <= cycles) {
-                /* we have enough cycles to end delay */
-                cycles -= this->delay;
-                this->delay = 0;
-            }
-            else {
-                /* not enough cycles */
-                this->delay -= cycles;
-                cycles = 0; 
-            }
+        if (this->delay) {
+            --this->delay;
+            cycles = 0;
         }
         if (!cycles) return this->out;
-
+        if (!this->enabled && !this->load) return this->out;
         int result = this->out;
 
         switch (this->mode_int) {
@@ -128,7 +120,7 @@ public:
                     //this->value = this->loadvalue; -- quirk!
                     this->enabled = true;
                 }
-                if (this->enabled && cycles > 0) {
+                if (this->enabled) {
                     this->value -= cycles;
                     if (this->value <= 0) {
                         int reload = this->loadvalue == 0 ? 
@@ -143,7 +135,7 @@ public:
                     this->value = this->loadvalue;
                     this->enabled = true;
                 }
-                if (this->enabled && cycles > 0) {
+                if (this->enabled) {
                     this->value -= cycles;
                     if (this->value <= 0) {
                         int reload = this->loadvalue == 0 ? 
@@ -160,20 +152,17 @@ public:
                     this->value = this->loadvalue;
                     this->enabled = true;
                 }
-                if (this->enabled && cycles > 0) {
-                    //if (cycles > 1) printf("cycles=%d\n", cycles);
-                    for (;--cycles >= 0;) {
-                        this->value -= 
-                            ((this->value == this->loadvalue) && ((this->value&1) == 1)) ? 
-                            this->out == 0 ? 3 : 1 : 2; 
-                        if (this->value <= 0) {
-                            this->out ^= 1;
+                if (this->enabled) {
+                    this->value -= 
+                        ((this->value == this->loadvalue) && ((this->value&1) == 1)) ? 
+                        this->out == 0 ? 3 : 1 : 2; 
+                    if (this->value <= 0) {
+                        this->out ^= 1;
 
-                            int reload = (this->loadvalue == 0) ? 
-                                (this->bcd ? 10000 : 0x10000) : this->loadvalue;
-                            this->value += reload;
-                            //this->value = this->loadvalue;
-                        }
+                        int reload = (this->loadvalue == 0) ? 
+                            (this->bcd ? 10000 : 0x10000) : this->loadvalue;
+                        this->value += reload;
+                        //this->value = this->loadvalue;
                     }
                 }
                 result = this->out;

@@ -162,13 +162,13 @@ public:
         this->sound_accu_int += 100;
         if (this->sound_accu_int >= this->sound_accu_top) {
             this->sound_accu_int -= this->sound_accu_top;
-            float sound = (int_sound + covox)/1024.0;
-            sound += this->aywrapper.value() - 0.5;
-            sound = (sound - 1.5) * 0.3;
-            if (sound > 1.0) { 
-                sound = 1.0; 
-            } else if (sound < -1.0) { 
-                sound = -1.0; 
+            float sound = (int_sound + covox)/1024.0f;
+            sound += this->aywrapper.value() - 0.5f;
+            sound = (sound - 1.5f) * 0.3f;
+            if (sound > 1.0f) { 
+                sound = 1.0f; 
+            } else if (sound < -1.0f) { 
+                sound = -1.0f; 
             }
             this->sample(sound);
         }

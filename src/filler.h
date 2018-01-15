@@ -6,6 +6,10 @@
 #include "io.h"
 #include "tv.h"
 
+#ifdef __ARM_NEON
+#include <arm_neon.h>
+#endif
+
 class PixelFiller
 {
 private:
@@ -81,6 +85,12 @@ public:
     {
         size_t addr = ((this->fb_column & 0xff) << 8) | (this->fb_row & 0xff);
         uint32_t x = this->pixel32 = this->mem32[0x2000 + addr];
+
+        // h/t Code generator for bit permutations
+        // http://programming.sirrida.de/calcperm.php
+        // Input:
+        // 31 23 15 7 30 22 14 6 29 21 13 5 28 20 12 4 27 19 11 3 26 18 10 2 25 17 9 1  24 16 8 0
+        // LSB, indices refer to source, Beneš/BPC
         x = bit_permute_step(x, 0x00550055, 9);  // Bit index swap+complement 0,3
         x = bit_permute_step(x, 0x00003333, 18);  // Bit index swap+complement 1,4
         x = bit_permute_step(x, 0x000f000f, 12);  // Bit index swap+complement 2,3
@@ -119,7 +129,7 @@ public:
 
     int fill(int clocks, int commit_time, int commit_time_pal, bool updateScreen) 
     {
-        if (commit_time || commit_time_pal || //this->vborder || 
+        if (commit_time || commit_time_pal || 
                 this->raster_line == 22 + 18 || 
                 this->raster_line == 0 ||
                 this->raster_line == 311 ||
@@ -160,10 +170,6 @@ public:
         bool vborder_loc = this->vborder;
         bool visible_loc = this->visible;
         bool mode512_loc = this->mode512;
-
-        //if (commit_time) {
-        //    printf("c=%d p=%d\n", commit_time, commit_time_pal);
-        //}
 
         // clocks=16/32/48/64/80/96..
         for (clk = 0; clk < clocks && !this->brk; clk += 2) {
@@ -245,11 +251,6 @@ public:
         uint32_t * bmp = this->tv.pixels();
         int clk;
 
-        //if (this->vborder && this->visible) {
-        //    printf("1vborder line=%d bmpofs=%d clocks=%d\n", this->raster_line, this->bmpofs,
-        //            clocks);
-        //}
-
         for (clk = 0; clk < clocks && !this->brk; clk += 2) {
             // offset for matching border/palette writes and the raster -- test:bord2
             const int rpixel = this->raster_pixel - 24;
@@ -326,41 +327,72 @@ public:
         int rpixel = this->raster_pixel - 24;
         this->raster_pixel += clocks;
 
-        int index;
-        uint32_t p;
         for (clk = 0; clk < clocks; clk += 16) {
-            //
-            index = this->getColorIndex(rpixel, false);
-            p = this->io.Palette(index);
-            bmp[ofs++] = p; bmp[ofs++] = p; rpixel += 2;
-            //
-            index = this->getColorIndex(rpixel, false);
-            p = this->io.Palette(index);
-            bmp[ofs++] = p; bmp[ofs++] = p; rpixel += 2;
-            //
-            index = this->getColorIndex(rpixel, false);
-            p = this->io.Palette(index);
-            bmp[ofs++] = p; bmp[ofs++] = p; rpixel += 2;
-            //
-            index = this->getColorIndex(rpixel, false);
-            p = this->io.Palette(index);
-            bmp[ofs++] = p; bmp[ofs++] = p; rpixel += 2;
-            //
-            index = this->getColorIndex(rpixel, false);
-            p = this->io.Palette(index);
-            bmp[ofs++] = p; bmp[ofs++] = p; rpixel += 2;
-            //
-            index = this->getColorIndex(rpixel, false);
-            p = this->io.Palette(index);
-            bmp[ofs++] = p; bmp[ofs++] = p; rpixel += 2;
-            //
-            index = this->getColorIndex(rpixel, false);
-            p = this->io.Palette(index);
-            bmp[ofs++] = p; bmp[ofs++] = p; rpixel += 2;
-            //
-            index = this->getColorIndex(rpixel, false);
-            p = this->io.Palette(index);
-            bmp[ofs++] = p; bmp[ofs++] = p; rpixel += 2;
+            uint32_t p0 = this->getColorIndex(rpixel, false); rpixel += 2;
+            uint32_t p1 = this->getColorIndex(rpixel, false); rpixel += 2;
+            uint32_t p2 = this->getColorIndex(rpixel, false); rpixel += 2;
+            uint32_t p3 = this->getColorIndex(rpixel, false); rpixel += 2;
+            uint32_t p4 = this->getColorIndex(rpixel, false); rpixel += 2;
+            uint32_t p5 = this->getColorIndex(rpixel, false); rpixel += 2;
+            uint32_t p6 = this->getColorIndex(rpixel, false); rpixel += 2;
+            uint32_t p7 = this->getColorIndex(rpixel, false); rpixel += 2;
+
+#if __ARM_NEON
+            uint32x4_t d0,d1,d2,d3;
+
+            p0 = this->io.Palette(p0);
+            p1 = this->io.Palette(p1);
+            d0 = vsetq_lane_u32(p0, d0, 0);
+            d0 = vsetq_lane_u32(p0, d0, 1);
+            d0 = vsetq_lane_u32(p1, d0, 2);
+            d0 = vsetq_lane_u32(p1, d0, 3);
+
+            p2 = this->io.Palette(p2);
+            p3 = this->io.Palette(p3);
+            d1 = vsetq_lane_u32(p2, d1, 0);
+            d1 = vsetq_lane_u32(p2, d1, 1);
+            d1 = vsetq_lane_u32(p3, d1, 2);
+            d1 = vsetq_lane_u32(p3, d1, 3);
+
+            p4 = this->io.Palette(p4);
+            p5 = this->io.Palette(p5);
+            d2 = vsetq_lane_u32(p4, d2, 0);
+            d2 = vsetq_lane_u32(p4, d2, 1);
+            d2 = vsetq_lane_u32(p5, d2, 2);
+            d2 = vsetq_lane_u32(p5, d2, 3);
+
+            p6 = this->io.Palette(p6);
+            p7 = this->io.Palette(p7);
+            d3 = vsetq_lane_u32(p6, d3, 0);
+            d3 = vsetq_lane_u32(p6, d3, 1);
+            d3 = vsetq_lane_u32(p7, d3, 2);
+            d3 = vsetq_lane_u32(p7, d3, 3);
+
+
+            vst1q_u32(&bmp[ofs], d0); ofs+= 4;
+            vst1q_u32(&bmp[ofs], d1); ofs+= 4;
+            vst1q_u32(&bmp[ofs], d2); ofs+= 4;
+            vst1q_u32(&bmp[ofs], d3); ofs+= 4;
+#else
+            p0 = this->io.Palette(p0);
+            p1 = this->io.Palette(p1);
+            p2 = this->io.Palette(p2);
+            p3 = this->io.Palette(p3);
+            p4 = this->io.Palette(p4);
+            p5 = this->io.Palette(p5);
+            p6 = this->io.Palette(p6);
+            p7 = this->io.Palette(p7);
+
+            bmp[ofs++] = p0; bmp[ofs++] = p0;
+            bmp[ofs++] = p1; bmp[ofs++] = p1;
+            bmp[ofs++] = p2; bmp[ofs++] = p2;
+            bmp[ofs++] = p3; bmp[ofs++] = p3;
+            bmp[ofs++] = p4; bmp[ofs++] = p4;
+            bmp[ofs++] = p5; bmp[ofs++] = p5;
+            bmp[ofs++] = p6; bmp[ofs++] = p6;
+            bmp[ofs++] = p7; bmp[ofs++] = p7;
+#endif
+
         } 
 
         this->bmpofs = ofs;
@@ -382,6 +414,44 @@ public:
 
         int index;
         for (clk = 0; clk < clocks; clk += 16) {
+#if __ARM_NEON
+            uint32x4_t d0,d1,d2,d3;
+
+            index = this->getColorIndex(rpixel, false); rpixel += 2;
+            d0 = vsetq_lane_u32(this->io.Palette(index & 0x03), d0, 0);
+            d0 = vsetq_lane_u32(this->io.Palette(index & 0x0c), d0, 1);
+            index = this->getColorIndex(rpixel, false); rpixel += 2;
+            d0 = vsetq_lane_u32(this->io.Palette(index & 0x03), d0, 2);
+            d0 = vsetq_lane_u32(this->io.Palette(index & 0x03), d0, 3);
+
+            index = this->getColorIndex(rpixel, false); rpixel += 2;
+            d1 = vsetq_lane_u32(this->io.Palette(index & 0x03), d1, 0);
+            d1 = vsetq_lane_u32(this->io.Palette(index & 0x0c), d1, 1);
+            index = this->getColorIndex(rpixel, false); rpixel += 2;
+            d1 = vsetq_lane_u32(this->io.Palette(index & 0x03), d1, 2);
+            d1 = vsetq_lane_u32(this->io.Palette(index & 0x03), d1, 3);
+
+
+            index = this->getColorIndex(rpixel, false); rpixel += 2;
+            d2 = vsetq_lane_u32(this->io.Palette(index & 0x03), d2, 0);
+            d2 = vsetq_lane_u32(this->io.Palette(index & 0x0c), d2, 1);
+            index = this->getColorIndex(rpixel, false); rpixel += 2;
+            d2 = vsetq_lane_u32(this->io.Palette(index & 0x03), d2, 2);
+            d2 = vsetq_lane_u32(this->io.Palette(index & 0x03), d2, 3);
+
+
+            index = this->getColorIndex(rpixel, false); rpixel += 2;
+            d3 = vsetq_lane_u32(this->io.Palette(index & 0x03), d3, 0);
+            d3 = vsetq_lane_u32(this->io.Palette(index & 0x0c), d3, 1);
+            index = this->getColorIndex(rpixel, false); rpixel += 2;
+            d3 = vsetq_lane_u32(this->io.Palette(index & 0x03), d3, 2);
+            d3 = vsetq_lane_u32(this->io.Palette(index & 0x03), d3, 3);
+
+            vst1q_u32(&bmp[ofs], d0); ofs+= 4;
+            vst1q_u32(&bmp[ofs], d1); ofs+= 4;
+            vst1q_u32(&bmp[ofs], d2); ofs+= 4;
+            vst1q_u32(&bmp[ofs], d3); ofs+= 4;
+#else
             //
             index = this->getColorIndex(rpixel, false); rpixel += 2;
             bmp[ofs++] = this->io.Palette(index & 0x03);
@@ -414,6 +484,7 @@ public:
             index = this->getColorIndex(rpixel, false); rpixel += 2;
             bmp[ofs++] = this->io.Palette(index & 0x03);
             bmp[ofs++] = this->io.Palette(index & 0x0c);
+#endif
         } 
 
         this->bmpofs = ofs;

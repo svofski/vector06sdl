@@ -43,10 +43,10 @@ public:
     float cstep(int ch) 
     {
         static const float amp[] = {
-            0, 0.0137, 0.0205, 0.0291,
-            0.0423, 0.0618, 0.0847, 0.1369,
-            0.1691, 0.2647, 0.3527, 0.4499,
-            0.5704, 0.6873, 0.8482, 1
+            0.0f, 0.0137f, 0.0205f, 0.0291f,
+            0.0423f, 0.0618f, 0.0847f, 0.1369f,
+            0.1691f, 0.2647f, 0.3527f, 0.4499f,
+            0.5704f, 0.6873f, 0.8482f, 1.0f
         };
 
         if (++this->ayr[ch + 16] >= (this->ayr[ch << 1] | this->ayr[1 | (ch << 1)] << 8)) {
@@ -89,7 +89,7 @@ public:
             this->noiv = this->noir & 1;
             this->noir = (this->noir ^ (this->noiv * 0x24000)) >> 1;
         }
-        return 0.3333 * (this->cstep(0) + this->cstep(1) + this->cstep(2));
+        return 0.3333f * (this->cstep(0) + this->cstep(1) + this->cstep(2));
     }
 
     void aymute()
