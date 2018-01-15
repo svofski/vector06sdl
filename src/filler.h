@@ -131,9 +131,11 @@ public:
 
     int fill1_count, fill2_count;
 
+#define TESTTABLE 0
+
     int fill(int clocks, int commit_time, int commit_time_pal, bool updateScreen) 
     {
-        if (commit_time || commit_time_pal || 
+        if (TESTTABLE || commit_time || commit_time_pal || 
                 this->raster_line == 22 + 18 || 
                 this->raster_line == 0 ||
                 this->raster_line == 311 ||
@@ -194,9 +196,19 @@ public:
                         bmp[ofs++] = this->io.Palette(index & 0x03);
                         bmp[ofs++] = this->io.Palette(index & 0x0c);
                     } else {
+#if TESTTABLE
+                        if (raster_line_loc & 1) {
+                            bmp[ofs++] = 0;
+                            bmp[ofs++] = 0;
+                        } else {
+                            bmp[ofs++] = 0xffffffff;
+                            bmp[ofs++] = 0xff000000;
+                        }
+#else
                         uint32_t p = this->io.Palette(index);
                         bmp[ofs++] = p;
                         bmp[ofs++] = p;
+#endif
                     }
                 }
             }

@@ -39,7 +39,7 @@ void options(int argc, char ** argv)
         ("window", "run in a window, not fullscreen")
         ("bootpalette", "init palette to yellow/blue colours before running a rom")
         ("vsync", "use display vsync for screen updates (use on Raspberry Pi sdtv_mode 18)")
-        ("yres", po::value<int>(), "number of visible lines (default 288, use 270 on Raspberry Pi sdtv_mode 18)")
+        ("yres", po::value<int>(), "number of visible lines (default 288)")
         ("border-width", po::value<int>(), "width of horizontal border (default 32)")
         ;
         
