@@ -25,8 +25,8 @@ except:
     exit(1)
 
 if errline == -1:
-    print msg + "MATCH";
+    print msg + "\033[46;30m PASS \033[0m";
     exit(0)
 else:
-    print msg + "ERROR in row " + repr(row)
+    print msg + "\033[41;97m ERROR in row " + repr(row) + " \033[0m";
     exit(-errline)

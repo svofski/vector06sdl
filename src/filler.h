@@ -36,6 +36,7 @@ private:
 public:
     bool brk;
     bool irq;
+    int irq_clk;
 
 public:
     PixelFiller(Memory & _mem, IO & _io, TV & _tv): 
@@ -226,6 +227,7 @@ public:
             // irq time -- test:bord2
             else if (raster_line_loc == 0 && raster_pixel_loc == 176) {
                 this->irq = true;
+                this->irq_clk = clk;
             }
         } 
 
@@ -300,9 +302,10 @@ public:
             if (this->raster_line == 22 + 18 && this->raster_pixel == 150) {
                 this->fb_row = this->io.ScrollStart();
             }
-            // irq time -- test:bord2
-            else if (this->raster_line == 0 && this->raster_pixel == 176) {
+            // irq time -- test:bord2, vst (MovR=1d37, MovM=1d36)
+            else if (this->raster_line == 0 && this->raster_pixel == 174) {
                 this->irq = true;
+                this->irq_clk = clk;
             }
         } 
         return clk;

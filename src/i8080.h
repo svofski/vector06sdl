@@ -37,6 +37,8 @@
 extern void i8080_init(void);
 int i8080_instruction(int * report_opcode);
 int i8080_execute(int opcode);
+bool i8080_iff();   /* Inner interrupt enable flag, not the same as INTE */
+int i8080_cycles(void); /* Return number of cycles taken by the last instr */
 
 extern void i8080_jump(int addr);
 extern int i8080_pc(void);

@@ -73,6 +73,8 @@ struct i8080 {
     reg_pair af, bc, de, hl;
     reg_pair sp, pc;
     uns16 iff;
+    uns8 ei_pending;
+    uns8 cpu_cycles;
     uns16 last_pc;
 };
 
@@ -96,6 +98,8 @@ struct i8080 {
 #define HPC             cpu.pc.b.h
 #define LPC             cpu.pc.b.l
 #define IFF             cpu.iff
+#define EI_PENDING      cpu.ei_pending
+#define CPU_CYCLES      cpu.cpu_cycles
 
 #define F_CARRY         0x01
 #define F_UN1           0x02
@@ -1031,8 +1035,11 @@ int i8080_execute(int opcode) {
             break;
 
         case 0x76:            /* hlt */
-            cpu_cycles = 4;
-            v_cycles = 4;
+            /* originally 4, but: */
+            /* hlt has two M-cycles, M1: 4 T-states and M2 2 T-states */
+            /* I'm not sure if this should be reflected here */
+            cpu_cycles = 4; // 6
+            v_cycles = 4;   // 8
             PC--;
             break;
 
@@ -1877,6 +1884,7 @@ int i8080_execute(int opcode) {
             cpu_cycles = 4;
             v_cycles = 4;
             IFF = 0;
+            EI_PENDING = 0;
             i8080_hal_iff(IFF);
             break;
 
@@ -1939,10 +1947,12 @@ int i8080_execute(int opcode) {
             break;
 
         case 0xFB:            /* ei */
+            //printf("%04x: ei\n", PC-1);
             cpu_cycles = 4;
             v_cycles = 4;
-            IFF = 1;
-            i8080_hal_iff(IFF);
+            IFF = 0;            /* internal iff is 0, no INTA possible */
+            i8080_hal_iff(1);   /* but external inte line goes up */
+            EI_PENDING = 2;     /* pending until the instr after the next one*/
             break;
 
         case 0xFC:            /* cm addr */
@@ -1975,6 +1985,13 @@ int i8080_execute(int opcode) {
             v_cycles = -1;
             break;
     }
+    if (EI_PENDING) {
+        if (--EI_PENDING == 0) {
+            IFF = 1;
+            i8080_hal_iff(IFF);
+        }
+    }
+    CPU_CYCLES = cpu_cycles;
 #if NOT_VECTOR06C
     return cpu_cycles;
 #else
@@ -2037,4 +2054,12 @@ int i8080_regs_h(void) {
 
 int i8080_regs_l(void) {
     return L;
+}
+
+bool i8080_iff(void) {
+    return IFF;
+}
+
+int i8080_cycles(void) {
+    return CPU_CYCLES;
 }

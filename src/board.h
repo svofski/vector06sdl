@@ -38,7 +38,7 @@ private:
     int last_opcode;
 
     bool irq;
-    bool iff;
+    bool inte;  /* CPU INTE pin */
 
     Memory & memory;
     IO & io;
@@ -53,7 +53,7 @@ public:
         : memory(_memory), io(_io), filler(_filler), soundnik(_snd), tv(_tv), 
           tape_player(_tape_player)
     {
-        iff = false;
+        this->inte = false;
     }
 
     void init()
@@ -88,36 +88,48 @@ public:
 
     void interrupt(bool on)
     {
-        this->iff = on;
+        this->inte = on;
+        this->irq &= on;
     }
 
-    void check_interrupt()
+    /* Fuses together inner CPU logic and Vector-06c interrupt logic */
+    bool check_interrupt()
     {
-        if (this->irq && this->iff) {
-            this->irq = false;
+        if (this->irq && i8080_iff()) {
+            this->interrupt(false);     // lower INTE which clears INT request on D65.2
             if (this->last_opcode == 0x76) {
                 i8080_jump(i8080_pc() + 1);
-                //this.CPU.pc += 1;
             }
-            //printf("check_interrupt\n");
-            i8080_execute(0xf3);    // di
             i8080_execute(0xff);    // rst7
             this->instr_time += 16;
-        }
-    }
 
+            return true;
+        }
+
+        return false;
+    }
+#define F1 368
+#define F2 370
+//#define DBG_FRM(a,b,bob) if (frame_no>=a && frame_no<=b) {bob;}
+#define DBG_FRM(a,b,bob) {};
     void execute_frame(bool update_screen)
     {
         static int frame_no = 0;
         ++frame_no;
         this->filler.reset();
 
+        bool irq_carry = false; // imitates cpu waiting after T2 when INTE
+
         // 59904 
         this->between = 0;
+        DBG_FRM(F1,F2, printf("--- %d ---\n", frame_no));
         for (; !this->filler.brk;) {
             this->check_interrupt();
-            this->filler.irq = this->filler.irq && this->irq;
+            this->filler.irq = false;
+            DBG_FRM(F1,F2,printf("%05d %04x: ", this->between + this->instr_time, i8080_pc()));
             this->instr_time += i8080_instruction(&last_opcode);
+            DBG_FRM(F1,F2,printf("%02x irq=%d inte=%d\n", last_opcode, 
+                        this->irq, this->inte));
             if (last_opcode == 0xd3) {
                 this->commit_time = this->instr_time - 5;
                 this->commit_time = this->commit_time * 4 + 4;
@@ -127,8 +139,44 @@ public:
             int clk = this->filler.fill(this->instr_time << 2, this->commit_time,
                     this->commit_time_pal, update_screen);
 
-            //printf("instr_time=%d clk=%d\n", instr_time, clk);
-            this->irq = this->iff && this->filler.irq;
+            DBG_FRM(F1,F2, if(this->filler.irq) {
+                        printf("irq_clk=%d\n", this->filler.irq_clk);
+                    });
+
+            /* Interrupt logic 
+             *  interrupt request is "pushed through" by VSYNC on /C if INTE (D65.2)
+             *  int request is cleared by INTE low, which is DI or INTA
+             *
+             *  EI instruction sets INTE high, but holds acknowledge until an
+             *  instruction after. A long string of EI holds on interrupt requests
+             *  indefinitely (test: vst: Ei=7fab)
+             *
+             *  an instruction that has 5 T-states would leave the CPU waiting
+             *  for 3 clock cycles. Interrupt happening during that period 
+             *  will not be served until after this command is executed.
+             *  test: vst MovR=1d37, MovM=1d36, C*-N=0e9b)
+             */
+            if (this->filler.irq) {
+                int thresh = i8080_cycles();
+                /* Adjust threshold of the last M-cycle of long instructions */
+                /* test: vst */
+                switch(thresh) {
+                    case 11:    thresh = 15; break; // T533
+                    case 13:    thresh = 15; break; // T4333 
+                    case 17:    thresh = 23; break; // T53333
+                    case 18:    thresh = 21; break; // T43335
+                }
+                if (this->filler.irq_clk > thresh * 4) {
+                    irq_carry = true;
+                } else {
+                    this->irq |= this->inte && this->filler.irq;
+                }
+            } 
+            else if (irq_carry) {
+                irq_carry = false;
+                this->irq |= this->inte;
+            }
+
             int wrap = this->instr_time - (clk >> 2);
             int step = this->instr_time - wrap;
             if (frame_no > 60) {
@@ -140,6 +188,7 @@ public:
             }
             this->between += step;
             this->instr_time = wrap;
+
             /* commit time is always 32, commit_time_pal is always 12 */
             /* not sure if it's even possible for a commit not to finish in one
              * fill operation, but keeping this for the time being */

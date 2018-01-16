@@ -8,16 +8,16 @@ private:
 public:
     Test(const char * _title) : title(_title), errors(0)
     {
-        printf("ENTER TEST: %s\n", _title);
+        printf("\033[0;35mENTER TEST: %s\033[0m\n", _title);
     }
 
     ~Test()
     {
-        printf("EXIT TEST: %s", this->title);
+        printf("EXIT TEST: %s ", this->title);
         if (this->errors) {
-            printf(" %d ERRORS\n", this->errors);
+            printf("\033[41;97m %d ERRORS \033[0m\n", this->errors);
         } else {
-            printf(" OK\n");
+            printf("\033[46;30m PASS \033[0m\n");
         }
     }
 
@@ -35,10 +35,10 @@ bool compare_u16x(uint16_t exp, uint16_t act, const char * msg)
 {
     printf("\t%s: ", msg);
     if (exp == act) {
-        printf("OK\n");
+        printf("pass\n");
         return true;
     }
-    printf("ERROR: EXP=0x%04x ACT=0x%04x\n", exp, act);
+    printf("\033[41;97m ERROR: \033[0m EXP=0x%04x ACT=0x%04x\n", exp, act);
     return false;
 }
 
@@ -46,10 +46,10 @@ bool compare_u16d(uint16_t exp, uint16_t act, const char * msg)
 {
     printf("\t%s: ", msg);
     if (exp == act) {
-        printf("OK\n");
+        printf("pass\n");
         return true;
     }
-    printf("ERROR: EXP=%04d ACT=%04d\n", exp, act);
+    printf("\033[41;97m ERROR: \033[0m EXP=%04d ACT=%04d\n", exp, act);
     return false;
 }
 

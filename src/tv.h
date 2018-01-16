@@ -86,8 +86,6 @@ public:
 
         window_width += 2 * (Options.border_width - 32);
 
-        int aspect_height = window_width * 5 / 4;
-
         this->window = SDL_CreateWindow("Вектор-06ц", 0, 0, 
                 window_width, window_height, window_options);
         this->renderer = SDL_CreateRenderer(this->window, -1, 

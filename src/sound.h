@@ -10,7 +10,6 @@ private:
     TimerWrapper & timerwrapper;
     AYWrapper & aywrapper;
     SDL_AudioDeviceID audiodev;
-    bool mute;
 
     static const int renderingBufferSize = 8192;
     int sdlBufferSize = 960;
@@ -25,7 +24,7 @@ private:
 
 public:
     Soundnik(TimerWrapper & tw, AYWrapper & aw) : timerwrapper(tw), 
-        aywrapper(aw), mute(false)
+        aywrapper(aw)
     {}
 
     void init() {
