@@ -6,6 +6,7 @@
 #include "filler.h"
 #include "sound.h"
 #include "tv.h"
+#include "cadence.h"
 
 
 #if USED_XXD
@@ -36,6 +37,11 @@ private:
     int commit_time;
     int commit_time_pal;
     int last_opcode;
+    int frame_no;
+
+    const int * cadence_frames; 
+    int cadence_length = 1;
+    int cadence_seq = 0;
 
     bool irq;
     bool inte;  /* CPU INTE pin */
@@ -59,6 +65,8 @@ public:
     void init()
     {
         i8080_hal_bind(memory, io, *this);
+        cadence::set_cadence(this->tv.get_refresh_rate(), cadence_frames, 
+                cadence_length);
         create_timer();
     }
 
@@ -114,15 +122,14 @@ public:
 #define DBG_FRM(a,b,bob) {};
     void execute_frame(bool update_screen)
     {
-        static int frame_no = 0;
-        ++frame_no;
+        ++this->frame_no;
         this->filler.reset();
 
         bool irq_carry = false; // imitates cpu waiting after T2 when INTE
 
         // 59904 
         this->between = 0;
-        DBG_FRM(F1,F2, printf("--- %d ---\n", frame_no));
+        DBG_FRM(F1,F2, printf("--- %d ---\n", this->frame_no));
         for (; !this->filler.brk;) {
             this->check_interrupt();
             this->filler.irq = false;
@@ -179,7 +186,7 @@ public:
 
             int wrap = this->instr_time - (clk >> 2);
             int step = this->instr_time - wrap;
-            if (frame_no > 60) {
+            if (this->frame_no > 60) {
                 this->tape_player.advance(step);
             }
             for (int g = step/2; --g >= 0;) {
@@ -214,12 +221,51 @@ public:
         }
     }
 
+#if 0
+    int measured_framerate;
+    uint32_t ticks_start;
+
+    int  measure_framerate()
+    {
+        if (this->measured_framerate == 0) {
+            if (this->ticks_start == 0 && this->frame_no == 60) {
+                ticks_start = SDL_GetTicks();
+            } else if (this->ticks_start != 0) {
+                uint32_t ticks_now = SDL_GetTicks();
+                if (ticks_now - this->ticks_start >= 1000) {
+                    this->measured_framerate = this->frame_no - 61;
+                    printf("Measured FPS: %d\n", this->measured_framerate);
+                    set_cadence(this->measured_framerate);
+                }
+            }
+        }
+        return this->measured_framerate;
+    }
+#endif
+
+    bool cadence_allows()
+    {
+        if (this->cadence_frames) {
+            int seq = this->cadence_seq++;
+            if (this->cadence_seq == cadence_length) {
+                this->cadence_seq = 0;
+            }
+            return this->cadence_frames[seq] != 0;
+        }
+        return true;
+    }
+
     void loop_frame_vsync()
     {
+#if 0
+        measure_framerate();
+#endif
         SDL_Event event;
         bool frame = false;
         while(!frame) {
-            execute_frame(true);
+            if (cadence_allows()) {
+                execute_frame(true);
+            }
             frame = true;
             while (SDL_PollEvent(&event)) {
                 handle_event(event);

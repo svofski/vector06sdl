@@ -93,8 +93,8 @@ int main(int argc, char ** argv)
 
     filler.init();
     soundnik.init();    // this may switch the audio output off
-    board.init();
     tv.init();
+    board.init();
     fdc.init();
     if (Options.bootpalette) {
         io.yellowblue();

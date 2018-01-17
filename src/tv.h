@@ -18,6 +18,7 @@ private:
     uint32_t * bmp;
     int tex_width;
     int tex_height;
+    int refresh_rate;
 
 public:
     TV() 
@@ -53,8 +54,9 @@ public:
             }
             f = mode.format;
 
-            SDL_Log("Mode %i\tbpp %i\t%s\t%i x %i", i,
-                    SDL_BITSPERPIXEL(f), SDL_GetPixelFormatName(f), mode.w, mode.h);
+            SDL_Log("Mode %i\tbpp %i\t%s\t%i x %i %dHz", i,
+                    SDL_BITSPERPIXEL(f), SDL_GetPixelFormatName(f), mode.w, mode.h,
+                    mode.refresh_rate);
         }
         return 0;
     }
@@ -73,7 +75,9 @@ public:
         SDL_DisplayMode display_mode;
         SDL_GetCurrentDisplayMode(0, &display_mode);
 
-        printf("Current display mode: %dx%d\n", display_mode.w, display_mode.h);
+        printf("Current display mode: %dx%d %dHz\n", display_mode.w, display_mode.h,
+                display_mode.refresh_rate);
+        this->refresh_rate = display_mode.refresh_rate;
 
         int window_options = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
         int renderer_options = SDL_RENDERER_ACCELERATED;
@@ -175,5 +179,10 @@ public:
             SDL_RenderCopy(this->renderer, this->texture, NULL, NULL);
             SDL_RenderPresent(this->renderer);
         }
+    }
+
+    int get_refresh_rate() const
+    {
+        return this->refresh_rate;
     }
 };
