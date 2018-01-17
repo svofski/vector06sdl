@@ -31,6 +31,13 @@ function test60 {
     ./pngdiff.py expected/$2 out/$3 | tee -a testresult.txt
 }
 
+function testwav {
+    cmd="$emu --wav $rompath/$1 --max-frame 240 --save-frame 240 --nofdc --novideo --nosound --autostart"
+    announce "$cmd"
+    $cmd >>testlog.txt
+    ./pngdiff.py expected/$2 out/$3 | tee -a testresult.txt
+}
+
 function test1600 {
     cmd="$emu --rom $rompath/$1 --max-frame 1600 --save-frame 1600 --novideo --nosound --bootpalette"
     announce "$cmd"
@@ -89,5 +96,5 @@ test60 tst8253.rom      tst8253.rom.png     tst8253_60.png
 test1600 testtp.rom     testtp.rom.png      testtp_1600.png
 testfdd test.fdd 318 test_318.png test_318.png
 test1800 vst.rom        vst_1800.png        vst_1800.png
-
+testwav clrs.wav        clrs_240.png        clrs_240.png
 
