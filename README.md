@@ -8,7 +8,7 @@ Verified platforms:
  * macOS 10.13.1 High Sierra
   
 
-## Build instructions and usage notes
+## Build instructions
 
 ## Raspberry Pi 3 and Linux in general
 
@@ -59,7 +59,7 @@ cd ../test
 ./t-v06c.sh
 ```
 
-## Raspberry Pi 3 specific
+# Raspberry Pi 3 specific
 
 Raspberry Pi supports PAL 50Hz 288p 'fake progressive' screen mode, which works fantastic in conjunction 
 with a CRT TV or monitor. To use it, plug a CRT TV to the composite output, obviously. Then edit /boot/config.txt and set ```sdtv_mode=18```
@@ -68,3 +68,18 @@ Your text console will probably look grumpy after doing so, you can make the tex
 ```fbset -yres 288``` in the console prompt. This has no effect on the emulator itself.
 
 This is the closest to the real thing you can ever get.
+
+# Profiling
+
+Example 1-minute run:
+```
+LD_PRELOAD=/usr/lib/libprofiler.so CPUPROFILE=v06x.prof ./v06x --rom testtp.rom --nosound --vsync  & sleep 60 && kill %1
+```
+
+For some reason, Linux distros known to me insist on packaging some prehistoric version of pprof which is not fantastic. To examine profile data, install golang (```apt-get install golang```), set up ```$GOPATH``` and install proper up to date pprof:
+```go get github.com/google/pprof```
+
+Now to interactively examine profiler data:
+```
+$GOPATH/bin/pprof -http=0.0.0.0:9999 ./v06x ./v06x.prof
+```
