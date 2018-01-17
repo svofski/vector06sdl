@@ -28,7 +28,8 @@ else()
     endif()	
 endif() 
 
-set(SOURCE_FILES src/main.cpp src/board.cpp src/i8080.cpp src/options.cpp)
+set(SOURCE_FILES src/main.cpp src/board.cpp src/i8080.cpp src/options.cpp
+    src/biquad.cpp)
 add_executable(v06x ${SOURCE_FILES} boots.o)
 
 set_property(TARGET v06x PROPERTY CXX_STANDARD 11)

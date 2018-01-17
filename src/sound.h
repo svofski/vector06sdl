@@ -2,6 +2,7 @@
 
 #include "8253.h"
 #include "ay.h"
+#include "biquad.h"
 #include "SDL.h"
 
 class Soundnik
@@ -21,6 +22,9 @@ private:
     int sampleRate;
 
     int sound_accu_int, sound_accu_top;
+
+    Biquad butt1;
+    Biquad butt2;
 
 public:
     Soundnik(TimerWrapper & tw, AYWrapper & aw) : timerwrapper(tw), 
@@ -91,6 +95,18 @@ public:
                 "have.samples=%d have.channels=%d have.format=%d have.size=%d\n", 
                 this->audiodev, this->sampleRate, 
                 have.samples, have.channels, have.format, have.size);
+
+        // filters
+        //butt1.calcLowpass(this->sampleRate, 1500, 1.0);
+        //butt2.calcLowpass(this->sampleRate, 2000, 1.5);
+        butt1.ba(0.00021253813256227462, 0.00042507626512454925, 0.00021253813256227462, 
+                -1.9769602848645957, 0.9778104373948449);
+        butt2.ba(0.0002092548424353858, 0.0004185096848707716, 0.0002092548424353858,
+                -1.9464201925701206, 0.9472572119398622);
+
+        butt1.calcInteger();
+        butt2.calcInteger();
+
     }
 
     void pause(int pause)
@@ -143,26 +159,37 @@ public:
         this->sndCount = plus1;
     }
 
+#define BIQUAD_FLOAT 1
+
     void soundStep(int step, int tapeout, int covox, int tapein) 
     {
-        static int int_sound = 0;
-        int newsound = this->timerwrapper.step(step / 2) * 256;
-        newsound += tapeout * 256 - 128;
-        newsound += tapein * 256 - 128;
-        int_sound = (int_sound + newsound) / 2;
+//        static int int_sound = 0;
+//        int newsound = this->timerwrapper.step(step / 2) * 256;
+//        newsound += tapeout * 256 - 128;
+//        newsound += tapein * 256 - 128;
+//        int_sound = (int_sound + newsound) / 2;
 
-        //// ay step should execute, but the sound can be sampled only 
-        //// when needed, no filtering necessary
-        this->aywrapper.step2(step);
+        float ay = this->aywrapper.step2(step);
 
-        // it's okay if sound is not used this time, the state is kept in the filters
-        //sound = this->butt2.filter(this->butt1.filter(sound));
+#if BIQUAD_FLOAT
+        float soundf = (this->timerwrapper.step(step/2) + tapeout + tapein) * 0.2 + ay*0.7 - 0.5;
+        soundf = this->butt2.ffilter(this->butt1.ffilter(soundf));
+#else
+        int soundi = (this->timerwrapper.step(step / 2) + tapeout + tapein) << (32-8);
+        soundi += (int)(ay * (162777216.0/4));
+        soundi = this->butt2.ifilter(this->butt1.ifilter(soundi));
+
+#endif
 
         this->sound_accu_int += 100;
         if (this->sound_accu_int >= this->sound_accu_top) {
             this->sound_accu_int -= this->sound_accu_top;
-            float sound = (int_sound + covox)/1024.0f;
-            sound += this->aywrapper.value() - 0.5f;
+
+#if BIQUAD_FLOAT
+            float sound = soundf + covox/256.0;
+#else
+            float sound = soundi / 16277216.0 + covox/256.0;
+#endif
             sound = (sound - 1.5f) * 0.3f;
             if (sound > 1.0f) { 
                 sound = 1.0f; 
