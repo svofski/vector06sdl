@@ -1,0 +1,70 @@
+# Cross-platform emulator of Вектор-06ц in C++
+## Кросс-платформенный эмулятор Вектора-06ц на C++
+
+Verified platforms:
+ * Raspberry Pi 3
+ * Linux amd64
+ * Windows 10
+ * macOS 10.13.1 High Sierra
+  
+
+## Build instructions and usage notes
+
+## Raspberry Pi 3 and Linux in general
+
+Assuming you already have a proper build environment, you may also need need to install additionally
+```cmake```, ```libboost1.62-dev```.
+
+I run vector06sdl in fullscreen and I compiled SDL2 on RPi3 from source like so:
+```
+../configure --host=armv7l-raspberry-linux-gnueabihf --disable-pulseaudio --disable-esd --disable-video-mir --disable-video-wayland --disable-video-x11 --disable-video-opengl
+make install
+```
+It is possible that the default SDL2 provided with Raspbian is perfectly fine too.
+
+```libsdl2_image``` is recommended but is only used to save PNG images of frames in the tests.
+
+### macOS
+
+You need xcode command-line tools and ports tree or Homebrew installed. I prefer Homebrew. Set up instructions are at https://brew.sh/
+
+You'll need ```cmake```, ```sdl2```. The tests also use ```sdl2_image```, Python 2.7, ```pypng```.
+
+### Windows
+
+I like nuwen.net MinGW distro: https://nuwen.net/mingw.html It already has libboost and SDL2 pre-packaged, which is a huge time saver. Alternatively, it should not be a problem to build using the toolchain supplied with Code::Blocks. 
+
+Open the environment using C:\MinGW\open_distro_window.bat. Now it's almost as on a real system, but you need to specify a magic parameter to cmake:
+```
+git clone --depth=1 https://github.com/svofski/vector06sdl
+cd vector06sdl
+mkdir build && cd build
+cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+make -j4
+```
+
+
+## Building (all platforms)
+```
+git clone --depth=1 https://github.com/svofski/vector06sdl
+cd vector06sdl
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make -j4
+```
+
+## Running tests (all platforms)
+``` 
+cd ../test
+./t-v06c.sh
+```
+
+## Raspberry Pi 3 specific
+
+Raspberry Pi supports PAL 50Hz 288p 'fake progressive' screen mode, which works fantastic in conjunction 
+with a CRT TV or monitor. To use it, plug a CRT TV to the composite output, obviously. Then edit /boot/config.txt and set ```sdtv_mode=18```
+(that's mode 2 + 16 for progessive scan).
+Your text console will probably look grumpy after doing so, you can make the text readable by issuing 
+```fbset -yres 288``` in the console prompt. This has no effect on the emulator itself.
+
+This is the closest to the real thing you can ever get.
