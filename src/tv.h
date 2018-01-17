@@ -53,8 +53,9 @@ public:
             }
             f = mode.format;
 
-            SDL_Log("Mode %i\tbpp %i\t%s\t%i x %i", i,
-                    SDL_BITSPERPIXEL(f), SDL_GetPixelFormatName(f), mode.w, mode.h);
+            SDL_Log("Mode %i\tbpp %i\t%s\t%i x %i %dHz", i,
+                    SDL_BITSPERPIXEL(f), SDL_GetPixelFormatName(f), mode.w, mode.h,
+                    mode.refresh_rate);
         }
         return 0;
     }
