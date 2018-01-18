@@ -217,21 +217,86 @@ public:
     int measured_framerate;
     uint32_t ticks_start;
 
-    void loop_frame_vsync()
+    int  measure_framerate()
     {
-        if (this->measured_framerate == 0 && this->ticks_start == 0) {
-            ticks_start = SDL_GetTicks();
-        } else if (this->measured_framerate == 0 && this->ticks_start != 0) {
-            uint32_t ticks_now = SDL_GetTicks();
-            if (ticks_now - this->ticks_start >= 1000) {
-                this->measured_framerate = this->frame_no - 1;
-                printf("FPS is probably %d\n", this->frame_no);
+        if (this->measured_framerate == 0) {
+            if (this->ticks_start == 0 && this->frame_no == 60) {
+                ticks_start = SDL_GetTicks();
+            } else if (this->ticks_start != 0) {
+                uint32_t ticks_now = SDL_GetTicks();
+                if (ticks_now - this->ticks_start >= 1000) {
+                    this->measured_framerate = this->frame_no - 61;
+                    printf("Measured FPS: %d\n", this->measured_framerate);
+                    set_cadence(this->measured_framerate);
+                }
             }
         }
+        return this->measured_framerate;
+    }
+
+    const int * cadence; 
+    int cadence_length = 1;
+    int cadence_seq = 0;
+
+    void set_cadence(int fps)
+    {
+        static constexpr int PULLUP_59[] = 
+            {
+                1, 1, 1, 1, 1, 0,
+                1, 1, 1, 1, 1, 0,
+                1, 1, 1, 1, 1, 0,
+                1, 1, 1, 1, 1, 0,
+                1, 1, 1, 1, 1, 0,
+                1, 1, 1, 1, 1, 0,
+                1, 1, 1, 1, 1, 0,
+                1, 1, 1, 1, 1, 0,
+                1, 1, 1, 1, 1, 0,
+                1, 1, 1, 1, 1,
+            };
+        static constexpr int PULLUP_60[] = {1, 1, 1, 1, 1, 0};
+        static constexpr int PULLUP_NONE[] = {1};
+        switch (fps) {
+            case 59:
+                this->cadence = PULLUP_59;
+                this->cadence_length = sizeof(PULLUP_59)/sizeof(PULLUP_59[0]);
+                printf("Cadence will be 59:9\n");
+                break;
+            case 60:
+                this->cadence = PULLUP_60;
+                this->cadence_length = sizeof(PULLUP_60)/sizeof(PULLUP_60[0]);
+                printf("Cadence will be 5:1\n");
+                break;
+            case 50:
+                this->cadence = PULLUP_NONE;
+                this->cadence_length = 1;
+                printf("Cadence will be 1:1\n");
+                break;
+        }
+    }
+
+    bool cadence_allows()
+    {
+        if (this->cadence) {
+            int seq = this->cadence_seq++;
+            if (this->cadence_seq == cadence_length) {
+                this->cadence_seq = 0;
+            }
+            return this->cadence[seq] != 0;
+        }
+        return true;
+    }
+
+    void loop_frame_vsync()
+    {
+        // 
+        measure_framerate();
+
         SDL_Event event;
         bool frame = false;
         while(!frame) {
-            execute_frame(true);
+            if (cadence_allows()) {
+                execute_frame(true);
+            }
             frame = true;
             while (SDL_PollEvent(&event)) {
                 handle_event(event);
