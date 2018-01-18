@@ -271,6 +271,9 @@ public:
                 this->cadence_length = 1;
                 printf("Cadence will be 1:1\n");
                 break;
+            default:
+                printf("Hi ivagor! Your fps seems to be %d and I don't know how to handle that.\n", fps);
+                break;
         }
     }
 
