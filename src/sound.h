@@ -126,22 +126,31 @@ public:
         int src = that->sndReadCount;
         int count = len / sizeof(float) / 2;
         if (diff < count) {
-            printf("audio starved: diff=%d count=%d\n", diff, count);
-        } 
-        int end = count;
-        if (diff < end) end = diff;
-        int i, dst;
-        for (i = 0, dst = 0; i < end; ++i) {
-            last_value = that->renderingBuffer[src];
-            fs[dst++] = last_value; // Left
-            fs[dst++] = last_value; // Right
-            src = (src + 1) & that->mask;
+            printf("audio starved: have=%d need=%d\n", diff, count);
+            // We're running short of samples.
+            // Skip this frame completely, this will increase the latency,
+            // but the hiccup rate should be lower on average
+            memset(stream, 0, len);
+            for (int i = 0; i < count*2; i += 2) {
+                fs[i] = last_value;
+                fs[i+1] = last_value;
+            }
+        } else {
+            int end = count;
+            if (diff < end) end = diff;
+            int i, dst;
+            for (i = 0, dst = 0; i < end; ++i) {
+                last_value = that->renderingBuffer[src];
+                fs[dst++] = last_value; // Left
+                fs[dst++] = last_value; // Right
+                src = (src + 1) & that->mask;
+            }
+            for (; i < count; ++i) {
+                fs[dst++] = last_value;
+                fs[dst++] = last_value;
+            }
+            that->sndReadCount = src;
         }
-        for (; i < count; ++i) {
-            fs[dst++] = last_value;
-            fs[dst++] = last_value;
-        }
-        that->sndReadCount = src;
 
         /* sound callback is also our frame interrupt source */
         extern uint32_t timer_callback(uint32_t interval, void * param);
@@ -152,8 +161,10 @@ public:
     {
         int plus1 = (this->sndCount + 1) & this->mask;
         if (plus1 == this->sndReadCount) {
-            ++this->sndReadCount;
-            //printf("AUDIO OVERRUN\n");
+            //++this->sndReadCount;
+            // generously adjust the buffer in case of overrun
+            this->sndReadCount += this->mask>>2;
+            printf("audio satiated\n");
         }
         this->renderingBuffer[this->sndCount] = samp;
         this->sndCount = plus1;
