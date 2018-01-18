@@ -6,6 +6,7 @@
 #include "filler.h"
 #include "sound.h"
 #include "tv.h"
+#include "cadence.h"
 
 
 #if USED_XXD
@@ -38,6 +39,10 @@ private:
     int last_opcode;
     int frame_no;
 
+    const int * cadence_frames; 
+    int cadence_length = 1;
+    int cadence_seq = 0;
+
     bool irq;
     bool inte;  /* CPU INTE pin */
 
@@ -60,6 +65,8 @@ public:
     void init()
     {
         i8080_hal_bind(memory, io, *this);
+        cadence::set_cadence(this->tv.get_refresh_rate(), cadence_frames, 
+                cadence_length);
         create_timer();
     }
 
@@ -214,6 +221,7 @@ public:
         }
     }
 
+#if 0
     int measured_framerate;
     uint32_t ticks_start;
 
@@ -233,67 +241,25 @@ public:
         }
         return this->measured_framerate;
     }
-
-    const int * cadence; 
-    int cadence_length = 1;
-    int cadence_seq = 0;
-
-    void set_cadence(int fps)
-    {
-        static constexpr int PULLUP_59[] = 
-            {
-                1, 1, 1, 1, 1, 0,
-                1, 1, 1, 1, 1, 0,
-                1, 1, 1, 1, 1, 0,
-                1, 1, 1, 1, 1, 0,
-                1, 1, 1, 1, 1, 0,
-                1, 1, 1, 1, 1, 0,
-                1, 1, 1, 1, 1, 0,
-                1, 1, 1, 1, 1, 0,
-                1, 1, 1, 1, 1, 0,
-                1, 1, 1, 1, 1,
-            };
-        static constexpr int PULLUP_60[] = {1, 1, 1, 1, 1, 0};
-        static constexpr int PULLUP_NONE[] = {1};
-        switch (fps) {
-            case 59:
-                this->cadence = PULLUP_59;
-                this->cadence_length = sizeof(PULLUP_59)/sizeof(PULLUP_59[0]);
-                printf("Cadence will be 59:9\n");
-                break;
-            case 60:
-                this->cadence = PULLUP_60;
-                this->cadence_length = sizeof(PULLUP_60)/sizeof(PULLUP_60[0]);
-                printf("Cadence will be 5:1\n");
-                break;
-            case 50:
-                this->cadence = PULLUP_NONE;
-                this->cadence_length = 1;
-                printf("Cadence will be 1:1\n");
-                break;
-            default:
-                printf("Hi ivagor! Your fps seems to be %d and I don't know how to handle that.\n", fps);
-                break;
-        }
-    }
+#endif
 
     bool cadence_allows()
     {
-        if (this->cadence) {
+        if (this->cadence_frames) {
             int seq = this->cadence_seq++;
             if (this->cadence_seq == cadence_length) {
                 this->cadence_seq = 0;
             }
-            return this->cadence[seq] != 0;
+            return this->cadence_frames[seq] != 0;
         }
         return true;
     }
 
     void loop_frame_vsync()
     {
-        // 
+#if 0
         measure_framerate();
-
+#endif
         SDL_Event event;
         bool frame = false;
         while(!frame) {
