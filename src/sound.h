@@ -49,7 +49,7 @@ public:
         want.format = AUDIO_F32;
         want.channels = 2;
 
-        this->sound_frame_size = want.freq / 50;
+        //this->sound_frame_size = want.freq / 50;
 
         want.samples = this->sound_frame_size;
         want.callback = Soundnik::callback;  // you wrote this function elsewhere.
@@ -90,7 +90,6 @@ public:
         }
 
         this->sampleRate = have.freq;
-        this->sound_frame_size = have.freq / 50;
 
         // one second = 50 frames
         // raster time in 12 MHz pixelclocks = 768 columns by 312 lines
