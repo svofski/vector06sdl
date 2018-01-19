@@ -29,8 +29,8 @@ private:
 
     int sound_accu_int, sound_accu_top;
 
-    Biquad butt1;
-    Biquad butt2;
+    Filter * butt1;
+    Filter * butt2;
 
 public:
     Soundnik(TimerWrapper & tw, AYWrapper & aw) : timerwrapper(tw), 
@@ -49,7 +49,9 @@ public:
         want.format = AUDIO_F32;
         want.channels = 2;
 
-        //this->sound_frame_size = want.freq / 50;
+        if (!Options.vsync) {
+            this->sound_frame_size = want.freq / 50;
+        }
 
         want.samples = this->sound_frame_size;
         want.callback = Soundnik::callback;  // you wrote this function elsewhere.
@@ -106,16 +108,19 @@ public:
                 have.samples, have.channels, have.format, have.size);
 
         // filters
-        //butt1.calcLowpass(this->sampleRate, 1500, 1.0);
-        //butt2.calcLowpass(this->sampleRate, 2000, 1.5);
-        butt1.ba(0.00021253813256227462, 0.00042507626512454925, 0.00021253813256227462, 
-                -1.9769602848645957, 0.9778104373948449);
-        butt2.ba(0.0002092548424353858, 0.0004185096848707716, 0.0002092548424353858,
-                -1.9464201925701206, 0.9472572119398622);
-
-        butt1.calcInteger();
-        butt2.calcInteger();
-
+        if (Options.nofilter) {
+            butt1 = new Bypass();
+            butt2 = new Bypass();
+        } else {
+            butt1 = new Biquad();
+            butt2 = new Biquad();
+            butt1->ba(0.00021253813256227462, 0.00042507626512454925, 0.00021253813256227462, 
+                    -1.9769602848645957, 0.9778104373948449);
+            butt2->ba(0.0002092548424353858, 0.0004185096848707716, 0.0002092548424353858,
+                    -1.9464201925701206, 0.9472572119398622);
+        }
+        butt1->calcInteger();
+        butt2->calcInteger();
     }
 
     void pause(int pause)
@@ -177,11 +182,11 @@ public:
 
 #if BIQUAD_FLOAT
         float soundf = (this->timerwrapper.step(step/2) + tapeout + tapein) * 0.2 + ay*0.7 - 0.5;
-        soundf = this->butt2.ffilter(this->butt1.ffilter(soundf));
+        soundf = this->butt2->ffilter(this->butt1->ffilter(soundf));
 #else
         int soundi = (this->timerwrapper.step(step / 2) + tapeout + tapein) << (32-8);
         soundi += (int)(ay * (162777216.0/4));
-        soundi = this->butt2.ifilter(this->butt1.ifilter(soundi));
+        soundi = this->butt2->ifilter(this->butt1->ifilter(soundi));
 
 #endif
 

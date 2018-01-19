@@ -22,6 +22,7 @@ struct _options
     bool log_fdd;
     bool autostart;
     bool window;        /* run in a window */
+    bool nofilter;      /* bypass audio filter */
 
     std::string path_for_frame(int n);
     std::vector<std::string> fddfile;

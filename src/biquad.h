@@ -10,23 +10,27 @@
 class Filter {
 public:
     virtual float ffilter(float x) = 0;
-    virtual float freq() const = 0;
-    virtual float Q() const = 0;
-    virtual float A0() const = 0;
-    virtual float A1() const = 0;
-    virtual float A2() const = 0;
-    virtual float B1() const = 0;
-    virtual float B2() const = 0;
-
-    virtual int32_t scale() const = 0;
-    virtual int32_t sampleRate() const = 0;
     virtual int32_t ifilter(int32_t x) = 0;
 
-    virtual int32_t IA0() const = 0;
-    virtual int32_t IA1() const = 0;
-    virtual int32_t IA2() const = 0;
-    virtual int32_t IB1() const = 0;
-    virtual int32_t IB2() const = 0;
+    virtual void ba(float b0, float b1, float b2, float a0, float a1) = 0;
+    virtual void calcBandpass(int sampleRate, float freq, float Q) = 0;
+    virtual void calcLowpass(int sampleRate, float freq, float Q) = 0;
+    virtual void calcHighpass(int sampleRate, float freq, float Q) = 0;
+    virtual void calcInteger() = 0;
+
+};
+
+class Bypass: public Filter {
+public:
+    Bypass() {}
+    float ffilter(float x) { return x; }
+    int32_t ifilter(int32_t x) { return x; }
+
+    void ba(float b0, float b1, float b2, float a0, float a1) {}
+    void calcBandpass(int sampleRate, float freq, float Q) {}
+    void calcLowpass(int sampleRate, float freq, float Q) {}
+    void calcHighpass(int sampleRate, float freq, float Q) {}
+    void calcInteger() {}
 };
 
 class Biquad: public Filter {

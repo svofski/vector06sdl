@@ -12,7 +12,7 @@ _options Options =
     .rom_org = 256,
     .wavfile = "",
     .max_frame = -1,
-    .vsync = false,
+    .vsync = true,
     .screen_width = DEFAULT_SCREEN_WIDTH,
     .screen_height = DEFAULT_SCREEN_HEIGHT,
     .border_width = DEFAULT_BORDER_WIDTH,
@@ -38,7 +38,9 @@ void options(int argc, char ** argv)
         ("nofdc", "detach floppy disk controller")
         ("window", "run in a window, not fullscreen")
         ("bootpalette", "init palette to yellow/blue colours before running a rom")
-        ("vsync", "use display vsync for screen updates (use on Raspberry Pi sdtv_mode 18)")
+        ("vsync", "(default) use display vsync")
+        ("novsync", "try to make do without vsync")
+        ("nofilter", "bypass audio filters")
         ("yres", po::value<int>(), "number of visible lines (default 288)")
         ("border-width", po::value<int>(), "width of horizontal border (default 32)")
         ;
@@ -119,10 +121,8 @@ void options(int argc, char ** argv)
             printf("Will run in a window\n");
         }
 
-        Options.vsync = vm.count("vsync") > 0;
-        if (Options.vsync) {
-            printf("Will use VSYNC\n");
-        }
+        Options.vsync = !(vm.count("novsync") > 0);
+        printf("Will%suse VSYNC\n", Options.vsync ? " " : " not ");
 
         if (vm.count("yres") > 0) {
             Options.screen_height = vm["yres"].as<int>();
@@ -137,6 +137,8 @@ void options(int argc, char ** argv)
             Options.center_offset = 152 - Options.border_width;
             printf("Border width = %d\n", Options.border_width);
         }
+
+        Options.nofilter = vm.count("nofilter") > 0;
     }
     catch(po::error & err) {
         std::cerr << err.what() << std::endl;
