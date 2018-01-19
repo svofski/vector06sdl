@@ -70,8 +70,9 @@ public:
         }
 
         SDL_Init(SDL_INIT_VIDEO);
+#if 0
         probe();
-
+#endif
         SDL_DisplayMode display_mode;
         SDL_GetCurrentDisplayMode(0, &display_mode);
 
