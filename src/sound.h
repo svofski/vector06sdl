@@ -12,13 +12,20 @@ private:
     AYWrapper & aywrapper;
     SDL_AudioDeviceID audiodev;
 
-    static const int renderingBufferSize = 8192;
-    int sdlBufferSize = 960;
+    static const int buffer_size = 2048 * 2; // 96000/50=1920, enough
+    int sound_frame_size = 2048;
 
-    float renderingBuffer[renderingBufferSize];
-    static const int mask = renderingBufferSize - 1;
-    int sndCount;
-    int sndReadCount;
+    static const int NBUFFERS = 8;
+    float buffer[NBUFFERS][buffer_size];
+    static const int mask = buffer_size - 1;
+    std::atomic_int wrptr;
+    int wrbuf;
+    int rdbuf;
+    float last_value;
+
+    //int sndCount;
+    //int sndReadCount;
+
     int sampleRate;
 
     int sound_accu_int, sound_accu_top;
@@ -43,9 +50,9 @@ public:
         want.format = AUDIO_F32;
         want.channels = 2;
 
-        this->sdlBufferSize = want.freq / 50;
+        this->sound_frame_size = want.freq / 50;
 
-        want.samples = sdlBufferSize;
+        want.samples = this->sound_frame_size;
         want.callback = Soundnik::callback;  // you wrote this function elsewhere.
         want.userdata = (void *)this;
 
@@ -63,12 +70,12 @@ public:
             return;
         };
 
-        if (have.samples == sdlBufferSize / 2) {
+        if (have.samples == this->sound_frame_size / 2) {
             // strange thing but we get a half buffer, try to get 2x
             SDL_CloseAudioDevice(this->audiodev);
 
             printf("SDL audio: retrying to open device with 2x buffer size\n");
-            want.samples = sdlBufferSize * 2;
+            want.samples = this->sound_frame_size * 2;
 
             if ((this->audiodev = SDL_OpenAudioDevice(NULL, 0, &want, &have, 
                             SDL_AUDIO_ALLOW_FORMAT_CHANGE)) == 0) {
@@ -77,7 +84,7 @@ public:
                 return;
             };
 
-            if (have.samples < sdlBufferSize) {
+            if (have.samples < this->sound_frame_size) {
                 printf("SDL audio cannot get the right buffer size, giving up\n");
                 Options.nosound = true;
             }
@@ -114,67 +121,48 @@ public:
     void pause(int pause)
     {
         SDL_PauseAudioDevice(this->audiodev, pause);
-        this->sndReadCount = this->sndCount = 0;
+        this->wrptr = 0;
+        this->rdbuf = 0;
+        this->wrbuf = 0;
         this->sound_accu_int = 0;
     }
 
     static void callback(void * userdata, uint8_t * stream, int len)
     {
-        static float last_value;
-
         Soundnik * that = (Soundnik *)userdata;
-        int diff = (that->sndCount - that->sndReadCount) & that->mask;
-        float * fs = (float *)stream;
-        int src = that->sndReadCount;
-        int count = len / sizeof(float) / 2;
-        if (diff < count) {
-            //--that->sound_accu_top;
-            printf("audio starved: have=%d need=%d top=%d\n", diff, count,
-                    that->sound_accu_top);
-            // We're running short of samples.
-            // Skip this frame completely, this will increase the latency,
-            // but the hiccup rate should be lower on average
-            memset(stream, 0, len);
-            for (int i = 0; i < count*2; i += 2) {
-                fs[i] = last_value;
-                fs[i+1] = last_value;
+        float * fstream = (float *)stream;
+
+        if (that->rdbuf == that->wrbuf) {
+            //memset(stream, 0, len);
+            for (int i = 0; i < that->sound_frame_size * 2; ++i) {
+                fstream[i] = that->last_value;
             }
+            printf("overrun rdbuf=%d wrbuf=%d len=%d\n", that->rdbuf, that->wrbuf, len);
         } else {
-            int end = count;
-            if (diff < end) end = diff;
-            int i, dst;
-            for (i = 0, dst = 0; i < end; ++i) {
-                last_value = that->renderingBuffer[src];
-                fs[dst++] = last_value; // Left
-                fs[dst++] = last_value; // Right
-                src = (src + 1) & that->mask;
+            memcpy(stream, that->buffer[that->rdbuf], len);
+            that->last_value = fstream[that->sound_frame_size * 2 - 1];
+            if (++that->rdbuf == Soundnik::NBUFFERS) {
+                that->rdbuf = 0;
             }
-            for (; i < count; ++i) {
-                fs[dst++] = last_value;
-                fs[dst++] = last_value;
-            }
-            that->sndReadCount = src;
         }
 
-        /* sound callback is also our frame interrupt source */
-        extern uint32_t timer_callback(uint32_t interval, void * param);
-        timer_callback(0, 0);
+        if (!Options.vsync) {
+            /* sound callback is also our frame interrupt source */
+            extern uint32_t timer_callback(uint32_t interval, void * param);
+            timer_callback(0, 0);
+        }
     }
 
     void sample(float samp) 
     {
-        SDL_LockAudioDevice(audiodev);
-        int plus1 = (this->sndCount + 1) & this->mask;
-        if (plus1 == this->sndReadCount) {
-            //++this->sndReadCount;
-            // generously adjust the buffer in case of overrun
-            this->sndReadCount = (this->sndReadCount + (this->mask>>2)) & this->mask;
-            //++this->sound_accu_top;
-            printf("audio satiated, top=%d\n", this->sound_accu_top);
+        this->buffer[this->wrbuf][this->wrptr++] = samp;
+        this->buffer[this->wrbuf][this->wrptr++] = samp;
+        if (this->wrptr >= this->sound_frame_size * 2) {
+            this->wrptr = 0;
+            if (++this->wrbuf == Soundnik::NBUFFERS) {
+                this->wrbuf = 0;
+            }
         }
-        this->renderingBuffer[this->sndCount] = samp;
-        this->sndCount = plus1;
-        SDL_UnlockAudioDevice(audiodev);
     }
 
 #define BIQUAD_FLOAT 1
