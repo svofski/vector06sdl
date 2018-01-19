@@ -159,15 +159,17 @@ public:
 
     void sample(float samp) 
     {
+        SDL_LockAudioDevice(audiodev);
         int plus1 = (this->sndCount + 1) & this->mask;
         if (plus1 == this->sndReadCount) {
             //++this->sndReadCount;
             // generously adjust the buffer in case of overrun
-            this->sndReadCount += this->mask>>2;
+            this->sndReadCount = (this->sndReadCount + (this->mask>>2)) & this->mask;
             printf("audio satiated\n");
         }
         this->renderingBuffer[this->sndCount] = samp;
         this->sndCount = plus1;
+        SDL_UnlockAudioDevice(audiodev);
     }
 
 #define BIQUAD_FLOAT 1
