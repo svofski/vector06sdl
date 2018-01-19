@@ -88,7 +88,9 @@ public:
         // raster time in 12 MHz pixelclocks = 768 columns by 312 lines
         // timer clocks = pixel clock / 8
         int timer_cycles_per_second = 50*768*312/8; // 1497600
-        this->sound_accu_top = 100 * timer_cycles_per_second / this->sampleRate; // 3210
+        // for 48000: 3120
+        // for 44100: 3396, which gives 44098.9... 
+        this->sound_accu_top = (int)(0.5 + 100.0 * timer_cycles_per_second / this->sampleRate); 
         this->sound_accu_int = 0;
 
         printf("SDL audio dev: %d, sample rate=%d "
