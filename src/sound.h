@@ -60,13 +60,13 @@ public:
         SDL_Init(SDL_INIT_AUDIO);
 
         if(!(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO)) {
-            printf("SDL audio error: SDL_INIT_AUDIO not initialized\n");
+            fprintf(stderr, "SDL audio error: SDL_INIT_AUDIO not initialized\n");
             return;
         }
 
         if ((this->audiodev = SDL_OpenAudioDevice(NULL, 0, &want, &have, 
                 SDL_AUDIO_ALLOW_FORMAT_CHANGE)) == 0) {
-            printf("SDL audio error: %s", SDL_GetError());
+            fprintf(stderr, "SDL audio error: %s", SDL_GetError());
             Options.nosound = true;
             return;
         };
@@ -75,18 +75,19 @@ public:
             // strange thing but we get a half buffer, try to get 2x
             SDL_CloseAudioDevice(this->audiodev);
 
-            printf("SDL audio: retrying to open device with 2x buffer size\n");
+            Options.log.audio &&
+            fprintf(stderr, "SDL audio: retrying to open device with 2x buffer size\n");
             want.samples = this->sound_frame_size * 2;
 
             if ((this->audiodev = SDL_OpenAudioDevice(NULL, 0, &want, &have, 
                             SDL_AUDIO_ALLOW_FORMAT_CHANGE)) == 0) {
-                printf("SDL audio error: %s", SDL_GetError());
+                fprintf(stderr, "SDL audio error: %s", SDL_GetError());
                 Options.nosound = true;
                 return;
             };
 
             if (have.samples < this->sound_frame_size) {
-                printf("SDL audio cannot get the right buffer size, giving up\n");
+                fprintf(stderr, "SDL audio cannot get the right buffer size, giving up\n");
                 Options.nosound = true;
             }
         }
@@ -102,6 +103,7 @@ public:
         this->sound_accu_top = (int)(0.5 + 100.0 * timer_cycles_per_second / this->sampleRate); 
         this->sound_accu_int = 0;
 
+        Options.log.audio && 
         printf("SDL audio dev: %d, sample rate=%d "
                 "have.samples=%d have.channels=%d have.format=%d have.size=%d\n", 
                 this->audiodev, this->sampleRate, 
@@ -142,8 +144,9 @@ public:
             for (int i = that->wrptr, end = that->sound_frame_size * 2; i < end; ++i) {
                 fstream[i] = that->last_value;
             }
-            printf("starve rdbuf=%d wrbuf=%d en manque=%d\n", that->rdbuf, that->wrbuf, 
-                    that->sound_frame_size - that->wrptr/2);
+            Options.log.audio &&
+            fprintf(stderr, "starve rdbuf=%d wrbuf=%d en manque=%d\n", 
+                    that->rdbuf, that->wrbuf, that->sound_frame_size - that->wrptr/2);
             that->wrptr = 0;
         } else {
             memcpy(stream, that->buffer[that->rdbuf], len);

@@ -31,7 +31,6 @@ public:
 class FDisk
 {
 private:
-    bool log;
     std::string name;
     std::vector<uint8_t> dsk; 
     int sectorsPerTrack;
@@ -56,7 +55,6 @@ public:
 
     void init()
     {
-        this->log = Options.log_fdd;
         this->sectorsPerTrack = 9;
         this->sectorSize = 512;
         this->totSec = 720;
@@ -104,7 +102,7 @@ public:
                 + (this->sectorsPerTrack * side) + offsetSector) * this->sectorSize;
             this->track = track;
             this->side = side;
-            if (this->log) {
+            if (Options.log.fdc) {
                 printf("FD1793: disk seek position: %02x "
                         "(side:%d,trk:%d,sec:%d)", this->position, this->side,
                         this->track, sector);
@@ -146,7 +144,7 @@ public:
             }
             this->readOffset++;
         } else {
-            if (this->log) {
+            if (Options.log.fdc) {
                 printf("FD1793: read finished src:%d\n", this->readSource);
             }
         }
@@ -198,7 +196,6 @@ private:
     int _track;
     int _sector;
     int _stepdir;
-    bool _log;
     int _lingertime;
 
     int LINGER_BEFORE;
@@ -242,7 +239,6 @@ public:
 
     void init()
     {
-        this->_log = Options.log_fdd;
         for (unsigned i = 0; i < sizeof(_disks)/sizeof(_disks[0]); ++i) {
             _disks[i].init();
         }
@@ -254,7 +250,7 @@ public:
             printf("FD1793: illegal drive: %d\n", drive);
             return false;
         }
-        if (this->_log) {
+        if (Options.log.fdc) {
             printf("FD1793: loadDsk: %s\n", name);
         }
         return this->_disks[drive].loadDsk(name, fdd_data);
@@ -277,7 +273,7 @@ public:
                 this->_status |= ST_DRQ;
                 this->_data = this->_dsk.read_data();
             }
-            if (this->_log) {
+            if (Options.log.fdc) {
                 printf("FD1793: exec - read done, "
                         "finished: %d data: %02x status: %02x\n", 
                         finished, this->_data, this->_status);
@@ -334,7 +330,7 @@ public:
 
             case 3: // data
                 if (!(this->_status & ST_DRQ)) { //throw ("invalid read");
-                    if (this->_log) {
+                    if (Options.log.fdc) {
                         printf("FD1793: reading too much!\n");
                     }
                 }
@@ -359,7 +355,7 @@ public:
                 break;
 
         }
-        if (this->_log) {
+        if (Options.log.fdc) {
             printf("FD1793: read port: %02x result: %02x status: %02x\n", addr, 
                     result, this->_status);
         }
@@ -375,12 +371,12 @@ public:
         this->_intrq = 0;
         this->_command = val;
         this->_commandtr = 0;
-        if (this->_log) {
+        if (Options.log.fdc) {
             printf("FD1793: CMD=%02x\n", val);
         }
         switch (cmd) {
             case 0x00: // restor, type 1
-                if (this->_log) {
+                if (Options.log.fdc) {
                     printf("FD1793: CMD restore\n");
                 }
                 this->_intrq = PRT_INTRQ;
@@ -392,7 +388,7 @@ public:
                 }
                 break;
             case 0x01: // seek
-                if (this->_log) {
+                if (Options.log.fdc) {
                     printf("FD1793: CMD seek: %02x\n", param);
                 }
                 this->_dsk.seek(this->_data, this->_sector, this->_side);
@@ -403,7 +399,7 @@ public:
                 break;
             case 0x02: // step, u = 0
             case 0x03: // step, u = 1
-                if (this->_log) {
+                if (Options.log.fdc) {
                     printf("FD1793: CMD step: update=%d\n", update);
                 }
                 this->_track += this->_stepdir;
@@ -415,7 +411,7 @@ public:
                 break;
             case 0x04: // step in, u = 0
             case 0x05: // step in, u = 1
-                if (this->_log) {
+                if (Options.log.fdc) {
                     printf("FD1793: CMD step in: update=%d\n", update);
                 }
                 this->_stepdir = 1;
@@ -426,7 +422,7 @@ public:
                 break;
             case 0x06: // step out, u = 0
             case 0x07: // step out, u = 1
-                if (this->_log) {
+                if (Options.log.fdc) {
                     printf("FD1793: CMD step out: update=%d\n", update);
                 }
                 this->_stepdir = -1;
@@ -447,7 +443,7 @@ public:
                 this->_status |= ST_BUSY;
                 this->_dsk.seek(this->_track, this->_sector, this->_side);
                 this->_dsk.readSector(this->_sector);
-                if (this->_log) {
+                if (Options.log.fdc) {
                     printf("FD1793: CMD read sector m:%d p:%02x sector:%d "
                             "status:%02x\n", multiple, param, this->_sector,
                             this->_status);
@@ -457,7 +453,7 @@ public:
                 break;
             case 0x0A: // write sector, m = 0
             case 0x0B: // write sector, m = 1
-                if (this->_log) {
+                if (Options.log.fdc) {
                     printf("FD1793: CMD write sector, m:%d\n", multiple);
                 }
                 break;
@@ -466,13 +462,13 @@ public:
                 this->_status |= ST_BUSY;
                 this->_dsk.readAddress();
                 this->_lingertime = this->LINGER_BEFORE;
-                if (this->_log) {
+                if (Options.log.fdc) {
                     printf("FD1793: CMD read address m:%d p:%02x status:%02x",
                             multiple, param, this->_status);
                 }
                 break;
             case 0x0D: // force interrupt
-                if (this->_log) {
+                if (Options.log.fdc) {
                     printf("FD1793: CMD force interrupt\n");
                 }
                 break;
@@ -496,7 +492,7 @@ public:
                 break;
 
             case 1: // track (current track)j
-                if (this->_log) {
+                if (Options.log.fdc) {
                     printf("FD1793: set track:%d\n", val);
                 }
                 this->_track = val;
@@ -504,7 +500,7 @@ public:
                 break;
 
             case 2: // sector (desired sector)
-                if (this->_log) {
+                if (Options.log.fdc) {
                     printf("FD1793: set sector:%d\n", val);
                 }
                 this->_sector = val;
@@ -512,7 +508,7 @@ public:
                 break;
 
             case 3: // data
-                if (this->_log) {
+                if (Options.log.fdc) {
                     printf("FD1793: set data:%02x\n", val);
                 }
                 this->_data = val;
@@ -525,7 +521,7 @@ public:
                 // 0 0 1 1 x S A B
                 this->_dsk = this->_disks[val & 3];
                 this->_side = ((~val) >> 2) & 1; // invert side
-                if (this->_log) {
+                if (Options.log.fdc) {
                     printf("FD1793: set pr:%02x disk select: %d side: %d\n",
                             val, val & 3, this->_side);
                 }

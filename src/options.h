@@ -19,14 +19,25 @@ struct _options
     bool nosound;
     bool nofdc;
     bool bootpalette;
-    bool log_fdd;
+
     bool autostart;
     bool window;        /* run in a window */
     bool nofilter;      /* bypass audio filter */
 
+
+    struct _log {
+        bool fdc;
+        bool audio;
+    } log;
+
     std::string path_for_frame(int n);
     std::vector<std::string> fddfile;
     std::vector<int> save_frames;
+
+    void load(const std::string & filename);
+    void save(const std::string & filename);
+    std::string get_config_path(void);
+    void parse_log(const std::string & opt);
 };
 
 extern _options Options;
