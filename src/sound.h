@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+
 #include "8253.h"
 #include "ay.h"
 #include "biquad.h"
@@ -22,9 +24,6 @@ private:
     int wrbuf;
     int rdbuf;
     float last_value;
-
-    //int sndCount;
-    //int sndReadCount;
 
     int sampleRate;
 
@@ -91,6 +90,8 @@ public:
         }
 
         this->sampleRate = have.freq;
+        this->sound_frame_size = have.freq / 50;
+
         // one second = 50 frames
         // raster time in 12 MHz pixelclocks = 768 columns by 312 lines
         // timer clocks = pixel clock / 8
@@ -134,11 +135,12 @@ public:
 
         if (that->rdbuf == that->wrbuf) {
             memcpy(stream, that->buffer[that->rdbuf], that->wrptr * sizeof(float));
-            for (int i = that->wrptr; i < that->sound_frame_size * 2; ++i) {
+            for (int i = that->wrptr, end = that->sound_frame_size * 2; i < end; ++i) {
                 fstream[i] = that->last_value;
             }
+            printf("starve rdbuf=%d wrbuf=%d en manque=%d\n", that->rdbuf, that->wrbuf, 
+                    that->sound_frame_size - that->wrptr/2);
             that->wrptr = 0;
-            printf("starve rdbuf=%d wrbuf=%d len=%d\n", that->rdbuf, that->wrbuf, len);
         } else {
             memcpy(stream, that->buffer[that->rdbuf], len);
             if (++that->rdbuf == Soundnik::NBUFFERS) {
@@ -155,6 +157,7 @@ public:
 
     void sample(float samp) 
     {
+        SDL_LockAudioDevice(this->audiodev);
         this->last_value = samp;
         this->buffer[this->wrbuf][this->wrptr++] = samp;
         this->buffer[this->wrbuf][this->wrptr++] = samp;
@@ -164,18 +167,13 @@ public:
                 this->wrbuf = 0;
             }
         }
+        SDL_UnlockAudioDevice(this->audiodev);
     }
 
 #define BIQUAD_FLOAT 1
 
     void soundStep(int step, int tapeout, int covox, int tapein) 
     {
-//        static int int_sound = 0;
-//        int newsound = this->timerwrapper.step(step / 2) * 256;
-//        newsound += tapeout * 256 - 128;
-//        newsound += tapein * 256 - 128;
-//        int_sound = (int_sound + newsound) / 2;
-
         float ay = this->aywrapper.step2(step);
 
 #if BIQUAD_FLOAT
