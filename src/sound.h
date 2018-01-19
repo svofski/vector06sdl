@@ -128,7 +128,7 @@ public:
         int src = that->sndReadCount;
         int count = len / sizeof(float) / 2;
         if (diff < count) {
-            --that->sound_accu_top;
+            //--that->sound_accu_top;
             printf("audio starved: have=%d need=%d top=%d\n", diff, count,
                     that->sound_accu_top);
             // We're running short of samples.
@@ -169,7 +169,7 @@ public:
             //++this->sndReadCount;
             // generously adjust the buffer in case of overrun
             this->sndReadCount = (this->sndReadCount + (this->mask>>2)) & this->mask;
-            ++this->sound_accu_top;
+            //++this->sound_accu_top;
             printf("audio satiated, top=%d\n", this->sound_accu_top);
         }
         this->renderingBuffer[this->sndCount] = samp;
