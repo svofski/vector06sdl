@@ -133,14 +133,14 @@ public:
         float * fstream = (float *)stream;
 
         if (that->rdbuf == that->wrbuf) {
-            //memset(stream, 0, len);
-            for (int i = 0; i < that->sound_frame_size * 2; ++i) {
+            memcpy(stream, that->buffer[that->rdbuf], that->wrptr * sizeof(float));
+            for (int i = that->wrptr; i < that->sound_frame_size * 2; ++i) {
                 fstream[i] = that->last_value;
             }
-            printf("overrun rdbuf=%d wrbuf=%d len=%d\n", that->rdbuf, that->wrbuf, len);
+            that->wrptr = 0;
+            printf("starve rdbuf=%d wrbuf=%d len=%d\n", that->rdbuf, that->wrbuf, len);
         } else {
             memcpy(stream, that->buffer[that->rdbuf], len);
-            that->last_value = fstream[that->sound_frame_size * 2 - 1];
             if (++that->rdbuf == Soundnik::NBUFFERS) {
                 that->rdbuf = 0;
             }
@@ -155,6 +155,7 @@ public:
 
     void sample(float samp) 
     {
+        this->last_value = samp;
         this->buffer[this->wrbuf][this->wrptr++] = samp;
         this->buffer[this->wrbuf][this->wrptr++] = samp;
         if (this->wrptr >= this->sound_frame_size * 2) {
