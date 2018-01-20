@@ -163,11 +163,11 @@ public:
         that->rec &&
             that->rec->record_buffer(fstream, that->sound_frame_size * 2);
 
-        if (!Options.vsync) {
+        //if (!Options.vsync) {
             /* sound callback is also our frame interrupt source */
             extern uint32_t timer_callback(uint32_t interval, void * param);
             timer_callback(0, 0);
-        }
+        //}
     }
 
     void sample(float samp) 
