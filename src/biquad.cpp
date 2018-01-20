@@ -49,6 +49,16 @@ void Biquad::ba(float b0, float b1, float b2, float a1, float a2)
     m_b1 = a1;
     m_b2 = a2;
     m_scale = 1;
+
+    m_x_2 = 0.0f;
+    m_x_1 = 0.0f;
+    m_y_2 = 0.0f;
+    m_y_1 = 0.0f;
+
+    m_ix_2 = 0;
+    m_ix_1 = 0;
+    m_iy_2 = 0;
+    m_iy_1 = 0;
 }
 
 void Biquad::calcInteger() {
@@ -102,13 +112,21 @@ void Biquad::calcHighpass(int sampleRate, float freq, float Q) {
     m_scale = 1;
 }      
 
+const float EPS = 1e-6;
 float Biquad::ffilter(float x) 
 {
     float result = m_a0*x + m_a1*m_x_1 + m_a2*m_x_2 - m_b1*m_y_1 - m_b2*m_y_2;
+
     m_x_2 = m_x_1;
     m_x_1 = x;
     m_y_2 = m_y_1;
     m_y_1 = result;
+
+    if (fabs(m_x_2) < EPS) m_x_2 = 0;
+    if (fabs(m_x_1) < EPS) m_x_1 = 0;
+    if (fabs(m_y_2) < EPS) m_y_2 = 0;
+    if (fabs(m_y_1) < EPS) m_y_1 = 0;
+
     return result;
 }
 

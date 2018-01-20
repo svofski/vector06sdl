@@ -116,7 +116,7 @@ public:
 
         return false;
     }
-#define F1 368
+#define F1 8
 #define F2 370
 //#define DBG_FRM(a,b,bob) if (frame_no>=a && frame_no<=b) {bob;}
 #define DBG_FRM(a,b,bob) {};
@@ -133,10 +133,10 @@ public:
         for (; !this->filler.brk;) {
             this->check_interrupt();
             this->filler.irq = false;
-            DBG_FRM(F1,F2,printf("%05d %04x: ", this->between + this->instr_time, i8080_pc()));
+            //DBG_FRM(F1,F2,printf("%05d %04x: ", this->between + this->instr_time, i8080_pc()));
             this->instr_time += i8080_instruction(&last_opcode);
-            DBG_FRM(F1,F2,printf("%02x irq=%d inte=%d\n", last_opcode, 
-                        this->irq, this->inte));
+            //DBG_FRM(F1,F2,printf("%02x irq=%d inte=%d\n", last_opcode, 
+            //            this->irq, this->inte));
             if (last_opcode == 0xd3) {
                 this->commit_time = this->instr_time - 5;
                 this->commit_time = this->commit_time * 4 + 4;

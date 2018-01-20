@@ -163,11 +163,11 @@ public:
         that->rec &&
             that->rec->record_buffer(fstream, that->sound_frame_size * 2);
 
-        if (!Options.vsync) {
+        //if (!Options.vsync) {
             /* sound callback is also our frame interrupt source */
             extern uint32_t timer_callback(uint32_t interval, void * param);
             timer_callback(0, 0);
-        }
+        //}
     }
 
     void sample(float samp) 
@@ -186,17 +186,15 @@ public:
     }
 
 #define BIQUAD_FLOAT 1
-
-    void soundStep(int step, int tapeout, int covox, int tapein) 
+    void soundStep(int step, int tapeout, int covox, int tapein)
     {
         float ay = this->aywrapper.step2(step);
 
 #if BIQUAD_FLOAT
-        float soundf = (this->timerwrapper.step(step/2) + tapeout + tapein) * 0.2 + ay*0.7 - 0.5;
-        soundf = this->butt2->ffilter(this->butt1->ffilter(soundf));
+        float soundf = this->timerwrapper.step(step/2) + tapeout + tapein;
+        soundf = this->butt2->ffilter(this->butt1->ffilter(soundf * 0.2));
 #else
-        int soundi = (this->timerwrapper.step(step / 2) + tapeout + tapein) << (32-8);
-        soundi += (int)(ay * (162777216.0/4));
+        int soundi = (this->timerwrapper.step(step / 2) + tapeout + tapein) << 21;
         soundi = this->butt2->ifilter(this->butt1->ifilter(soundi));
 
 #endif
@@ -206,11 +204,10 @@ public:
             this->sound_accu_int -= this->sound_accu_top;
 
 #if BIQUAD_FLOAT
-            float sound = soundf + covox/256.0;
+            float sound = soundf + ay * 0.2;// + covox/256.0;
 #else
-            float sound = soundi / 16277216.0 + covox/256.0;
+            float sound = soundi / 16277216.0 + ay * 0.2;// + covox/256.0;
 #endif
-            sound = (sound - 1.5f) * 0.3f;
             if (sound > 1.0f) { 
                 sound = 1.0f; 
             } else if (sound < -1.0f) { 
