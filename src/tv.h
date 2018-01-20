@@ -14,11 +14,12 @@ class TV
 private:
     SDL_Window * window;
     SDL_Renderer * renderer;
-    SDL_Texture * texture;
+    SDL_Texture * texture[2];
     uint32_t * bmp;
     int tex_width;
     int tex_height;
     int refresh_rate;
+    int texture_n;
 
 public:
     TV() 
@@ -108,8 +109,12 @@ public:
 
         this->tex_width = Options.screen_width;
         this->tex_height = Options.screen_height;
-        this->texture = SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_ABGR8888,
+        this->texture[0] = SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_ABGR8888,
                 SDL_TEXTUREACCESS_STATIC, this->tex_width, this->tex_height);
+
+        this->texture[1] = SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_ABGR8888,
+                SDL_TEXTUREACCESS_STATIC, this->tex_width, this->tex_height);
+        this->texture_n = 0;
 
         SDL_RenderSetLogicalSize(this->renderer, window_width, window_height);
     }
@@ -171,14 +176,56 @@ public:
         return this->bmp;
     }
 
-    void render()
+    void render_with_blend(int src_alpha)
     {
+        int next_texture = (this->texture_n + 1) & 1;
+        SDL_UpdateTexture(this->texture[next_texture], NULL, this->bmp, 
+                this->tex_width * sizeof(uint32_t));
+        SDL_RenderClear(this->renderer);
+        SDL_SetTextureBlendMode(this->texture[this->texture_n], SDL_BLENDMODE_NONE);
+        SDL_SetTextureAlphaMod(this->texture[this->texture_n], 255);
+        SDL_RenderCopy(this->renderer, this->texture[this->texture_n], NULL, NULL);
+        SDL_SetTextureBlendMode(this->texture[next_texture], SDL_BLENDMODE_BLEND);
+        SDL_SetTextureAlphaMod(this->texture[next_texture], src_alpha);
+        SDL_RenderCopy(this->renderer, this->texture[next_texture], NULL, NULL);
+        this->texture_n = next_texture;
+    }
+
+    void render_single()
+    {
+        /* render single frame */
+        this->texture_n = (this->texture_n + 1) & 1;
+        SDL_UpdateTexture(this->texture[this->texture_n], NULL, this->bmp,
+                this->tex_width * sizeof(uint32_t));
+        SDL_SetTextureBlendMode(this->texture[this->texture_n], SDL_BLENDMODE_NONE);
+        SDL_SetTextureAlphaMod(this->texture[this->texture_n], 255);
+        SDL_RenderClear(this->renderer);
+        SDL_RenderCopy(this->renderer, this->texture[this->texture_n], NULL, NULL);
+    }
+
+    /* executed: 1 if the frame was real, 0 if the frame is a skip frame */
+    void render(int executed)
+    {
+        static int prev_executed;
         if (!Options.novideo) {
-            SDL_UpdateTexture(this->texture, NULL, this->bmp, 
-                    this->tex_width * sizeof(uint32_t));
-            SDL_RenderClear(this->renderer);
-            SDL_RenderCopy(this->renderer, this->texture, NULL, NULL);
+            if (Options.blendmode == 0) {
+                render_single();
+            } 
+            else if (Options.blendmode == 1) {
+                if (executed) {
+                    render_with_blend(128);
+                }
+            }
+            else if (Options.blendmode == 2) {
+                if (executed && prev_executed) {
+                    render_with_blend(200);
+                } 
+                else {
+                    render_single();
+                }
+            }
             SDL_RenderPresent(this->renderer);
+            prev_executed = executed;
         }
     }
 

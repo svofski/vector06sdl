@@ -145,12 +145,12 @@ int main(int argc, char ** argv)
         soundnik.pause(0);
     }
     for(int i = 0;; ++i) {
-        board.loop_frame();
+        int executed = board.loop_frame();
         if (i == startframe) {
             soundnik.pause(0);
             printf("Starting audio\n");
         }
-        tv.render();
+        tv.render(executed);
 
         if (Options.save_frames.size() && i == Options.save_frames[0])
         {

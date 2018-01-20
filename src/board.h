@@ -211,13 +211,13 @@ public:
         //printf("between = %d\n", this->between);
     }
 
-    void loop_frame()
+    int loop_frame()
     {
         if (Options.vsync) {
-            loop_frame_vsync();
+            return loop_frame_vsync();
         }
         else {
-            loop_frame_userevent();
+            return loop_frame_userevent();
         }
     }
 
@@ -255,25 +255,28 @@ public:
         return true;
     }
 
-    void loop_frame_vsync()
+    int loop_frame_vsync()
     {
 #if 0
         measure_framerate();
 #endif
         SDL_Event event;
         bool frame = false;
+        int result = 0;
         while(!frame) {
             if (cadence_allows()) {
                 execute_frame(true);
+                result = 1;
             }
             frame = true;
             while (SDL_PollEvent(&event)) {
                 handle_event(event);
             }
         }
+        return result;
     }
 
-    void loop_frame_userevent()
+    int loop_frame_userevent()
     {
         SDL_Event event;
         bool frame = false;
@@ -290,6 +293,7 @@ public:
                 }
             }
         }
+        return 1;
     }
 
     void handle_event(SDL_Event & event)
