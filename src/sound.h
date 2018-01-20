@@ -185,18 +185,26 @@ public:
         SDL_UnlockAudioDevice(this->audiodev);
     }
 
-#define BIQUAD_FLOAT 1
+#define BIQUAD_FLOAT 0
 
-    void soundStep(int step, int tapeout, int covox, int tapein) 
+    void soundStep(int step, int tapeout, int covox, int tapein, int frm) 
     {
+        static int sample_count;
+
+        //if (frm) {
+        //    fprintf(stderr, "frame sample count=%d\n", sample_count);
+        //    sample_count = 0;
+        //}
+
         float ay = this->aywrapper.step2(step);
 
 #if BIQUAD_FLOAT
-        float soundf = (this->timerwrapper.step(step/2) + tapeout + tapein) * 0.2 + ay*0.7 - 0.5;
+        float soundf = this->timerwrapper.step(step/2) + tapeout + tapein;
+        soundf = soundf * 0.2 + ay * 0.2;
         soundf = this->butt2->ffilter(this->butt1->ffilter(soundf));
 #else
-        int soundi = (this->timerwrapper.step(step / 2) + tapeout + tapein) << (32-8);
-        soundi += (int)(ay * (162777216.0/4));
+        int soundi = (this->timerwrapper.step(step / 2) + tapeout + tapein) << (32-9);
+        soundi += (int)(ay * (162777216.0/8));
         soundi = this->butt2->ifilter(this->butt1->ifilter(soundi));
 
 #endif
@@ -206,17 +214,19 @@ public:
             this->sound_accu_int -= this->sound_accu_top;
 
 #if BIQUAD_FLOAT
-            float sound = soundf + covox/256.0;
+            float sound = soundf;// + covox/256.0;
 #else
-            float sound = soundi / 16277216.0 + covox/256.0;
+            float sound = soundi / 16277216.0;// + covox/256.0;
 #endif
-            sound = (sound - 1.5f) * 0.3f;
+            //printf("%f\n", sound);
+            //sound = (sound - 1.5f) * 0.3f;
             if (sound > 1.0f) { 
                 sound = 1.0f; 
             } else if (sound < -1.0f) { 
                 sound = -1.0f; 
             }
             this->sample(sound);
+            ++sample_count;
         }
     }
 

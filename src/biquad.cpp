@@ -49,6 +49,11 @@ void Biquad::ba(float b0, float b1, float b2, float a1, float a2)
     m_b1 = a1;
     m_b2 = a2;
     m_scale = 1;
+
+    m_x_2 = 0;
+    m_x_1 = 0;
+    m_y_2 = 0;
+    m_y_1 = 0;
 }
 
 void Biquad::calcInteger() {
