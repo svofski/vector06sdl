@@ -82,11 +82,8 @@ public:
 
         int window_options = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
         int renderer_options = SDL_RENDERER_ACCELERATED;
-        if (true || Options.vsync) {
+        if (Options.vsync) {
             renderer_options |= SDL_RENDERER_PRESENTVSYNC;
-            if (!Options.vsync) {
-                printf("USING VSYNC ANYWAY!\n");
-            }
         }
 
         int window_height = Options.screen_height * 2;
