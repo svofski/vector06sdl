@@ -51,6 +51,7 @@ void options(int argc, char ** argv)
         ("vsync", "(default) use display vsync")
         ("novsync", "try to make do without vsync")
         ("nofilter", "bypass audio filters")
+        ("blendmode", po::value<int>(), "blend mode: 0=none, 1=blend fields, 2=equalize fps conversion")
         ("yres", po::value<int>(), "number of visible lines (default 288)")
         ("border-width", po::value<int>(), "width of horizontal border (default 32)")
         ("record-audio", po::value<std::string>(), "record audio output to file")
@@ -93,6 +94,11 @@ void options(int argc, char ** argv)
                 printf("%d%c", Options.save_frames[i], 
                         (i+1) == Options.save_frames.size() ? '\n' : ',');
             }
+        }
+
+        if (vm.count("blendmode")) {
+            Options.blendmode = vm["blendmode"].as<int>();
+            printf("Using blend mode %d\n", Options.blendmode);
         }
 
         if (vm.count("fdd")) {
@@ -242,6 +248,7 @@ void _options::load(const std::string & filename)
     vsync = pt.get<bool>("video.vsync");
     screen_height = pt.get<int>("video.yres");
     border_width = pt.get<int>("video.border_width");
+    blendmode = pt.get<int>("video.blendmode");
     nofilter = pt.get<bool>("audio.bypass_filter");
     nofdc = pt.get<bool>("peripheral.nofdc");
     log.fdc = pt.get<bool>("log.fdc");
@@ -257,6 +264,7 @@ void _options::save(const std::string & filename)
     pt.put("video.vsync", vsync);
     pt.put("video.yres", screen_height);
     pt.put("video.border_width", border_width);
+    pt.put("video.blendmode", blendmode);
     pt.put("audio.bypass_filter", nofilter);
     pt.put("peripheral.nofdc", nofdc);
     pt.put("log.fdc", log.fdc);
