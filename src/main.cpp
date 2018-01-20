@@ -90,9 +90,16 @@ Board board(memory, io, filler, soundnik, tv, tape_player);
 int main(int argc, char ** argv)
 {
     options(argc, argv);
+    WavRecorder rec;
+    WavRecorder * prec = 0;
+
+    if (Options.audio_rec_path.length()) {
+        rec.init(Options.audio_rec_path);
+        prec = &rec;
+    }
 
     filler.init();
-    soundnik.init();    // this may switch the audio output off
+    soundnik.init(prec);    // this may switch the audio output off
     tv.init();
     board.init();
     fdc.init();

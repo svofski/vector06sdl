@@ -53,6 +53,7 @@ void options(int argc, char ** argv)
         ("nofilter", "bypass audio filters")
         ("yres", po::value<int>(), "number of visible lines (default 288)")
         ("border-width", po::value<int>(), "width of horizontal border (default 32)")
+        ("record-audio", po::value<std::string>(), "record audio output to file")
         ("saveconfig", "save config to ~/.v06x.conf")
         ;
         
@@ -158,6 +159,10 @@ void options(int argc, char ** argv)
 
         if (vm.count("log")) {
             Options.parse_log(vm["log"].as<std::string>());
+        }
+
+        if (vm.count("record-audio")) {
+            Options.audio_rec_path = vm["record-audio"].as<std::string>();
         }
 
         if (vm.count("saveconfig")) {

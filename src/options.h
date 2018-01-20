@@ -33,6 +33,7 @@ struct _options
     std::string path_for_frame(int n);
     std::vector<std::string> fddfile;
     std::vector<int> save_frames;
+    std::string audio_rec_path;
 
     void load(const std::string & filename);
     void save(const std::string & filename);

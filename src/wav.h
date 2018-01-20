@@ -3,6 +3,8 @@
 #include <inttypes.h>
 #include <vector>
 #include <functional>
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -215,5 +217,72 @@ public:
             return wav.sample_at(playhead) > 0 ? 1 : 0;
         }
         return 0;
+    }
+};
+
+class WavRecorder 
+{
+private:
+    ofstream file;
+    std::vector<int16_t> buffer;
+    static const int buffer_size = 65536;
+    int offset = 0;
+    size_t length_pos;
+    uint32_t data_size;
+
+public:
+    WavRecorder()
+    {
+    }
+
+    void init(const std::string & path)
+    {
+        file.open(path, ios::out | ios::binary);
+
+        buffer.resize(8192);
+        offset = 0;
+        data_size = 0;
+
+        static const uint8_t header[] = {
+            0x52, 0x49, 0x46, 0x46, 0x24, 0xb0, 0x2b, 
+            0x00, 0x57, 0x41, 0x56, 0x45, 0x66, 0x6d, 0x74, 0x20, 0x10, 0x00, 
+            0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x80, 0xbb, 0x00, 0x00, 0x00, 
+            0xee, 0x02, 0x00, 0x04, 0x00, 0x10, 0x00, 0x64, 0x61, 0x74, 0x61, 
+            0x00, 0xb0, 0x2b, 0x00, };
+
+        file.write((char *)header, sizeof(header));
+        length_pos = sizeof(header)/sizeof(header[0]) - 4;
+    }
+
+    int record_sample(float left, float right)
+    {
+        buffer[offset++] = (int) (left * 32767 + 0.5);
+        buffer[offset++] = (int) (right * 32767 + 0.5);
+        if (offset >= buffer.size()) {
+            file.write((const char *)buffer.data(), sizeof(uint16_t) * buffer.size());
+            offset = 0;
+        }
+        data_size += 4;
+        return 0;
+    }
+
+    int record_buffer(const float * fstream, const size_t count)
+    {
+        for (int i = 0; i < count; i += 2) {
+            record_sample(fstream[i], fstream[i+1]);
+        }
+        return count;
+    }
+
+    ~WavRecorder()
+    {
+        if (file.is_open()) {
+            if (offset > 0) {
+                file.write((const char *)buffer.data(), sizeof(uint16_t) * offset);
+            }
+            file.seekp(length_pos);
+            file.write((const char *)&data_size, 4);
+            printf("~WavRecorder: data size=%x\n", data_size);
+        }
     }
 };

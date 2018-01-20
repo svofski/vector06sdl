@@ -6,6 +6,7 @@
 #include "ay.h"
 #include "biquad.h"
 #include "SDL.h"
+#include "wav.h"
 
 class Soundnik
 {
@@ -32,12 +33,16 @@ private:
     Filter * butt1;
     Filter * butt2;
 
+    WavRecorder * rec;
+
 public:
     Soundnik(TimerWrapper & tw, AYWrapper & aw) : timerwrapper(tw), 
         aywrapper(aw)
     {}
 
-    void init() {
+    void init(WavRecorder * _rec = 0) {
+        this->rec = _rec;
+
         SDL_AudioSpec want, have;
 
         if (Options.nosound) {
@@ -154,6 +159,9 @@ public:
                 that->rdbuf = 0;
             }
         }
+
+        that->rec &&
+            that->rec->record_buffer(fstream, that->sound_frame_size * 2);
 
         if (!Options.vsync) {
             /* sound callback is also our frame interrupt source */
