@@ -191,7 +191,7 @@ public:
             }
             for (int g = step/2; --g >= 0;) {
                 this->soundnik.soundStep(2, this->io.TapeOut(), this->io.Covox(),
-                        this->tape_player.sample(), this->between == 0);
+                        this->tape_player.sample());
             }
             this->between += step;
             this->instr_time = wrap;
