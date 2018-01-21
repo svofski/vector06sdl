@@ -4,6 +4,7 @@ emu=../build/v06x
 
 rompath=../testroms
 
+rm -rf out
 mkdir -p out
 
 function announce {

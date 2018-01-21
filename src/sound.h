@@ -43,12 +43,13 @@ public:
     void init(WavRecorder * _rec = 0) {
         this->rec = _rec;
 
-        SDL_AudioSpec want, have;
-
+        butt1 = new Bypass();
+        butt2 = new Bypass();
         if (Options.nosound) {
             return;
         }
 
+        SDL_AudioSpec want, have;
         SDL_memset(&want, 0, sizeof(want)); /* or SDL_zero(want) */
         want.freq = 48000;
         want.format = AUDIO_F32;
@@ -115,10 +116,7 @@ public:
                 have.samples, have.channels, have.format, have.size);
 
         // filters
-        if (Options.nofilter) {
-            butt1 = new Bypass();
-            butt2 = new Bypass();
-        } else {
+        if (!Options.nofilter) {
             butt1 = new Biquad();
             butt2 = new Biquad();
             butt1->ba(0.00021253813256227462, 0.00042507626512454925, 0.00021253813256227462, 
