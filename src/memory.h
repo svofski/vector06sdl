@@ -58,6 +58,12 @@ public:
         if (this->bootbytes.size() && addr < this->bootbytes.size()) {
             return this->bootbytes[addr];
         }
+        if (this->bigram_select(addr & 0xffff, stackrq) != addr) {
+            uint8_t res = this->bytes[this->tobank(
+                    this->bigram_select(addr & 0xffff, stackrq))];
+            //printf("RD: %04x#%d->%06x: %02x\n", addr, stackrq,
+            //        this->bigram_select(addr & 0xffff, stackrq), res);
+        }
         return this->bytes[this->tobank(this->bigram_select(addr & 0xffff, stackrq))];
     }
 
@@ -69,6 +75,10 @@ public:
 
     void write(uint32_t addr, uint8_t w8, bool stackrq)
     {
+        if (this->bigram_select(addr & 0xffff, stackrq) != addr) {
+            //printf("WR: %04x#%d->%06x=%02x\n", addr, stackrq,
+            //    this->bigram_select(addr & 0xffff, stackrq), w8);
+        }
         this->bytes[this->tobank(this->bigram_select(addr & 0xffff, stackrq))] = w8;
     }
 

@@ -132,9 +132,10 @@ int main(int argc, char ** argv)
     else if (Options.wavfile.length() != 0) {
         load_wav(wav, Options.wavfile);
     }
-    else {
+
+    //if (!Options.nofdc) {
         load_disks(fdc);
-    }
+    //}
 
     atexit(SDL_Quit);
 
