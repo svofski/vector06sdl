@@ -12,6 +12,7 @@
 #include "sound.h"
 #include "ay.h"
 #include "wav.h"
+#include "server.h"
 
 static size_t islength(std::ifstream & is)
 {
@@ -87,6 +88,8 @@ TV tv;
 PixelFiller filler(memory, io, tv);
 Board board(memory, io, filler, soundnik, tv, tape_player);
 
+GdbServer gdbserver(board);
+
 int main(int argc, char ** argv)
 {
     options(argc, argv);
@@ -97,6 +100,8 @@ int main(int argc, char ** argv)
         rec.init(Options.audio_rec_path);
         prec = &rec;
     }
+
+    gdbserver.init();
 
     filler.init();
     soundnik.init(prec);    // this may switch the audio output off
@@ -145,6 +150,11 @@ int main(int argc, char ** argv)
         // so it must be started, or we're going to be stuck waiting for event
         soundnik.pause(0);
     }
+
+    board.poll_debugger = [](void) {
+        gdbserver.poll();
+    };
+
     for(int i = 0;; ++i) {
         int executed = board.loop_frame();
         if (i == startframe) {

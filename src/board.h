@@ -2,12 +2,12 @@
 
 #include <stdio.h>
 #include <vector>
+#include <functional>
 #include "i8080.h"
 #include "filler.h"
 #include "sound.h"
 #include "tv.h"
 #include "cadence.h"
-
 
 #if USED_XXD
 // boots.o made using xxd already has okay symbols
@@ -53,11 +53,18 @@ private:
     TV & tv;
     WavPlayer & tape_player;
 
+    int debugging;
+    int debugger_interrupt;
+
+public:
+    std::function<void(void)> poll_debugger;
+
 public:
     Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd, 
             TV & _tv, WavPlayer & _tape_player) 
         : memory(_memory), io(_io), filler(_filler), soundnik(_snd), tv(_tv), 
-          tape_player(_tape_player)
+          tape_player(_tape_player), 
+          debugging(0), debugger_interrupt(0)
     {
         this->inte = false;
     }
@@ -122,6 +129,9 @@ public:
 #define DBG_FRM(a,b,bob) {};
     void execute_frame(bool update_screen)
     {
+        if (this->poll_debugger) this->poll_debugger();
+        if (this->debugger_interrupt) return;
+
         ++this->frame_no;
         this->filler.reset();
 
@@ -130,7 +140,7 @@ public:
         // 59904 
         this->between = 0;
         DBG_FRM(F1,F2, printf("--- %d ---\n", this->frame_no));
-        for (; !this->filler.brk;) {
+        for (; !this->filler.brk && !this->debugger_interrupt;) {
             this->check_interrupt();
             this->filler.irq = false;
             //DBG_FRM(F1,F2,printf("%05d %04x: ", this->between + this->instr_time, i8080_pc()));
@@ -326,5 +336,36 @@ public:
                 printf("\n");
             }
         }
+    }
+
+    std::string read_memory(int start, int count)
+    {
+        char buf[count * 2 + 1];
+        for (int i = start, k = 0; i < start + count; ++i, k+=2) {
+            sprintf(&buf[k], "%02x", this->memory.read(i, false));
+        }
+        return std::string(buf);
+    }
+
+    void debugger_attached()
+    {
+        this->debugging = 1;
+        this->debugger_break();
+    }
+
+    void debugger_detached()
+    {
+        this->debugging = 0;
+        this->debugger_continue();
+    }
+
+    void debugger_break()
+    {
+        this->debugger_interrupt = 1;
+    }
+
+    void debugger_continue()
+    {
+        this->debugger_interrupt = 0;
     }
 };
