@@ -49,11 +49,22 @@ extern int i8080_regs_hl(void);
 extern int i8080_regs_sp(void);
 
 extern int i8080_regs_a(void);
+extern int i8080_regs_f(void);
 extern int i8080_regs_b(void);
 extern int i8080_regs_c(void);
 extern int i8080_regs_d(void);
 extern int i8080_regs_e(void);
 extern int i8080_regs_h(void);
 extern int i8080_regs_l(void);
+
+extern void i8080_setreg_a(int a);
+extern void i8080_setreg_b(int b);
+extern void i8080_setreg_c(int c);
+extern void i8080_setreg_d(int d);
+extern void i8080_setreg_e(int e);
+extern void i8080_setreg_h(int h);
+extern void i8080_setreg_l(int l);
+extern void i8080_setreg_f(int f);
+extern void i8080_setreg_sp(int sp);
 
 #endif

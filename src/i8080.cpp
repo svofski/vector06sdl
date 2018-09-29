@@ -2056,9 +2056,51 @@ int i8080_regs_l(void) {
     return L;
 }
 
+int i8080_regs_f(void) {
+    return F;
+}
+
 bool i8080_iff(void) {
     return IFF;
 }
+
+/* setters */
+void i8080_setreg_a(int a) {
+    A = a;
+}
+
+void i8080_setreg_b(int b) {
+    B = b;
+}
+
+void i8080_setreg_c(int c) {
+     C = c;
+}
+
+void i8080_setreg_d(int d) {
+     D = d;
+}
+
+void i8080_setreg_e(int e) {
+     E = e;
+}
+
+void i8080_setreg_h(int h) {
+     H = h;
+}
+
+void i8080_setreg_l(int l) {
+     L = l;
+}
+
+void i8080_setreg_f(int f) {
+     F = f;
+}
+
+void i8080_setreg_sp(int sp) {
+     SP = sp;
+}
+
 
 int i8080_cycles(void) {
     return CPU_CYCLES;

@@ -5,6 +5,7 @@
 void start_gdb_server(Board & board);
 void poll_gdb_server();
 void stop_gdb_server();
+void notify_breakpoint();
 
 class GdbServer {
 public:
@@ -26,6 +27,11 @@ public:
     void poll() 
     {
         poll_gdb_server();
+    }
+
+    void breakpoint()
+    {
+        notify_breakpoint();
     }
 
 private:

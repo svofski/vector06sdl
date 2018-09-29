@@ -15,6 +15,7 @@ using boost::asio::ip::tcp;
 const std::string STD_OK("OK");
 const std::string STD_EMPTY("");
 const std::string STD_INTERRUPT("T05");
+const std::string STD_ERROR("E00");
 const std::string STD_IGNORE("------------------");
 
 class GdbPacket {
@@ -77,6 +78,16 @@ public:
     void start()
     {
         board.debugger_attached();
+        board.onbreakpoint = [this](void) {
+            std::string response("T05");
+            std::string full = "+$" + response + "#" + 
+                GdbPacket::calc_crc(response);
+            boost::asio::async_write(this->socket,
+                    boost::asio::buffer(full.c_str(), full.length()),
+                    boost::bind(&Session::handle_write, this,
+                        shared_from_this(),
+                        boost::asio::placeholders::error));
+        };
 
         socket.async_read_some(
                 boost::asio::buffer(data, max_length),
@@ -91,7 +102,8 @@ public:
             size_t bytes_transferred)
     {
         if (!err) {
-            std::cout << "recv: " << data << std::endl;
+            std::cout << "recv: " << std::string(data, bytes_transferred) 
+                << std::endl;
             if (data[0] == 3) {
                 printf("^C\n");
             }
@@ -162,13 +174,29 @@ public:
             case '?':   // indicate reason for stopping
                 response = "S05"; // ? what
                 break;
-            case 'g':
-                response = read_registers(packet);
+            case 'g':   // read registers
+                response = board.read_registers();
                 break;
-            case 'm':
+            case 'G':   // write registers
+                response = write_registers(packet);
+                break;
+            case 'm':   // read memory location(s)
                 response = read_memory(packet);
                 break;
-            case 'D':
+            case 'M':   // write memory location(s)
+                response = write_memory(packet);
+                break;
+            case 'Z':   // insert breakpoint: type,addr,kind -> OK/E NN/''
+                response = insert_breakpoint(packet);
+                break;
+            case 'z':   // remove breakpoint
+                response = remove_breakpoint(packet);
+                break;
+            case 's':   // singlestep
+                board.single_step(true);
+                response = "T05";
+                break;
+            case 'D':   // debugger detach
                 response = STD_OK;
                 board.debugger_detached();
                 this->closing = true;
@@ -207,16 +235,6 @@ public:
         return STD_OK;
     }
 
-    std::string read_registers(GdbPacket & packet)
-    {
-        std::string res;
-        for (int i = 0; i < 16; ++i) {
-            res += get_register_hex(i); 
-        }
-
-        return res;
-    }
-
     std::string read_memory(GdbPacket & packet)
     {
         using namespace std;
@@ -229,42 +247,93 @@ public:
             int len = stoul(parts.at(1), nullptr, 16);
             return board.read_memory(addr, len);
         } catch(invalid_argument) {
-            return "E";
+            return STD_ERROR;
         }
     }
 
-
-    std::string get_register_hex(int r) const
+    std::string write_memory(GdbPacket & packet)
     {
-        char buf[32];
-        switch (r) {
-            case 0:     sprintf(buf, "%02x", 0x0a); break; /* A */
-            case 1:     sprintf(buf, "%02x", 0x0f); break; /* F */
-            case 2:     sprintf(buf, "%04x", 0x0c0b); break; /* BC */
-            case 3:     sprintf(buf, "%04x", 0x0e0d); break; /* DE */
-            case 4:     sprintf(buf, "%04x", 0x4433); break; /* HL */
-            case 5:     sprintf(buf, "0000"); break;        /* IX */
-            case 6:     sprintf(buf, "0000"); break;        /* IY */
-            case 7:     sprintf(buf, "%04x", 0x8967); break; /* SP */
-            case 8:     sprintf(buf, "00"); break;
-            case 9:     sprintf(buf, "00"); break;
-            case 10:    sprintf(buf, "00"); break;
-            case 11:    sprintf(buf, "00"); break;
-            case 12:    sprintf(buf, "0000"); break;
-            case 13:    sprintf(buf, "0000"); break;
-            case 14:    sprintf(buf, "0000"); break;
-            case 15:    sprintf(buf, "3412"); break;
+        using namespace std;
+        vector<string> parts;
+        string params = packet.get_params();
+        boost::algorithm::split(parts, params, boost::is_any_of(",:"));
+        
+        try {
+            int addr = stoul(parts.at(0), nullptr, 16);
+            int len = stoul(parts.at(1), nullptr, 16);
+
+            if (len > 0) {
+                const char * ostr = parts.at(2).c_str();
+                for (int i = 0, end = strlen(ostr)/2; i < len && i < end; ++i) {
+                    uint8_t bytt = stoul(string(&ostr[i*2], 2), nullptr, 16);
+                    printf("W %04x,%02x", addr + i, bytt);
+                    board.write_memory_byte(addr + i, bytt);
+                }
+            }
+
+            return STD_OK;
+        } catch(invalid_argument) {
+            return STD_ERROR;
         }
-        return std::string(buf);
     }
+
+    std::string write_registers(GdbPacket & packet)
+    {
+        uint8_t regs[26];
+        const char * cstr = packet.get_params().c_str();
+
+        for (int i = 0; i < sizeof(regs); ++i) {
+            try {
+                regs[i] = std::stoul(string(&cstr[i*2], 2), nullptr, 16);
+            } catch(invalid_argument) {
+                return STD_ERROR;
+            }
+        }
+        board.write_registers(regs);
+        return STD_OK;
+    }
+
+    std::string insert_breakpoint(GdbPacket & packet)
+    {
+        using namespace std;
+        vector<string> parts;
+        string params = packet.get_params();
+        boost::algorithm::split(parts, params, boost::is_any_of(","));
+        try {
+            int type = stoul(parts.at(0), nullptr, 10);
+            int addr = stoul(parts.at(1), nullptr, 16);
+            int kind = stoul(parts.at(2), nullptr, 10);
+
+            return board.insert_breakpoint(type, addr, kind);
+        } catch (invalid_argument) {
+            return STD_ERROR;
+        }
+    }
+
+    std::string remove_breakpoint(GdbPacket & packet)
+    {
+        using namespace std;
+        vector<string> parts;
+        string params = packet.get_params();
+        boost::algorithm::split(parts, params, boost::is_any_of(","));
+        try {
+            int type = stoul(parts.at(0), nullptr, 10);
+            int addr = stoul(parts.at(1), nullptr, 16);
+            int kind = stoul(parts.at(2), nullptr, 10);
+
+            return board.remove_breakpoint(type, addr, kind);
+        } catch (invalid_argument) {
+            return STD_ERROR;
+        }
+    }
+
 
 private:
     tcp::socket socket;
     enum { max_length = 65536 };
     char data[max_length];
-    bool closing;
-
     Board & board;
+    bool closing;
 };
 
 class Server {
