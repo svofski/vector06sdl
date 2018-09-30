@@ -193,7 +193,7 @@ void _options::parse_log(const std::string & opt)
 {
     std::vector<std::string> cats;
     boost::split(cats, opt, boost::is_any_of(","), boost::token_compress_on);
-    for (int i = 0; i < cats.size(); ++i) {
+    for (size_t i = 0; i < cats.size(); ++i) {
         if (cats[i] == "fdc") {
             log.fdc = true;
         } 

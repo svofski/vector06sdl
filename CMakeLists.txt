@@ -29,7 +29,7 @@ else()
     endif()	
 endif() 
 
-set(SOURCE_FILES src/main.cpp src/board.cpp src/hal.cpp src/i8080.cpp src/options.cpp
+set(SOURCE_FILES src/main.cpp src/memory.cpp src/board.cpp src/hal.cpp src/i8080.cpp src/options.cpp
     src/biquad.cpp src/cadence.cpp
     src/server.cpp)
 add_executable(v06x ${SOURCE_FILES} boots.o)
@@ -38,6 +38,10 @@ set_property(TARGET v06x PROPERTY CXX_STANDARD 11)
 
 find_package(Boost COMPONENTS thread system filesystem program_options REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+	target_link_libraries(v06x ws2_32 mswsock)
+endif()
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
@@ -81,3 +85,5 @@ target_link_libraries(v06x ${BOOT_O} ${EXTRA_LIBS})
 set(TEST_SOURCE_FILES test/tests.cpp)
 include_directories(src)
 add_executable(tests ${TEST_SOURCE_FILES} boots.o)
+
+set_property(TARGET v06x PROPERTY CXX_STANDARD 14)

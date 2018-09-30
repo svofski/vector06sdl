@@ -23,7 +23,7 @@ public:
     GdbPacket(const char * data, size_t length)
     {
         printf("raw data: [%s]\n", std::string(data, length).c_str());
-        int i = 0;
+        size_t i = 0;
         for(; (data[i] == '$' || data[i] == '+') && i < length; ++i);
         if (i >= length) {
             this->command = 0;
@@ -50,7 +50,7 @@ public:
     static std::string calc_crc(std::string & s) 
     {
         int crc = 0;
-        for (int i = 0; i < s.length(); ++i) {
+        for (size_t i = 0; i < s.length(); ++i) {
             crc += s.at(i);
         }
         char buf[4];
@@ -282,7 +282,7 @@ public:
         uint8_t regs[26];
         const char * cstr = packet.get_params().c_str();
 
-        for (int i = 0; i < sizeof(regs); ++i) {
+        for (size_t i = 0; i < sizeof(regs); ++i) {
             try {
                 regs[i] = std::stoul(string(&cstr[i*2], 2), nullptr, 16);
             } catch(invalid_argument) {

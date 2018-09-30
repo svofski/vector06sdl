@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <vector>
 #include <functional>
+#include <algorithm>
 #include "i8080.h"
 #include "filler.h"
 #include "sound.h"
@@ -53,7 +54,7 @@ void Board::reset(bool blkvvod)    // true: power-on reset, false: boot loaded p
             boot[i] = src[i];
         }
         this->memory.attach_boot(boot);
-        printf("Board::reset() attached boot, size=%zu\n", size);
+        printf("Board::reset() attached boot, size=%u\n", (unsigned int)size);
     } else {
         this->memory.detach_boot();
         printf("Board::reset() detached boot\n");
@@ -417,6 +418,9 @@ std::string Board::remove_breakpoint(int type, int addr, int kind)
 
 bool Board::check_breakpoint()
 {
+//    Breakpoint needle(i8080_pc(), 1);
+//    auto it = std::find(this->breakpoints.begin(), this->breakpoints.end(), needle);
+
     return std::find(this->breakpoints.begin(), this->breakpoints.end(),
             Breakpoint(i8080_pc(), 1)) != this->breakpoints.end();
 }

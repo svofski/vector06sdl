@@ -9,7 +9,7 @@ template <unsigned N, unsigned M = 50> int * calc_pullup()
     de = (double)M / N;
     err = de;
     int on = 0;
-    for (int i = 0; i < N; ++i) {
+    for (size_t i = 0; i < N; ++i) {
         err += de;
         cadence[i] = err > 1;
         if (err > 1) {

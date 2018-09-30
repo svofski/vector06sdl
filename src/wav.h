@@ -225,8 +225,8 @@ class WavRecorder
 private:
     ofstream file;
     std::vector<int16_t> buffer;
-    static const int buffer_size = 65536;
-    int offset = 0;
+    static const size_t buffer_size = 65536;
+    size_t offset = 0;
     size_t length_pos;
     uint32_t data_size;
 
@@ -268,7 +268,7 @@ public:
 
     int record_buffer(const float * fstream, const size_t count)
     {
-        for (int i = 0; i < count; i += 2) {
+        for (size_t i = 0; i < count; i += 2) {
             record_sample(fstream[i], fstream[i+1]);
         }
         return count;
