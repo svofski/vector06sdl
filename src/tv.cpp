@@ -87,13 +87,29 @@ void TV::init()
     uint32_t window_pixelformat = SDL_GetWindowPixelFormat(this->window);
     this->pixelformat = SDL_PIXELFORMAT_ABGR8888;
     switch (window_pixelformat) {
+        /* in theory we should follow native format, but on linux vm
+         * I'm getting native format RGB888, which gets internally
+         * converted into ARGB8888 anyway */
+        case SDL_PIXELFORMAT_RGB888:
         case SDL_PIXELFORMAT_ARGB8888:
             printf("Native pixelformat: ARGB8888\n");
             this->pixelformat = SDL_PIXELFORMAT_ARGB8888;
             break;
+        case SDL_PIXELFORMAT_BGR888:
         case SDL_PIXELFORMAT_ABGR8888:
             printf("Native pixelformat: ABGR8888\n");
             this->pixelformat = SDL_PIXELFORMAT_ABGR8888;
+            break;
+        //case SDL_PIXELFORMAT_RGB888:
+        //    printf("Native pixelformat: RGB888\n");
+        //    this->pixelformat = SDL_PIXELFORMAT_RGB888;
+        //    break;
+        //case SDL_PIXELFORMAT_BGR888:
+        //    printf("Native pixelformat: BGR888\n");
+        //    this->pixelformat = SDL_PIXELFORMAT_BGR888;
+        //    break;
+        default:
+            printf("Unknown native pixelformat: %08x\n", window_pixelformat);
             break;
     }
 
@@ -240,6 +256,7 @@ bool TV::handle_keyboard_event(SDL_KeyboardEvent & event)
 std::function<uint32_t(uint8_t,uint8_t,uint8_t)> TV::get_rgb2pixelformat() const
 {
     switch(this->pixelformat) {
+        case SDL_PIXELFORMAT_RGB888:
         case SDL_PIXELFORMAT_ARGB8888:
             return [](uint8_t r, uint8_t g, uint8_t b) {
                 uint32_t result =
@@ -250,6 +267,7 @@ std::function<uint32_t(uint8_t,uint8_t,uint8_t)> TV::get_rgb2pixelformat() const
                  return result;
             };
             break;
+        case SDL_PIXELFORMAT_BGR888:
         case SDL_PIXELFORMAT_ABGR8888:
             return [](uint8_t r, uint8_t g, uint8_t b) {
                 uint32_t result =
