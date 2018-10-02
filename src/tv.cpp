@@ -92,24 +92,22 @@ void TV::init()
         /* in theory we should follow native format, but on linux vm
          * I'm getting native format RGB888, which gets internally
          * converted into ARGB8888 anyway */
-        case SDL_PIXELFORMAT_RGB888:
         case SDL_PIXELFORMAT_ARGB8888:
             printf("Native pixelformat: ARGB8888\n");
             this->pixelformat = SDL_PIXELFORMAT_ARGB8888;
             break;
-        case SDL_PIXELFORMAT_BGR888:
         case SDL_PIXELFORMAT_ABGR8888:
             printf("Native pixelformat: ABGR8888\n");
             this->pixelformat = SDL_PIXELFORMAT_ABGR8888;
             break;
-        //case SDL_PIXELFORMAT_RGB888:
-        //    printf("Native pixelformat: RGB888\n");
-        //    this->pixelformat = SDL_PIXELFORMAT_RGB888;
-        //    break;
-        //case SDL_PIXELFORMAT_BGR888:
-        //    printf("Native pixelformat: BGR888\n");
-        //    this->pixelformat = SDL_PIXELFORMAT_BGR888;
-        //    break;
+        case SDL_PIXELFORMAT_RGB888:
+            printf("Native pixelformat: RGB888\n");
+            this->pixelformat = SDL_PIXELFORMAT_RGB888;
+            break;
+        case SDL_PIXELFORMAT_BGR888:
+            printf("Native pixelformat: BGR888\n");
+            this->pixelformat = SDL_PIXELFORMAT_BGR888;
+            break;
         default:
             printf("Unknown native pixelformat: %08x\n", window_pixelformat);
             break;
