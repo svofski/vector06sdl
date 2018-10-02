@@ -130,7 +130,9 @@ public:
 
     void pause(int pause)
     {
-        SDL_PauseAudioDevice(this->audiodev, pause);
+        if (!Options.nosound) {
+            SDL_PauseAudioDevice(this->audiodev, pause);
+        }
         this->wrptr = 0;
         this->rdbuf = 0;
         this->wrbuf = 0;
@@ -170,17 +172,19 @@ public:
 
     void sample(float samp) 
     {
-        SDL_LockAudioDevice(this->audiodev);
-        this->last_value = samp;
-        this->buffer[this->wrbuf][this->wrptr++] = samp;
-        this->buffer[this->wrbuf][this->wrptr++] = samp;
-        if (this->wrptr >= this->sound_frame_size * 2) {
-            this->wrptr = 0;
-            if (++this->wrbuf == Soundnik::NBUFFERS) {
-                this->wrbuf = 0;
+        if (!Options.nosound) {
+            SDL_LockAudioDevice(this->audiodev);
+            this->last_value = samp;
+            this->buffer[this->wrbuf][this->wrptr++] = samp;
+            this->buffer[this->wrbuf][this->wrptr++] = samp;
+            if (this->wrptr >= this->sound_frame_size * 2) {
+                this->wrptr = 0;
+                if (++this->wrbuf == Soundnik::NBUFFERS) {
+                    this->wrbuf = 0;
+                }
             }
+            SDL_UnlockAudioDevice(this->audiodev);
         }
-        SDL_UnlockAudioDevice(this->audiodev);
     }
 
 #define BIQUAD_FLOAT 1
@@ -188,11 +192,14 @@ public:
     {
         float ay = this->aywrapper.step2(step);
 
+        /* timerwrapper does the stepping of 8253, it must always be called */
 #if BIQUAD_FLOAT
         float soundf = this->timerwrapper.step(step/2) + tapeout + tapein;
+        if (Options.nosound) return; /* but then we can return if nosound */
         soundf = this->butt2->ffilter(this->butt1->ffilter(soundf * 0.2));
 #else
         int soundi = (this->timerwrapper.step(step / 2) + tapeout + tapein) << 21;
+        if (Options.nosound) return;
         soundi = this->butt2->ifilter(this->butt1->ifilter(soundi));
 
 #endif
