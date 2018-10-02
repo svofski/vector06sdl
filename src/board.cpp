@@ -388,14 +388,14 @@ void Board::debugger_continue()
 
 void Board::check_watchpoint(uint32_t addr, uint8_t value, int how)
 {
-    if (addr == 0) {
-        printf("check_watchpoint how=%d\n", how);
-    }
+    //if (addr == 0x100) {
+    //    printf("check_watchpoint how=%d\n", how);
+    //}
     auto found = std::find_if(this->memory_watchpoints.begin(),
             this->memory_watchpoints.end(), 
             [addr, how](Watchpoint const & item) {
                 if (item.type == Watchpoint::ACCESS || item.type == how) {
-                    return addr >= item.addr && addr < item.length;
+                    return addr >= item.addr && addr < (item.addr + item.length);
                 }
                 return false;
             });
