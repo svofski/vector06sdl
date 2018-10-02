@@ -7,7 +7,7 @@ set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release Debug NoConfig)
 message("CMAKE_SYSTEM_NAME is ${CMAKE_SYSTEM_NAME}")
 
 add_definitions(-Wall)
-add_definitions(-std=c++14)
+add_definitions(-std=gnu++14)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     message("This is Windows. Assuming MinGW from https://nuwen.net/mingw.html")

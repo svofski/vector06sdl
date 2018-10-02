@@ -1,3 +1,4 @@
+#include <math.h>
 #include "biquad.h"
 
 #define FIXP_WBITS     8 
