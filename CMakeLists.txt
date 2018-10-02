@@ -7,6 +7,7 @@ set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release Debug NoConfig)
 message("CMAKE_SYSTEM_NAME is ${CMAKE_SYSTEM_NAME}")
 
 add_definitions(-Wall)
+add_definitions(-std=c++14)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     message("This is Windows. Assuming MinGW from https://nuwen.net/mingw.html")
@@ -36,7 +37,6 @@ set(SOURCE_FILES src/main.cpp src/memory.cpp src/tv.cpp src/board.cpp
     src/server.cpp)
 add_executable(v06x ${SOURCE_FILES} boots.o)
 
-set_property(TARGET v06x PROPERTY CXX_STANDARD 11)
 
 set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost COMPONENTS thread system filesystem program_options REQUIRED)
@@ -93,4 +93,3 @@ set(TEST_SOURCE_FILES test/tests.cpp)
 include_directories(src)
 add_executable(tests ${TEST_SOURCE_FILES} boots.o)
 
-set_property(TARGET v06x PROPERTY CXX_STANDARD 14)

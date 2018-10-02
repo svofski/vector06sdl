@@ -20,15 +20,6 @@ _options Options =
     .screen_height = DEFAULT_SCREEN_HEIGHT,
     .border_width = DEFAULT_BORDER_WIDTH,
     .center_offset = DEFAULT_CENTER_OFFSET,
-    .novideo = false,
-    .nosound = false,
-    .nofdc = false,
-    .bootpalette = false,
-    .autostart = false,
-    .window = false,
-    .nofilter = false,
-    .blendmode = 0,
-    .profile = false,
 };
 
 void options(int argc, char ** argv)
