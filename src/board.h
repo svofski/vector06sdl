@@ -50,6 +50,9 @@ public:
     std::function<void(void)> poll_debugger;
     std::function<void(void)> onbreakpoint;
 
+private:
+    void refresh_watchpoint_listeners(void);
+
 public:
     Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd, 
             TV & _tv, WavPlayer & _tape_player);

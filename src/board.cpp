@@ -404,7 +404,7 @@ void Board::check_watchpoint(uint32_t addr, uint8_t value, int how)
     }
 }
 
-std::string Board::insert_breakpoint(int type, int addr, int kind)
+void Board::refresh_watchpoint_listeners()
 {
     auto check_wp_read = 
         [this](uint32_t addr, uint32_t phys, bool stack, uint8_t value) {
@@ -415,24 +415,28 @@ std::string Board::insert_breakpoint(int type, int addr, int kind)
             this->check_watchpoint(addr, value, Watchpoint::WRITE);
         };
 
-    auto add_memory_watchpoint = 
-        [this,check_wp_read,check_wp_write](Watchpoint w) {
-        this->memory_watchpoints.push_back(w);
-
-        printf("memory.onwrite, memory.onread reset\n");
-        this->memory.onwrite = this->memory.onread = nullptr;
-        for (auto &w : this->memory_watchpoints) {
-            if (this->memory.onwrite == nullptr && 
-                (w.type == Watchpoint::WRITE || w.type == Watchpoint::ACCESS)) {
-                this->memory.onwrite = check_wp_write;
-                printf("memory.onwrite set up\n");
-            }
-            if (this->memory.onread == nullptr &&
-                (w.type == Watchpoint::READ || w.type == Watchpoint::ACCESS)) {
-                this->memory.onread = check_wp_read;
-                printf("memory.onread set up\n");
-            }
+    printf("--- watchpoint inventory ---\n");
+    this->memory.onwrite = this->memory.onread = nullptr;
+    for (auto &w : this->memory_watchpoints) {
+        if (this->memory.onwrite == nullptr && 
+            (w.type == Watchpoint::WRITE || w.type == Watchpoint::ACCESS)) {
+            this->memory.onwrite = check_wp_write;
+            printf("write watchpoint: %08x,%x\n", w.addr, w.length);
         }
+        if (this->memory.onread == nullptr &&
+            (w.type == Watchpoint::READ || w.type == Watchpoint::ACCESS)) {
+            this->memory.onread = check_wp_read;
+            printf("read watchpoint: %08x,%x\n", w.addr, w.length);
+        }
+    }
+    printf("--- ---\n");
+}
+
+std::string Board::insert_breakpoint(int type, int addr, int kind)
+{
+    auto add_memory_watchpoint = [this](Watchpoint w) {
+        this->memory_watchpoints.push_back(w);
+	this->refresh_watchpoint_listeners();
     };
 
     switch (type) {
@@ -463,8 +467,9 @@ std::string Board::remove_breakpoint(int type, int addr, int kind)
 {
     auto del_memory_watchpoint = [this](Watchpoint w)
     {
-        auto v = this->memory_watchpoints;
+        auto & v = this->memory_watchpoints;
         v.erase(std::remove(v.begin(), v.end(), w), v.end());
+	this->refresh_watchpoint_listeners();
     };
 
     Breakpoint needle(addr, kind);
@@ -478,12 +483,15 @@ std::string Board::remove_breakpoint(int type, int addr, int kind)
             }
             return "OK";
         case 2:
+            printf("deleting write watchpoint @%04x, length=%d\n", addr, kind);
             del_memory_watchpoint(Watchpoint(Watchpoint::WRITE, addr, kind));
             return "OK";
         case 3:
+            printf("deleting read watchpoint @%04x, length=%d\n", addr, kind);
             del_memory_watchpoint(Watchpoint(Watchpoint::READ, addr, kind));
             return "OK";
         case 4:
+            printf("deleting access watchpoint @%04x, length=%d\n", addr, kind);
             del_memory_watchpoint(Watchpoint(Watchpoint::ACCESS, addr, kind));
             return "OK";
     }
