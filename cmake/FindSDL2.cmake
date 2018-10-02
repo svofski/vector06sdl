@@ -66,6 +66,7 @@
 #  License text for the above reference.)
 
 SET(SDL2_SEARCH_PATHS
+        $ENV{HOME}  # check user home for custom-built version
 	~/Library/Frameworks
 	/Library/Frameworks
 	/usr/local

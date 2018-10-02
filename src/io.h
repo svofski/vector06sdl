@@ -30,6 +30,7 @@ public:
     std::function<void(int)> onborderchange;
     std::function<void(bool)> onmodechange;
     std::function<void(bool)> onruslat;
+    std::function<uint32_t(uint8_t,uint8_t,uint8_t)> rgb2pixelformat;
 
 public:
     IO(Memory & _memory, Keyboard & _keyboard, I8253 & _timer, FD1793 & _fdc, 
@@ -290,11 +291,8 @@ public:
             int b = (w8 & 0xc0) >> 6;
             int g = (w8 & 0x38) >> 3;
             int r = (w8 & 0x07);
-            this->palette[index] =
-                0xff000000 |
-                (b << (6 + 16)) |
-                (g << (5 + 8)) |
-                (r << (5 + 0));
+
+            this->palette[index] = rgb2pixelformat(r,g,b);
             //printf("commit palette: %02x = %02x\n", index, this->palette[index]);
             this->palettebyte = -1;
         }

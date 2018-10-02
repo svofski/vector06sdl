@@ -45,6 +45,7 @@ int TV::probe()
                 SDL_BITSPERPIXEL(f), SDL_GetPixelFormatName(f), mode.w, mode.h,
                 mode.refresh_rate);
     }
+
     return 0;
 }
 
@@ -83,6 +84,19 @@ void TV::init()
     this->renderer = SDL_CreateRenderer(this->window, -1, 
             renderer_options);
 
+    uint32_t window_pixelformat = SDL_GetWindowPixelFormat(this->window);
+    this->pixelformat = SDL_PIXELFORMAT_ABGR8888;
+    switch (window_pixelformat) {
+        case SDL_PIXELFORMAT_ARGB8888:
+            printf("Native pixelformat: ARGB8888\n");
+            this->pixelformat = SDL_PIXELFORMAT_ARGB8888;
+            break;
+        case SDL_PIXELFORMAT_ABGR8888:
+            printf("Native pixelformat: ABGR8888\n");
+            this->pixelformat = SDL_PIXELFORMAT_ABGR8888;
+            break;
+    }
+
     if (!Options.window) {
         SDL_SetWindowFullscreen(this->window, 
 #if __MACOSX__
@@ -95,10 +109,10 @@ void TV::init()
 
     this->tex_width = Options.screen_width;
     this->tex_height = Options.screen_height;
-    this->texture[0] = SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_ABGR8888,
+    this->texture[0] = SDL_CreateTexture(this->renderer, this->pixelformat,
             SDL_TEXTUREACCESS_STATIC, this->tex_width, this->tex_height);
 
-    this->texture[1] = SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_ABGR8888,
+    this->texture[1] = SDL_CreateTexture(this->renderer, this->pixelformat,
             SDL_TEXTUREACCESS_STATIC, this->tex_width, this->tex_height);
     this->texture_n = 0;
 
@@ -150,7 +164,7 @@ bool TV::handle_keyboard_event(SDL_KeyboardEvent & event)
 #if HAS_IMAGE
         SDL_Surface * s = SDL_CreateRGBSurfaceWithFormatFrom(this->bmp, 
                 Options.screen_width, Options.screen_height, 32, 
-                4*Options.screen_width, SDL_PIXELFORMAT_ABGR8888);
+                4*Options.screen_width, this->pixelformat);
 
         IMG_SavePNG(s, path.c_str());
 
@@ -223,3 +237,30 @@ bool TV::handle_keyboard_event(SDL_KeyboardEvent & event)
         return this->refresh_rate;
     }
 
+std::function<uint32_t(uint8_t,uint8_t,uint8_t)> TV::get_rgb2pixelformat() const
+{
+    switch(this->pixelformat) {
+        case SDL_PIXELFORMAT_ARGB8888:
+            return [](uint8_t r, uint8_t g, uint8_t b) {
+                uint32_t result =
+                    0xff000000 |
+                    (r << (5 + 16)) |
+                    (g << (5 + 8)) |
+                    (b << (6 + 0));
+                 return result;
+            };
+            break;
+        case SDL_PIXELFORMAT_ABGR8888:
+            return [](uint8_t r, uint8_t g, uint8_t b) {
+                uint32_t result =
+                    0xff000000 |
+                    (b << (6 + 16)) |
+                    (g << (5 + 8)) |
+                    (r << (5 + 0));
+                 return result;
+            };
+            break;
+    }
+    printf("Impossible pixelformat: %08x\n", this->pixelformat);
+    return nullptr;
+}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <functional>
 #include "globaldefs.h"
 #include "SDL.h"
 #include "options.h"
@@ -21,6 +22,8 @@ private:
     int refresh_rate;
     int texture_n;
 
+    uint32_t pixelformat;
+
 private:
     void render_with_blend(int src_alpha);
     void render_single();
@@ -33,6 +36,7 @@ public:
     void toggle_fullscreen();
     void save_frame(std::string path);
     uint32_t* pixels() const;
+    std::function<uint32_t(uint8_t,uint8_t,uint8_t)> get_rgb2pixelformat() const;
     /* executed: 1 if the frame was real, 0 if the frame is a skip frame */
     void render(int executed);
     int get_refresh_rate() const;

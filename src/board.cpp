@@ -39,6 +39,7 @@ void Board::init()
     i8080_hal_bind(memory, io, *this);
     cadence::set_cadence(this->tv.get_refresh_rate(), cadence_frames, 
             cadence_length);
+    io.rgb2pixelformat = tv.get_rgb2pixelformat();
     create_timer();
 }
 
