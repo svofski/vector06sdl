@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 struct Breakpoint {
     int addr;
     int kind;
@@ -17,8 +19,8 @@ struct Watchpoint {
         WRITE, READ, ACCESS
     };
 
-    int addr;
-    int length;
+    uint32_t addr;
+    uint32_t length;
     int type;
 
     Watchpoint(wptype type_, int addr_, int length_) : addr(addr_), 

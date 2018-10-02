@@ -82,9 +82,11 @@ public:
             std::string response("T05");
             std::string full = "+$" + response + "#" + 
                 GdbPacket::calc_crc(response);
+            strncpy(breakdata, full.c_str(), sizeof(breakdata)-1);
+            printf("BREAKPOINT -- sending to GDB: [%s]\n", full.c_str());
             boost::asio::async_write(this->socket,
-                    boost::asio::buffer(full.c_str(), full.length()),
-                    boost::bind(&Session::handle_write, this,
+                    boost::asio::buffer(breakdata, full.length()),
+                    boost::bind(&Session::handle_write_dummy, this,
                         shared_from_this(),
                         boost::asio::placeholders::error));
         };
@@ -97,13 +99,19 @@ public:
                     boost::asio::placeholders::bytes_transferred));
     }
 
+    void handle_write_dummy(std::shared_ptr<Session>& s,
+            const boost::system::error_code& err) 
+    {
+         printf("handle_write_dummy: whatever\n");
+    }
+
     void handle_read(std::shared_ptr<Session>& s,
             const boost::system::error_code& err,
             size_t bytes_transferred)
     {
+        printf("handle_read: ");
         if (!err) {
-            std::cout << "recv: " << std::string(data, bytes_transferred) 
-                << std::endl;
+            printf("[%s]\n", std::string(data, bytes_transferred).c_str());
             if (data[0] == 3) {
                 printf("^C\n");
             }
@@ -124,6 +132,7 @@ public:
             }
         } 
         else {
+            printf("ERROR\n");
             std::cerr << "err (recv): " << err.message() << std::endl;
         }
     }
@@ -137,7 +146,10 @@ public:
             return;
         }
 
+        printf("handle_write: ");
+
         if (!err) {
+            printf("ok -> async_read_some\n");
             socket.async_read_some(
                     boost::asio::buffer(data, max_length),
                     boost::bind(&Session::handle_read, this,
@@ -146,6 +158,7 @@ public:
                         boost::asio::placeholders::bytes_transferred));
         } 
         else {
+            printf("ERROR\n");
             std::cerr << "err (recv): " << err.message() << std::endl;
         }
     }
@@ -330,8 +343,9 @@ public:
 
 private:
     tcp::socket socket;
-    enum { max_length = 65536 };
+    enum { max_length = 4096 };
     char data[max_length];
+    char breakdata[max_length];
     Board & board;
     bool closing;
 };

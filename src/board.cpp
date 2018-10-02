@@ -265,12 +265,11 @@ int Board::loop_frame_userevent()
 {
     SDL_Event event;
     bool frame = false;
-    int result = 0;
     while(!frame) {
         if (SDL_WaitEvent(&event)) {
             switch(event.type) {
                 case SDL_USEREVENT:
-                    result = this->execute_frame(true);
+                    this->execute_frame(true);
                     frame = true;
                     break;
                 default:
