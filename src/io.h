@@ -47,12 +47,15 @@ public:
 
     void yellowblue()
     {
-        static uint32_t yeblette[] = {
-            4286578688, 4286578688, 4278231200, 4278231200,
-            4286578688, 4286578688, 4278231200, 4278231200,
-            4286578688, 4286578688, 4278231200, 4278231200,
-            4286578688, 4286578688, 4278231200, 4278231200};
-        memcpy(palette, yeblette, sizeof(palette));
+        // Create boot-time yellow/blue yeblette using correct pixelformat
+        for (int i = 0; i < 16; ++i) {
+            if (i & 2) {
+                this->palette[i] = rgb2pixelformat(5, 5, 0); 
+            } 
+            else {
+                this->palette[i] = rgb2pixelformat(0, 0, 2); 
+            }
+        }
     }
 
     int input(int port)

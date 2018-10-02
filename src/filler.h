@@ -263,7 +263,7 @@ public:
         return false;
     }
 #else
-    int fill1(int clocks, int commit_time, int commit_time_pal, bool updateScreen) {
+int fill1(int clocks, int commit_time, int commit_time_pal, bool updateScreen) {
         uint32_t * bmp = this->tv.pixels();
         int clk;
 

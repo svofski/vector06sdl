@@ -195,11 +195,11 @@ public:
         /* timerwrapper does the stepping of 8253, it must always be called */
 #if BIQUAD_FLOAT
         float soundf = this->timerwrapper.step(step/2) + tapeout + tapein;
-        if (Options.nosound) return; /* but then we can return if nosound */
+        //if (Options.nosound) return; /* but then we can return if nosound */
         soundf = this->butt2->ffilter(this->butt1->ffilter(soundf * 0.2));
 #else
         int soundi = (this->timerwrapper.step(step / 2) + tapeout + tapein) << 21;
-        if (Options.nosound) return;
+        //if (Options.nosound) return;
         soundi = this->butt2->ifilter(this->butt1->ifilter(soundi));
 
 #endif
