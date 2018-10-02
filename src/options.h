@@ -25,11 +25,12 @@ struct _options
     bool nofilter;      /* bypass audio filter */
     int blendmode;      /* 0: no blend, 1: mix in doubled frames */
 
-
     struct _log {
         bool fdc;
         bool audio;
     } log;
+
+    bool profile;       /* enable gperftools CPU profiler */
 
     std::string path_for_frame(int n);
     std::vector<std::string> fddfile;

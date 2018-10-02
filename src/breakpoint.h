@@ -11,7 +11,21 @@ struct Breakpoint {
     }
 
 };
-//    bool operator==(const Breakpoint & lhs, const Breakpoint & rhs)
-//    {
-//    	return lhs.addr == rhs.addr && lhs.kind == rhs.kind;
-//    }
+
+struct Watchpoint {
+    enum wptype {
+        WRITE, READ, ACCESS
+    };
+
+    int addr;
+    int length;
+    int type;
+
+    Watchpoint(wptype type_, int addr_, int length_) : addr(addr_), 
+        length(length_), type(type_) {}
+
+    bool operator==(const Watchpoint & b) const {
+        return this->addr == b.addr && this->length == b.length &&
+            this->type == b.type;
+    }
+};

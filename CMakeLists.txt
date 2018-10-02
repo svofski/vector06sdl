@@ -10,7 +10,8 @@ add_definitions(-Wall)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     message("This is Windows. Assuming MinGW from https://nuwen.net/mingw.html")
-    set(EXTRA_LIBS -limm32 -lwinmm -lversion)
+    set(EXTRA_LIBS -limm32 -lwinmm -lversion -lws2_32 -lmswsock)
+    #target_link_libraries(v06x ws2_32 mswsock)
     set(BFDNAME -O pe-x86-64 -B i386:x86-64)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     message("Must be a macOS, will use xxd")
@@ -29,19 +30,17 @@ else()
     endif()	
 endif() 
 
-set(SOURCE_FILES src/main.cpp src/memory.cpp src/board.cpp src/hal.cpp src/i8080.cpp src/options.cpp
+set(SOURCE_FILES src/main.cpp src/memory.cpp src/tv.cpp src/board.cpp 
+    src/hal.cpp src/i8080.cpp src/options.cpp
     src/biquad.cpp src/cadence.cpp
     src/server.cpp)
 add_executable(v06x ${SOURCE_FILES} boots.o)
 
 set_property(TARGET v06x PROPERTY CXX_STANDARD 11)
 
+set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost COMPONENTS thread system filesystem program_options REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-	target_link_libraries(v06x ws2_32 mswsock)
-endif()
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
@@ -57,6 +56,14 @@ endif()
 include_directories(${SDL2_INCLUDE_DIR} ${SDL2_IMAGE_INCLUDE_DIRS})
 
 target_link_libraries(v06x ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARIES} ${Boost_LIBRARIES})
+
+get_directory_property(include_dirs INCLUDE_DIRECTORIES)
+find_path(PERFTOOLS_H gperftools/profiler.h ${include_dirs})
+if (PERFTOOLS_H)
+    message("Found gperftools/profiler.h")
+    add_definitions(-DHAVE_GPERFTOOLS=1)
+    set(EXTRA_LIBS ${EXTRA_LIBS} -lprofiler)
+endif()
 
 # Have boots.bin copied first to avoid using long paths
 # objcopy generates absurd names if paths are used

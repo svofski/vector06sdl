@@ -14,6 +14,10 @@
 #include "wav.h"
 #include "server.h"
 
+#if HAVE_GPERFTOOLS
+#include <gperftools/profiler.h>
+#endif
+
 static size_t islength(std::ifstream & is)
 {
     is.seekg(0, is.end);
@@ -155,6 +159,13 @@ int main(int argc, char ** argv)
         gdbserver.poll();
     };
 
+#if HAVE_GPERFTOOLS
+    if (Options.profile) {
+        printf("Enabling profile data collection to v06x.prof\n");
+        ProfilerStart("v06x.prof");
+    }
+#endif
+
     for(int i = 0;; ++i) {
         int executed = board.loop_frame();
         if (i == startframe) {
@@ -173,6 +184,12 @@ int main(int argc, char ** argv)
             break;
         }
     }
+
+#if HAVE_GPERFTOOLS
+    if (Options.profile) {
+        ProfilerStop();
+    }
+#endif
 
     return 0;
 }

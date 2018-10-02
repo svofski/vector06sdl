@@ -42,31 +42,26 @@ uint32_t Memory::tobank(uint32_t a)
 
 uint8_t Memory::read(uint32_t addr, bool stackrq)
 {
+    uint8_t value;
+    uint32_t phys = addr;
     if (this->bootbytes.size() && addr < this->bootbytes.size()) {
-        return this->bootbytes[addr];
+        value = this->bootbytes[phys];
+    } else {
+        phys = this->tobank(this->bigram_select(addr & 0xffff, stackrq));
+        value = this->bytes[phys];
     }
-    //if (this->bigram_select(addr & 0xffff, stackrq) != addr) {
-    //    uint8_t res = this->bytes[this->tobank(
-    //            this->bigram_select(addr & 0xffff, stackrq))];
-    //    printf("RD: %04x#%d->%06x: %02x\n", addr, stackrq,
-    //            this->bigram_select(addr & 0xffff, stackrq), res);
-    //}
-    return this->bytes[this->tobank(this->bigram_select(addr & 0xffff, stackrq))];
-}
+    if (this->onread) this->onread(addr, phys, stackrq, value);
 
-uint8_t Memory::read_ram(uint32_t addr, bool stackrq)
-{
-    return this->bytes[this->tobank(this->bigram_select(addr & 0xffff, stackrq))];
+    return value;
 }
-
 
 void Memory::write(uint32_t addr, uint8_t w8, bool stackrq)
 {
-    if (this->bigram_select(addr & 0xffff, stackrq) != addr) {
-        //printf("WR: %04x#%d->%06x=%02x\n", addr, stackrq,
-        //    this->bigram_select(addr & 0xffff, stackrq), w8);
+    uint32_t phys = this->tobank(this->bigram_select(addr & 0xffff, stackrq));
+    if (this->onwrite) {
+        this->onwrite(addr, phys, stackrq, w8);
     }
-    this->bytes[this->tobank(this->bigram_select(addr & 0xffff, stackrq))] = w8;
+    this->bytes[phys] = w8;
 }
 
 void Memory::init_from_vector(vector<uint8_t> & from, uint32_t start_addr)

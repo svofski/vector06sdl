@@ -43,6 +43,8 @@ private:
     int debugging;
     int debugger_interrupt;
     std::vector<Breakpoint> breakpoints;
+    std::vector<Watchpoint> memory_watchpoints;
+    std::vector<Watchpoint> io_watchpoints;
 
 public:
     std::function<void(void)> poll_debugger;
@@ -57,7 +59,7 @@ public:
     void interrupt(bool on);
     /* Fuses together inner CPU logic and Vector-06c interrupt logic */
     bool check_interrupt();
-    void execute_frame(bool update_screen);
+    int execute_frame(bool update_screen);
     void single_step(bool update_screen);
     int loop_frame();
     bool cadence_allows();
@@ -78,4 +80,5 @@ public:
     std::string insert_breakpoint(int type, int addr, int kind);
     std::string remove_breakpoint(int type, int addr, int kind);
     bool check_breakpoint();
+    void check_watchpoint(uint32_t addr, uint8_t value, int how);
 };

@@ -92,10 +92,10 @@ bool Board::check_interrupt()
 #define F2 370
 //#define DBG_FRM(a,b,bob) if (frame_no>=a && frame_no<=b) {bob;}
 #define DBG_FRM(a,b,bob) {};
-void Board::execute_frame(bool update_screen)
+int Board::execute_frame(bool update_screen)
 {
     if (this->poll_debugger) this->poll_debugger();
-    if (this->debugger_interrupt) return;
+    if (this->debugger_interrupt) return 0;
 
     ++this->frame_no;
     this->filler.reset();
@@ -118,6 +118,7 @@ void Board::execute_frame(bool update_screen)
         this->single_step(update_screen);
     }
     //printf("between = %d\n", this->between);
+    return 1;
 }
 
 void Board::single_step(bool update_screen)
@@ -199,7 +200,7 @@ void Board::single_step(bool update_screen)
 
 int Board::loop_frame()
 {
-    if (Options.vsync) {
+    if (Options.vsync /* && !this->debugger_interrupt*/ ) {
         return loop_frame_vsync();
     }
     else {
@@ -247,18 +248,15 @@ int Board::loop_frame_vsync()
     measure_framerate();
 #endif
     SDL_Event event;
-    bool frame = false;
     int result = 0;
-    while(!frame) {
+    do {
         if (cadence_allows()) {
-            execute_frame(true);
-            result = 1;
+            result = this->execute_frame(true);
         }
-        frame = true;
         while (SDL_PollEvent(&event)) {
             handle_event(event);
         }
-    }
+    } while(0);
     return result;
 }
 
@@ -266,11 +264,12 @@ int Board::loop_frame_userevent()
 {
     SDL_Event event;
     bool frame = false;
+    int result = 0;
     while(!frame) {
         if (SDL_WaitEvent(&event)) {
             switch(event.type) {
                 case SDL_USEREVENT:
-                    execute_frame(true);
+                    result = this->execute_frame(true);
                     frame = true;
                     break;
                 default:
@@ -284,6 +283,7 @@ int Board::loop_frame_userevent()
 
 void Board::handle_event(SDL_Event & event)
 {
+    //printf("handle_event: event.type=%d\n", event.type);
     switch(event.type) {
         case SDL_KEYDOWN:
             if (!this->tv.handle_keyboard_event(event.key)) {
@@ -385,15 +385,74 @@ void Board::debugger_continue()
     this->debugger_interrupt = 0;
 }
 
+void Board::check_watchpoint(uint32_t addr, uint8_t value, int how)
+{
+    if (addr == 0) {
+        printf("check_watchpoint how=%d\n", how);
+    }
+    auto found = std::find_if(this->memory_watchpoints.begin(),
+            this->memory_watchpoints.end(), 
+            [addr, how](Watchpoint const & item) {
+                if (item.type == Watchpoint::ACCESS || item.type == how) {
+                    return addr >= item.addr && addr < item.length;
+                }
+                return false;
+            });
+    if (found != this->memory_watchpoints.end()) {
+        this->debugger_interrupt = true;
+        if (this->onbreakpoint) this->onbreakpoint();
+    }
+}
+
 std::string Board::insert_breakpoint(int type, int addr, int kind)
 {
+    auto check_wp_read = 
+        [this](uint32_t addr, uint32_t phys, bool stack, uint8_t value) {
+            this->check_watchpoint(addr, value, Watchpoint::READ);
+        };
+    auto check_wp_write = 
+        [this](uint32_t addr, uint32_t phys, bool stack, uint8_t value) {
+            this->check_watchpoint(addr, value, Watchpoint::WRITE);
+        };
+
+    auto add_memory_watchpoint = 
+        [this,check_wp_read,check_wp_write](Watchpoint w) {
+        this->memory_watchpoints.push_back(w);
+
+        printf("memory.onwrite, memory.onread reset\n");
+        this->memory.onwrite = this->memory.onread = nullptr;
+        for (auto &w : this->memory_watchpoints) {
+            if (this->memory.onwrite == nullptr && 
+                (w.type == Watchpoint::WRITE || w.type == Watchpoint::ACCESS)) {
+                this->memory.onwrite = check_wp_write;
+                printf("memory.onwrite set up\n");
+            }
+            if (this->memory.onread == nullptr &&
+                (w.type == Watchpoint::READ || w.type == Watchpoint::ACCESS)) {
+                this->memory.onread = check_wp_read;
+                printf("memory.onread set up\n");
+            }
+        }
+    };
+
     switch (type) {
         case 0: // software breakpoint
         case 1: // hardware breakpoint
             this->breakpoints.push_back(Breakpoint(addr, kind));
             printf("added breakpoint @%04x, kind=%d\n", addr, kind);
             return "OK";
-            break;
+        case 2: // write watchpoint @ addr, kind = number of bytes to watch
+            add_memory_watchpoint(Watchpoint(Watchpoint::WRITE, addr, kind));
+            printf("added write watchpoint @%04x, len=%d\n", addr, kind);
+            return "OK";
+        case 3: // read watchpoint
+            add_memory_watchpoint(Watchpoint(Watchpoint::READ, addr, kind));
+            printf("added read watchpoint @%04x, len=%d\n", addr, kind);
+            return "OK";
+        case 4: // access watchpoint
+            add_memory_watchpoint(Watchpoint(Watchpoint::ACCESS, addr, kind));
+            printf("added access watchpoint @%04x, len=%d\n", addr, kind);
+            return "OK";
         default:
             break;
     }
@@ -402,25 +461,37 @@ std::string Board::insert_breakpoint(int type, int addr, int kind)
 
 std::string Board::remove_breakpoint(int type, int addr, int kind)
 {
+    auto del_memory_watchpoint = [this](Watchpoint w)
+    {
+        auto v = this->memory_watchpoints;
+        v.erase(std::remove(v.begin(), v.end(), w), v.end());
+    };
+
     Breakpoint needle(addr, kind);
     switch (type) {
         case 0:
         case 1:
+            {
             auto & v = this->breakpoints;
             v.erase(std::remove(v.begin(), v.end(), needle), v.end());
-            printf("deleted breakpoint @%04x, kind=%d\n", 
-                    addr, kind);
+            printf("deleted breakpoint @%04x, kind=%d\n", addr, kind);
+            }
             return "OK";
-            break;
+        case 2:
+            del_memory_watchpoint(Watchpoint(Watchpoint::WRITE, addr, kind));
+            return "OK";
+        case 3:
+            del_memory_watchpoint(Watchpoint(Watchpoint::READ, addr, kind));
+            return "OK";
+        case 4:
+            del_memory_watchpoint(Watchpoint(Watchpoint::ACCESS, addr, kind));
+            return "OK";
     }
     return ""; // not supported
 }
 
 bool Board::check_breakpoint()
 {
-//    Breakpoint needle(i8080_pc(), 1);
-//    auto it = std::find(this->breakpoints.begin(), this->breakpoints.end(), needle);
-
     return std::find(this->breakpoints.begin(), this->breakpoints.end(),
             Breakpoint(i8080_pc(), 1)) != this->breakpoints.end();
 }

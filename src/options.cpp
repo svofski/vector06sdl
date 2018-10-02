@@ -20,6 +20,15 @@ _options Options =
     .screen_height = DEFAULT_SCREEN_HEIGHT,
     .border_width = DEFAULT_BORDER_WIDTH,
     .center_offset = DEFAULT_CENTER_OFFSET,
+    .novideo = false,
+    .nosound = false,
+    .nofdc = false,
+    .bootpalette = false,
+    .autostart = false,
+    .window = false,
+    .nofilter = false,
+    .blendmode = 0,
+    .profile = false,
 };
 
 void options(int argc, char ** argv)
@@ -56,6 +65,10 @@ void options(int argc, char ** argv)
         ("border-width", po::value<int>(), "width of horizontal border (default 32)")
         ("record-audio", po::value<std::string>(), "record audio output to file")
         ("saveconfig", "save config to ~/.v06x.conf")
+#if HAVE_GPERFTOOLS
+        ("profile", "collect CPU profile data in v06x.prof\n"
+            "examine data using pprof -http 0.0.0.0:5555 ./v06x v06x.prof")
+#endif
         ;
         
     po::variables_map vm;
@@ -181,6 +194,8 @@ void options(int argc, char ** argv)
                 printf("There was an error saving config to %s\n", conf.c_str());
             }
         }
+
+        Options.profile = vm.count("profile") > 0;
     }
     catch(po::error & err) {
         std::cerr << err.what() << std::endl;
