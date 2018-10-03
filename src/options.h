@@ -24,6 +24,7 @@ struct _options
     bool window;        /* run in a window */
     bool nofilter;      /* bypass audio filter */
     int blendmode;      /* 0: no blend, 1: mix in doubled frames */
+    bool opengl;
 
     struct _log {
         bool fdc;

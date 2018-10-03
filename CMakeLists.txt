@@ -55,7 +55,10 @@ else()
 endif()
 include_directories(${SDL2_INCLUDE_DIR} ${SDL2_IMAGE_INCLUDE_DIRS})
 
-target_link_libraries(v06x ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARIES} ${Boost_LIBRARIES})
+find_package(OpenGL)
+message("OPENGL_FOUND: ${OPENGL_FOUND}")
+
+target_link_libraries(v06x ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARIES} ${Boost_LIBRARIES} ${OPENGL_LIBRARIES})
 
 get_directory_property(include_dirs INCLUDE_DIRECTORIES)
 find_path(PERFTOOLS_H gperftools/profiler.h ${include_dirs})

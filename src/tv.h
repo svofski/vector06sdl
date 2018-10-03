@@ -4,6 +4,7 @@
 #include <functional>
 #include "globaldefs.h"
 #include "SDL.h"
+#include "SDL_opengl.h"
 #include "options.h"
 
 #if HAS_IMAGE
@@ -24,9 +25,17 @@ private:
 
     uint32_t pixelformat;
 
+    SDL_GLContext gl_context;
+    GLuint gl_textures[2];
+
 private:
     void render_with_blend(int src_alpha);
     void render_single();
+    void render_single_regular();
+    void render_single_opengl();
+    void init_regular();
+    void init_opengl();
+    void init_gl_textures();
 
 public:
     TV();

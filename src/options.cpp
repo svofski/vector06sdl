@@ -44,6 +44,7 @@ void options(int argc, char ** argv)
         ("max-frame", po::value<int>(), "run emulation for this many frames then exit")
         ("save-frame", po::value<std::vector<int>>(), "save frame with these numbers (multiple)")
         ("novideo", "do not output video")
+        ("opengl", "use OpenGL for rendering")
         ("nosound", "stay silent")
         ("nofdc", "detach floppy disk controller")
         ("window", "run in a window, not fullscreen")
@@ -187,6 +188,8 @@ void options(int argc, char ** argv)
         }
 
         Options.profile = vm.count("profile") > 0;
+
+        Options.opengl = vm.count("opengl") > 0;
     }
     catch(po::error & err) {
         std::cerr << err.what() << std::endl;

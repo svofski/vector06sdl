@@ -1,9 +1,17 @@
 #include <string>
 #include "globaldefs.h"
 #include "SDL.h"
+#include "SDL_opengl.h"
 #include "options.h"
 #include "tv.h"
 
+#include <OpenGL/GL.h>
+#include <OpenGL/glext.h>
+#include <OpenGL/gl3ext.h>
+
+extern "C" {
+extern void APIENTRY glGetInternalformativ (GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint *params);
+}
 #if HAS_IMAGE
 extern "C" DECLSPEC int SDLCALL IMG_SavePNG(SDL_Surface *surface, const char *file);
 #endif
@@ -53,9 +61,12 @@ int TV::probe()
 
 void TV::init()
 {
-    if (Options.novideo) {
+    if (Options.novideo || Options.opengl) {
         /* if novideo, we need a texture to draw to */
+        /* if OpenGl, allocate pixels */
         this->bmp = new uint32_t[Options.screen_width * Options.screen_height];
+    }
+    if (Options.novideo) {
         return;
     }
 
@@ -70,6 +81,16 @@ void TV::init()
             display_mode.refresh_rate);
     this->refresh_rate = display_mode.refresh_rate;
 
+    if (Options.opengl) {
+        this->init_opengl();
+    }
+    else {
+        this->init_regular();
+    }
+}
+
+void TV::init_regular()
+{
     int window_options = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
     int renderer_options = SDL_RENDERER_ACCELERATED;
     if (Options.vsync) {
@@ -85,6 +106,13 @@ void TV::init()
             window_width, window_height, window_options);
     this->renderer = SDL_CreateRenderer(this->window, -1, 
             renderer_options);
+
+    SDL_RendererInfo rinfo;
+    SDL_GetRendererInfo(this->renderer, &rinfo);
+    printf("SDL_RendererInfo: %s SDL_RENDERER_ACCELERATED\n", 
+            (rinfo.flags & SDL_RENDERER_ACCELERATED) ? "yes" : "no");
+    printf("SDL_RendererInfo: %s SDL_RENDERER_TARGETTEXTURE\n", 
+            (rinfo.flags & SDL_RENDERER_TARGETTEXTURE) ? "yes" : "no");
 
     uint32_t window_pixelformat = SDL_GetWindowPixelFormat(this->window);
     //this->pixelformat = SDL_PIXELFORMAT_ABGR8888;
@@ -133,6 +161,61 @@ void TV::init()
     this->texture_n = 0;
 
     SDL_RenderSetLogicalSize(this->renderer, window_width, window_height);
+}
+
+void print_tex_format_info(GLenum internalformat)
+{
+    GLint pformat, format, type;
+
+    pformat = format = type = 0;
+
+    glGetInternalformativ(GL_TEXTURE_2D, internalformat, GL_INTERNALFORMAT_PREFERRED, 1, &pformat);
+    glGetInternalformativ(GL_TEXTURE_2D, internalformat, GL_TEXTURE_IMAGE_FORMAT, 1, &format);
+    glGetInternalformativ(GL_TEXTURE_2D, internalformat, GL_TEXTURE_IMAGE_TYPE, 1, &type);
+
+    printf("IF [%x]\nPF [%x]\nXF [%x]\nTP [%x]\n\n",
+            internalformat,
+            pformat,
+            format,
+            type
+          );
+}
+
+
+void TV::init_opengl()
+{
+    int window_height = Options.screen_height * 2;
+    int window_width = window_height * 5 / 4;
+
+    window_width += 2 * (Options.border_width - 32);
+
+    int window_options = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | 
+        SDL_WINDOW_OPENGL;
+    this->window = SDL_CreateWindow("Вектор-06ц (gl)", 0, 0, 
+            window_width, window_height, window_options);
+    gl_context = SDL_GL_CreateContext(window);
+    SDL_GL_SetSwapInterval(Options.vsync ? 1 : 0);
+
+    print_tex_format_info(GL_RGB);
+    print_tex_format_info(GL_RGB8);
+    print_tex_format_info(GL_RGBA8);
+    init_gl_textures();
+}
+
+
+void TV::init_gl_textures()
+{
+    this->pixelformat = SDL_PIXELFORMAT_ARGB8888;
+    glGenTextures(1, &this->gl_textures[0]);
+    glBindTexture(GL_TEXTURE_2D, gl_textures[0]);
+    glTexImage2D(GL_TEXTURE_2D, 0, 
+            /* internalformat */ GL_RGBA8,
+            Options.screen_width, Options.screen_height, /* border */ 0, 
+            /* format */ GL_RGBA, 
+            /* type */   GL_UNSIGNED_BYTE, 
+            (uint8_t*)this->bmp);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
 }
 
 bool TV::handle_keyboard_event(SDL_KeyboardEvent & event)
@@ -200,6 +283,10 @@ uint32_t* TV::pixels() const {
 
 void TV::render_with_blend(int src_alpha)
 {
+    if (Options.opengl) {
+        printf("render_with_blend not supported on opengl");
+        return;
+    }
     int A = this->texture_n;
     int B = (this->texture_n + 1) & 1;
 
@@ -220,15 +307,56 @@ void TV::render_with_blend(int src_alpha)
 
 void TV::render_single()
 {
+    if (Options.opengl) {
+        this->render_single_opengl();
+    }
+    else {
+        this->render_single_regular();
+    }
+}
+
+void TV::render_single_regular()
+{
     /* render single frame */
-    SDL_UnlockTexture(this->texture[this->texture_n]);
+    int t = this->texture_n;
+    SDL_UnlockTexture(this->texture[t]);
     this->bmp = NULL;
-    SDL_SetTextureBlendMode(this->texture[this->texture_n], 
+    SDL_SetTextureBlendMode(this->texture[t], 
             SDL_BLENDMODE_NONE);
-    SDL_SetTextureAlphaMod(this->texture[this->texture_n], 255);
+    SDL_SetTextureAlphaMod(this->texture[t], 255);
     SDL_RenderClear(this->renderer);
-    SDL_RenderCopy(this->renderer, this->texture[this->texture_n], NULL, NULL);
+    SDL_RenderCopy(this->renderer, this->texture[t], NULL, NULL);
     this->texture_n = (this->texture_n + 1) & 1;
+}
+
+void TV::render_single_opengl()
+{
+    const int w = Options.screen_width, h = Options.screen_height;
+
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, 
+            GL_BGRA, 
+            GL_UNSIGNED_BYTE, 
+            (GLvoid*)this->bmp);
+
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glMatrixMode(GL_PROJECTION); 
+    glLoadIdentity(); 
+    glOrtho(0.0f, w, h, 0.0f, 0.0f, 1.0f);
+    glMatrixMode(GL_MODELVIEW); 
+    glLoadIdentity();
+ 
+    //glBindTexture(GL_TEXTURE_2D, this->gl_textures[0]);
+    glEnable(GL_TEXTURE_2D);
+
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 0); glVertex2f(0,0);
+    glTexCoord2f(1, 0); glVertex2f(w,0);
+    glTexCoord2f(1, 1); glVertex2f(w,h);
+    glTexCoord2f(0, 1); glVertex2f(0,h);
+    glEnd();
+
+    SDL_GL_SwapWindow(window);
 }
 
 /* executed: 1 if the frame was real, 0 if the frame is a skip frame */
