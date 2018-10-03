@@ -201,6 +201,9 @@ void TV::init_opengl()
     gl_context = SDL_GL_CreateContext(window);
     SDL_GL_SetSwapInterval(Options.vsync ? 1 : 0);
 
+    glDisable(GL_DEPTH_TEST);
+    glDepthFunc(GL_ALWAYS);
+
     print_tex_format_info(GL_RGB);
     print_tex_format_info(GL_RGB8);
     print_tex_format_info(GL_RGBA8);
@@ -210,17 +213,21 @@ void TV::init_opengl()
 
 void TV::init_gl_textures()
 {
+    printf("Texture size: %dx%d\n", Options.screen_width, Options.screen_height);
     this->pixelformat = SDL_PIXELFORMAT_ARGB8888;
     glGenTextures(1, &this->gl_textures[0]);
     glBindTexture(GL_TEXTURE_2D, gl_textures[0]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+
     glTexImage2D(GL_TEXTURE_2D, 0, 
             /* internalformat */ GL_RGBA8,
             Options.screen_width, Options.screen_height, /* border */ 0, 
             /* format */ GL_RGBA, 
             /* type */   GL_UNSIGNED_BYTE, 
             (uint8_t*)this->bmp);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
 }
 
 bool TV::handle_keyboard_event(SDL_KeyboardEvent & event)
@@ -338,10 +345,11 @@ void TV::render_single_opengl()
 {
     const int w = Options.screen_width, h = Options.screen_height;
 
+    //this->texture_n = (this->texture_n + 1) & 1;
+
+    glBindTexture(GL_TEXTURE_2D, this->gl_textures[0]);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, 
-            GL_BGRA, 
-            GL_UNSIGNED_BYTE, 
-            (GLvoid*)this->bmp);
+            GL_BGRA, GL_UNSIGNED_BYTE, (GLvoid*)this->bmp);
 
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -351,17 +359,13 @@ void TV::render_single_opengl()
     glMatrixMode(GL_MODELVIEW); 
     glLoadIdentity();
  
-    //glBindTexture(GL_TEXTURE_2D, this->gl_textures[0]);
     glEnable(GL_TEXTURE_2D);
-
     glBegin(GL_QUADS);
     glTexCoord2f(0, 0); glVertex2f(0,0);
     glTexCoord2f(1, 0); glVertex2f(w,0);
     glTexCoord2f(1, 1); glVertex2f(w,h);
     glTexCoord2f(0, 1); glVertex2f(0,h);
     glEnd();
-
-    SDL_GL_SwapWindow(window);
 }
 
 /* executed: 1 if the frame was real, 0 if the frame is a skip frame */
@@ -388,7 +392,12 @@ void TV::render(int executed)
         /* it is actually better to call SDL_RenderPresent
          * because it maintains the pace. Otherwise we use 100% CPU
          * when stopped in debugger. */
-        if (!Options.opengl) SDL_RenderPresent(this->renderer);
+        if (Options.opengl) {
+            SDL_GL_SwapWindow(window);
+        } 
+        else {
+            SDL_RenderPresent(this->renderer);
+        } 
         prev_executed = executed;
     }
 }
