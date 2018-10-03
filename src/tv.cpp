@@ -5,13 +5,15 @@
 #include "options.h"
 #include "tv.h"
 
+
+#ifdef __APPLE__
 #include <OpenGL/GL.h>
 #include <OpenGL/glext.h>
-#include <OpenGL/gl3ext.h>
+#else
+#include <GL/GL.h>
+#include <GL/glext.h>
+#endif
 
-extern "C" {
-extern void APIENTRY glGetInternalformativ (GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint *params);
-}
 #if HAS_IMAGE
 extern "C" DECLSPEC int SDLCALL IMG_SavePNG(SDL_Surface *surface, const char *file);
 #endif
@@ -165,6 +167,10 @@ void TV::init_regular()
 
 void print_tex_format_info(GLenum internalformat)
 {
+#if 0
+    extern "C" {
+    extern void APIENTRY glGetInternalformativ (GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint *params);
+    }
     GLint pformat, format, type;
 
     pformat = format = type = 0;
@@ -179,9 +185,8 @@ void print_tex_format_info(GLenum internalformat)
             format,
             type
           );
+#endif
 }
-
-
 void TV::init_opengl()
 {
     int window_height = Options.screen_height * 2;
@@ -383,7 +388,7 @@ void TV::render(int executed)
         /* it is actually better to call SDL_RenderPresent
          * because it maintains the pace. Otherwise we use 100% CPU
          * when stopped in debugger. */
-        /* if (executed) */ SDL_RenderPresent(this->renderer);
+        if (!Options.opengl) SDL_RenderPresent(this->renderer);
         prev_executed = executed;
     }
 }
