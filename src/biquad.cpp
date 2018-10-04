@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "biquad.h"
 #include "mmintrin.h"
+#include "xmmintrin.h"
 
 #define FIXP_WBITS     8 
 
@@ -135,24 +136,25 @@ float Biquad::ffilter_2stage(float samp)
     this->buf[this->bufidx++] = samp;
     if (this->bufidx >= 32) {
         this->update_y();
-        this->bufidx = 0;
     }
     return m_y;
 }
     
 void Biquad::update_y()
 {
-    __attribute__((aligned(16))) float xabuf[128];
+    __attribute__((aligned(16))) float xabuf[32];
 
     __m128 A0 = _mm_set1_ps(m_a0);
     __m128 A1 = _mm_set1_ps(m_a1);
     __m128 A2 = _mm_set1_ps(m_a2);
 
-    for (int i = 0; i+4 < 32; i += 4) {
+
+    __m128 X0, X1, X2;
+    for (int i = 0; i+4+2 < 32; i += 4) {
         // stage 1: calculate partial sums x0*a8+x1*a1+x2*a2
-        __m128 X0 = _mm_loadu_ps(&buf[i]);    // x0 x1 x2 x3
-        __m128 X1 = _mm_loadu_ps(&buf[i+1]);  // x1 x2 x3 x4
-        __m128 X2 = _mm_loadu_ps(&buf[i+2]);  // x2 x3 x4 x5
+        X0 = _mm_loadu_ps(&buf[i]);    // x0 x1 x2 x3
+        X1 = _mm_loadu_ps(&buf[i+1]);  // x1 x2 x3 x4
+        X2 = _mm_loadu_ps(&buf[i+2]);  // x2 x3 x4 x5
 
         __m128 XA = X0 * A0 + X1 * A1 + X2 * A2;
         
@@ -173,6 +175,11 @@ void Biquad::update_y()
     m_y = result;
     m_y_1 = y_1;
     m_y_2 = y_2;
+
+    /* keep the loop */
+    this->buf[0] = this->buf[32-2];
+    this->buf[1] = this->buf[32-1];
+    this->bufidx = 2;
 }
 
 float Biquad::ffilter_buf(float (&buf)[128], int count, Biquad & f1, Biquad & f2)
