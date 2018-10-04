@@ -32,7 +32,7 @@ else()
 endif() 
 
 set(SOURCE_FILES src/main.cpp src/memory.cpp src/tv.cpp src/board.cpp 
-    src/hal.cpp src/i8080.cpp src/options.cpp
+    src/hal.cpp src/i8080.cpp src/options.cpp src/sound.cpp
     src/biquad.cpp src/cadence.cpp
     src/server.cpp)
 add_executable(v06x ${SOURCE_FILES} boots.o)

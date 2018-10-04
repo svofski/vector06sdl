@@ -10,7 +10,7 @@
 #include <OpenGL/GL.h>
 #include <OpenGL/glext.h>
 #else
-#include <GL/GL.h>
+#include <GL/gl.h>
 #include <GL/glext.h>
 #endif
 
