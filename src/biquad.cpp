@@ -1,6 +1,7 @@
 #include <math.h>
 #include <algorithm>
 #include "biquad.h"
+#include "simd/simd8f.h"
 
 #define FIXP_WBITS     8 
 
@@ -56,6 +57,8 @@ void Biquad::ba(float b0, float b1, float b2, float a1, float a2)
     m_x_1 = 0.0f;
     m_y_2 = 0.0f;
     m_y_1 = 0.0f;
+
+    m_ab = dlib::simd8f(m_a0,   m_a1,   m_a2,    m_b1,   m_b2, 0.0f, 0.0f, 0.0f);
 
     m_ix_2 = 0;
     m_ix_1 = 0;
@@ -116,13 +119,28 @@ void Biquad::calcHighpass(int sampleRate, float freq, float Q) {
 
 float Biquad::ffilter(float x) 
 {
-    float result = m_a0*x + m_a1*m_x_1 + m_a2*m_x_2 - m_b1*m_y_1 - m_b2*m_y_2;
+    //dlib::simd8f m_ab(m_a0,   m_a1,   m_a2,    m_b1,   m_b2, 0.0f, 0.0f, 0.0f);
+    dlib::simd8f m_xy(   x,  m_x_1,  m_x_2,  -m_y_1, -m_y_2, 0.0f, 0.0f, 0.0f);
+    float result = dlib::dot(m_ab, m_xy);
+
+    //float result = m_a0*x + m_a1*m_x_1 + m_a2*m_x_2 - m_b1*m_y_1 - m_b2*m_y_2;
 
     m_x_2 = std::max(0.0f, m_x_1);
     m_x_1 = std::max(0.0f, x);
     m_y_2 = std::max(0.0f, m_y_1);
     m_y_1 = std::max(0.0f, result);
 
+    m_xy = dlib::simd8f(   x,  m_x_1,  m_x_2,  -m_y_1, -m_y_2, 0.0f, 0.0f, 0.0f);
+
+    return result;
+}
+
+float Biquad::ffilter_buf(float (&buf)[128], int count, Biquad & f1, Biquad & f2)
+{
+    float result;
+    for (int i = 0; i < count; ++i) {
+        result = f2.ffilter(f1.ffilter(buf[i]));
+    }
     return result;
 }
 

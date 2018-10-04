@@ -1,13 +1,12 @@
 #pragma once
 
 #include <atomic>
-
+#include "globaldefs.h"
 #include "8253.h"
 #include "ay.h"
 #include "biquad.h"
 #include "SDL.h"
 #include "wav.h"
-
 class Soundnik
 {
 private:
@@ -32,6 +31,13 @@ private:
 
     Filter * butt1;
     Filter * butt2;
+
+#if BIQUAD_FLOAT
+    float filterbuf[128];   /* keep samples before low-pass filter here */
+#else
+    int filterbufi[128];
+#endif
+    int filteridx;
 
     WavRecorder * rec;
 

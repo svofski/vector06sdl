@@ -6,6 +6,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
+#include <iostream>
+
+#include "simd/simd8f.h"
 
 class Filter {
 public:
@@ -65,6 +68,8 @@ public:
     void calcLowpass(int sampleRate, float freq, float Q);
     void calcHighpass(int sampleRate, float freq, float Q);
     void calcInteger();
+
+    static float ffilter_buf(float (&buf)[128], int count, Biquad & f1, Biquad & f2);
 private:
 
     float m_Q;
@@ -76,6 +81,10 @@ private:
 
     int32_t m_ia0, m_ia1, m_ia2, m_ib1, m_ib2;
     int32_t m_ix_1, m_ix_2, m_iy_1, m_iy_2;
+
+    // simd
+    dlib::simd8f m_ab;
+    dlib::simd8f m_xy;
 };
 
 
