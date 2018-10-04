@@ -16,12 +16,11 @@ void Soundnik::soundStep(int step, int tapeout, int covox, int tapein)
     float soundf = this->timerwrapper.step(step/2) + tapeout + tapein;
     if (Options.nosound) return; /* but then we can return if nosound */
     //soundf = this->butt2->ffilter(this->butt1->ffilter(soundf * 0.2f));
-    this->filterbuf[this->filteridx++] = soundf * 0.2f;
+    soundf = this->butt1->ffilter_2stage(soundf * 0.2f);
 #else
     int soundi = (this->timerwrapper.step(step / 2) + tapeout + tapein) << 21;
     if (Options.nosound) return;
     //soundi = this->butt2->ifilter(this->butt1->ifilter(soundi));
-    this->filterbufi[this->filteridx++] = soundi;
 
 #endif
 
@@ -30,9 +29,10 @@ void Soundnik::soundStep(int step, int tapeout, int covox, int tapein)
         this->sound_accu_int -= this->sound_accu_top;
 
 #if BIQUAD_FLOAT
-        soundf = Biquad::ffilter_buf(this->filterbuf, this->filteridx, 
-                static_cast<Biquad&>(*this->butt1), 
-                static_cast<Biquad&>(*this->butt2));
+        //soundf = Biquad::ffilter_buf(this->filterbuf, this->filteridx, 
+        //        static_cast<Biquad&>(*this->butt1), 
+        //        static_cast<Biquad&>(*this->butt2));
+        //soundf = this->butt1->ffilter_2stage(this->filterbuf, this->filteridx);
         this->filteridx = 0;
 
         float sound = soundf + ay * 0.2;// + covox/256.0;

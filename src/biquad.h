@@ -8,8 +8,6 @@
 #include <math.h>
 #include <iostream>
 
-#include "simd/simd8f.h"
-
 class Filter {
 public:
     virtual float ffilter(float x) = 0;
@@ -20,7 +18,7 @@ public:
     virtual void calcLowpass(int sampleRate, float freq, float Q) = 0;
     virtual void calcHighpass(int sampleRate, float freq, float Q) = 0;
     virtual void calcInteger() = 0;
-
+    virtual float ffilter_2stage(float x) = 0;
 };
 
 class Bypass: public Filter {
@@ -28,6 +26,7 @@ public:
     Bypass() {}
     float ffilter(float x) { return x; }
     int32_t ifilter(int32_t x) { return x; }
+    virtual float ffilter_2stage(float x) { return x; }
 
     void ba(float b0, float b1, float b2, float a0, float a1) {}
     void calcBandpass(int sampleRate, float freq, float Q) {}
@@ -70,7 +69,9 @@ public:
     void calcInteger();
 
     static float ffilter_buf(float (&buf)[128], int count, Biquad & f1, Biquad & f2);
+    float ffilter_2stage(float samp);
 private:
+    void update_y();
 
     float m_Q;
     float m_Freq;
@@ -82,9 +83,9 @@ private:
     int32_t m_ia0, m_ia1, m_ia2, m_ib1, m_ib2;
     int32_t m_ix_1, m_ix_2, m_iy_1, m_iy_2;
 
-    // simd
-    dlib::simd8f m_ab;
-    dlib::simd8f m_xy;
+    float m_y;
+    float buf[64];
+    int   bufidx;
 };
 
 

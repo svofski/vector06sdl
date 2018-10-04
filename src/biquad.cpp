@@ -1,7 +1,7 @@
 #include <math.h>
 #include <algorithm>
 #include "biquad.h"
-#include "simd/simd8f.h"
+#include "mmintrin.h"
 
 #define FIXP_WBITS     8 
 
@@ -58,12 +58,12 @@ void Biquad::ba(float b0, float b1, float b2, float a1, float a2)
     m_y_2 = 0.0f;
     m_y_1 = 0.0f;
 
-    m_ab = dlib::simd8f(m_a0,   m_a1,   m_a2,    m_b1,   m_b2, 0.0f, 0.0f, 0.0f);
-
     m_ix_2 = 0;
     m_ix_1 = 0;
     m_iy_2 = 0;
     m_iy_1 = 0;
+
+    bufidx = 0;
 }
 
 void Biquad::calcInteger() {
@@ -119,27 +119,70 @@ void Biquad::calcHighpass(int sampleRate, float freq, float Q) {
 
 float Biquad::ffilter(float x) 
 {
-    //dlib::simd8f m_ab(m_a0,   m_a1,   m_a2,    m_b1,   m_b2, 0.0f, 0.0f, 0.0f);
-    dlib::simd8f m_xy(   x,  m_x_1,  m_x_2,  -m_y_1, -m_y_2, 0.0f, 0.0f, 0.0f);
-    float result = dlib::dot(m_ab, m_xy);
+    float result = m_a0*x + m_a1*m_x_1 + m_a2*m_x_2 - m_b1*m_y_1 - m_b2*m_y_2;
 
-    //float result = m_a0*x + m_a1*m_x_1 + m_a2*m_x_2 - m_b1*m_y_1 - m_b2*m_y_2;
-
-    m_x_2 = std::max(0.0f, m_x_1);
-    m_x_1 = std::max(0.0f, x);
-    m_y_2 = std::max(0.0f, m_y_1);
+    m_x_2 = m_x_1;
+    m_x_1 = x;
+    m_y_2 = m_y_1;
     m_y_1 = std::max(0.0f, result);
-
-    m_xy = dlib::simd8f(   x,  m_x_1,  m_x_2,  -m_y_1, -m_y_2, 0.0f, 0.0f, 0.0f);
 
     return result;
 }
 
+//float Biquad::ffilter_2stage(float (&buf)[128], int count)
+float Biquad::ffilter_2stage(float samp)
+{
+    this->buf[this->bufidx++] = samp;
+    if (this->bufidx >= 32) {
+        this->update_y();
+        this->bufidx = 0;
+    }
+    return m_y;
+}
+    
+void Biquad::update_y()
+{
+    __attribute__((aligned(16))) float xabuf[128];
+
+    __m128 A0 = _mm_set1_ps(m_a0);
+    __m128 A1 = _mm_set1_ps(m_a1);
+    __m128 A2 = _mm_set1_ps(m_a2);
+
+    for (int i = 0; i+4 < 32; i += 4) {
+        // stage 1: calculate partial sums x0*a8+x1*a1+x2*a2
+        __m128 X0 = _mm_loadu_ps(&buf[i]);    // x0 x1 x2 x3
+        __m128 X1 = _mm_loadu_ps(&buf[i+1]);  // x1 x2 x3 x4
+        __m128 X2 = _mm_loadu_ps(&buf[i+2]);  // x2 x3 x4 x5
+
+        __m128 XA = X0 * A0 + X1 * A1 + X2 * A2;
+        
+        _mm_store_ps(&xabuf[i], XA);
+    }
+
+    float result = 0;
+    float y_2 = m_y_2;
+    float y_1 = m_y_1;
+    const float b1 = m_b1;
+    const float b2 = m_b2;
+
+    for (int i = 0; i < 32; i++) {
+        result = xabuf[i] - b1 * y_1 - b2 * y_2;
+        y_2 = y_1;
+        y_1 = result;
+    }
+    m_y = result;
+    m_y_1 = y_1;
+    m_y_2 = y_2;
+}
+
 float Biquad::ffilter_buf(float (&buf)[128], int count, Biquad & f1, Biquad & f2)
 {
-    float result;
+    float result = 0.0f;
     for (int i = 0; i < count; ++i) {
-        result = f2.ffilter(f1.ffilter(buf[i]));
+        buf[i] = f1.ffilter(buf[i]);
+    }
+    for (int i = 0; i < count; ++i) {
+        result = f2.ffilter(buf[i]);
     }
     return result;
 }
