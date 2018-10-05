@@ -38,6 +38,7 @@ Resampler::Resampler() : filter(0), cleanup(nullptr)
 void Resampler::create_filter()
 {
     iir6_t * iir = new iir6_t();
+    init_iir6(*iir);
     this->filter = iir;
 
     sample = [iir](float s) { return iir->tick(s); };
