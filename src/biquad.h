@@ -83,8 +83,9 @@ private:
     int32_t m_ia0, m_ia1, m_ia2, m_ib1, m_ib2;
     int32_t m_ix_1, m_ix_2, m_iy_1, m_iy_2;
 
+    static const int stage_depth = 64;
     float m_y;
-    float buf[64];
+    __attribute__((aligned(16))) float buf[stage_depth];
     int   bufidx;
 };
 

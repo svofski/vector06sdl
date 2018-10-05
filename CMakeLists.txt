@@ -10,6 +10,10 @@ add_definitions(-Wall)
 add_definitions(-std=gnu++14)
 add_definitions(-fpermissive)
 add_definitions(-O3)
+add_definitions(-Rpass=loop-vectorize)
+
+include_directories(fast-filters/sources)
+include_directories(coreutil/sources)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     message("This is Windows. Assuming MinGW from https://nuwen.net/mingw.html")

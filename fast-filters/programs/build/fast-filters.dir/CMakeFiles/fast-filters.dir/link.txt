@@ -1,0 +1,2 @@
+/Library/Developer/CommandLineTools/usr/bin/ar qc libfast-filters.a  CMakeFiles/fast-filters.dir/sources/dummy.cpp.o
+/Library/Developer/CommandLineTools/usr/bin/ranlib libfast-filters.a

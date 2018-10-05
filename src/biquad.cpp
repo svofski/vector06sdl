@@ -134,7 +134,7 @@ float Biquad::ffilter(float x)
 float Biquad::ffilter_2stage(float samp)
 {
     this->buf[this->bufidx++] = samp;
-    if (this->bufidx >= 32) {
+    if (this->bufidx >= stage_depth) {
         this->update_y();
     }
     return m_y;
@@ -142,7 +142,7 @@ float Biquad::ffilter_2stage(float samp)
     
 void Biquad::update_y()
 {
-    __attribute__((aligned(16))) float xabuf[32];
+    __attribute__((aligned(16))) float xabuf[stage_depth];
 
     __m128 A0 = _mm_set1_ps(m_a0);
     __m128 A1 = _mm_set1_ps(m_a1);
@@ -150,9 +150,9 @@ void Biquad::update_y()
 
 
     __m128 X0, X1, X2;
-    for (int i = 0; i+4+2 < 32; i += 4) {
+    for (int i = 0; i < stage_depth-8; i += 4) {
         // stage 1: calculate partial sums x0*a8+x1*a1+x2*a2
-        X0 = _mm_loadu_ps(&buf[i]);    // x0 x1 x2 x3
+        X0 = _mm_load_ps(&buf[i]);    // x0 x1 x2 x3
         X1 = _mm_loadu_ps(&buf[i+1]);  // x1 x2 x3 x4
         X2 = _mm_loadu_ps(&buf[i+2]);  // x2 x3 x4 x5
 
@@ -167,19 +167,19 @@ void Biquad::update_y()
     const float b1 = m_b1;
     const float b2 = m_b2;
 
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < stage_depth - 8; i++) {
         result = xabuf[i] - b1 * y_1 - b2 * y_2;
         y_2 = y_1;
-        y_1 = result;
+        y_1 = std::max(0.0f, result);
     }
     m_y = result;
     m_y_1 = y_1;
     m_y_2 = y_2;
 
     /* keep the loop */
-    this->buf[0] = this->buf[32-2];
-    this->buf[1] = this->buf[32-1];
-    this->bufidx = 2;
+    X0 = _mm_load_ps(&buf[stage_depth-4]);
+    _mm_store_ps(&this->buf[0], X0);
+    this->bufidx = 4;
 }
 
 float Biquad::ffilter_buf(float (&buf)[128], int count, Biquad & f1, Biquad & f2)

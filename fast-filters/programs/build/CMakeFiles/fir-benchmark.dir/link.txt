@@ -1,0 +1,1 @@
+/Library/Developer/CommandLineTools/usr/bin/clang++   -O3 -DNDEBUG -Wl,-search_paths_first -Wl,-headerpad_max_install_names  -L/usr/local/opt/qt5/lib CMakeFiles/fir-benchmark.dir/fir-benchmark.cc.o  -o fir-benchmark  fast-filters.dir/libfast-filters.a fast-filters.dir/coreutil.dir/libcoreutil.a 

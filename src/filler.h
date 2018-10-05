@@ -10,6 +10,8 @@
 #include <arm_neon.h>
 #endif
 
+//#define USE_BIT_PERMUTE 1
+
 class PixelFiller
 {
 private:

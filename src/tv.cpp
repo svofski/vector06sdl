@@ -187,6 +187,18 @@ void print_tex_format_info(GLenum internalformat)
           );
 #endif
 }
+
+
+//void ogl_debug_print_callback(GLenum source, GLenum type, GLuint id, 
+//        GLenum severity, GLsizei length, const GLchar* message, 
+//        const void* userParam) {
+//    if(severity!=0x826b) {
+//        fprintf(stderr, 
+//            "GL CALLBACK: type = %s, severity = 0x%x, message = %s\n", 
+//            type_to_string(type).c_str(), severity, message);
+//    }
+//}
+
 void TV::init_opengl()
 {
     int window_height = Options.screen_height * 2;
@@ -199,6 +211,12 @@ void TV::init_opengl()
     this->window = SDL_CreateWindow("Вектор-06ц (gl)", 0, 0, 
             window_width, window_height, window_options);
     gl_context = SDL_GL_CreateContext(window);
+
+    const GLubyte* openGLVersion = glGetString(GL_VERSION);
+    printf("GL_VERSION: %s\n", openGLVersion);
+    //glEnable(GL_DEBUG_OUTPUT);
+    //glDebugMessageCallback(ogl_debug_print_callback, nullptr);
+
     SDL_GL_SetSwapInterval(Options.vsync ? 1 : 0);
 
     glDisable(GL_DEPTH_TEST);

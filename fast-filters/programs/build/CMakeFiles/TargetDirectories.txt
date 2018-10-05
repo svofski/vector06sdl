@@ -1,0 +1,4 @@
+/Users/svo/projects/vector06sdl/fast-filters/programs/build/fast-filters.dir/CMakeFiles/fast-filters.dir
+/Users/svo/projects/vector06sdl/fast-filters/programs/build/CMakeFiles/iir-benchmark.dir
+/Users/svo/projects/vector06sdl/fast-filters/programs/build/CMakeFiles/fir-benchmark.dir
+/Users/svo/projects/vector06sdl/fast-filters/programs/build/fast-filters.dir/coreutil.dir/CMakeFiles/coreutil.dir

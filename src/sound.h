@@ -7,6 +7,9 @@
 #include "biquad.h"
 #include "SDL.h"
 #include "wav.h"
+
+#include "coredsp/filter.h"
+
 class Soundnik
 {
 private:
@@ -32,12 +35,7 @@ private:
     Filter * butt1;
     Filter * butt2;
 
-#if BIQUAD_FLOAT
-    float filterbuf[128];   /* keep samples before low-pass filter here */
-#else
-    int filterbufi[128];
-#endif
-    int filteridx;
+    coredsp::IIR<4, coreutil::simd_t<double>> resample_iir;
 
     WavRecorder * rec;
 
@@ -46,93 +44,7 @@ public:
         aywrapper(aw)
     {}
 
-    void init(WavRecorder * _rec = 0) {
-        this->rec = _rec;
-
-        butt1 = new Bypass();
-        butt2 = new Bypass();
-        if (Options.nosound) {
-            return;
-        }
-
-        SDL_AudioSpec want, have;
-        SDL_memset(&want, 0, sizeof(want)); /* or SDL_zero(want) */
-        want.freq = 48000;
-        want.format = AUDIO_F32;
-        want.channels = 2;
-
-        if (!Options.vsync) {
-            this->sound_frame_size = want.freq / 50;
-        }
-
-        want.samples = this->sound_frame_size;
-        want.callback = Soundnik::callback;  // you wrote this function elsewhere.
-        want.userdata = (void *)this;
-
-        SDL_Init(SDL_INIT_AUDIO);
-
-        if(!(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO)) {
-            fprintf(stderr, "SDL audio error: SDL_INIT_AUDIO not initialized\n");
-            return;
-        }
-
-        if ((this->audiodev = SDL_OpenAudioDevice(NULL, 0, &want, &have, 
-                SDL_AUDIO_ALLOW_FORMAT_CHANGE)) == 0) {
-            fprintf(stderr, "SDL audio error: %s", SDL_GetError());
-            Options.nosound = true;
-            return;
-        };
-
-        if (have.samples == this->sound_frame_size / 2) {
-            // strange thing but we get a half buffer, try to get 2x
-            SDL_CloseAudioDevice(this->audiodev);
-
-            Options.log.audio &&
-            fprintf(stderr, "SDL audio: retrying to open device with 2x buffer size\n");
-            want.samples = this->sound_frame_size * 2;
-
-            if ((this->audiodev = SDL_OpenAudioDevice(NULL, 0, &want, &have, 
-                            SDL_AUDIO_ALLOW_FORMAT_CHANGE)) == 0) {
-                fprintf(stderr, "SDL audio error: %s", SDL_GetError());
-                Options.nosound = true;
-                return;
-            };
-
-            if (have.samples < this->sound_frame_size) {
-                fprintf(stderr, "SDL audio cannot get the right buffer size, giving up\n");
-                Options.nosound = true;
-            }
-        }
-
-        this->sampleRate = have.freq;
-
-        // one second = 50 frames
-        // raster time in 12 MHz pixelclocks = 768 columns by 312 lines
-        // timer clocks = pixel clock / 8
-        int timer_cycles_per_second = 50*768*312/8; // 1497600
-        // for 48000: 3120
-        // for 44100: 3396, which gives 44098.9... 
-        this->sound_accu_top = (int)(0.5 + 100.0 * timer_cycles_per_second / this->sampleRate); 
-        this->sound_accu_int = 0;
-
-        Options.log.audio && 
-        printf("SDL audio dev: %d, sample rate=%d "
-                "have.samples=%d have.channels=%d have.format=%d have.size=%d\n", 
-                this->audiodev, this->sampleRate, 
-                have.samples, have.channels, have.format, have.size);
-
-        // filters
-        if (!Options.nofilter) {
-            butt1 = new Biquad();
-            butt2 = new Biquad();
-            butt1->ba(0.00021253813256227462, 0.00042507626512454925, 0.00021253813256227462, 
-                    -1.9769602848645957, 0.9778104373948449);
-            butt2->ba(0.0002092548424353858, 0.0004185096848707716, 0.0002092548424353858,
-                    -1.9464201925701206, 0.9472572119398622);
-        }
-        butt1->calcInteger();
-        butt2->calcInteger();
-    }
+    void init(WavRecorder * _rec = 0);
 
     void pause(int pause)
     {
