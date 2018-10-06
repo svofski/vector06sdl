@@ -40,7 +40,7 @@ endif()
 set(SOURCE_FILES src/main.cpp src/memory.cpp src/tv.cpp src/board.cpp 
     src/hal.cpp src/i8080.cpp src/options.cpp src/sound.cpp src/filler.cpp
     src/resampler.cpp
-    src/biquad.cpp src/cadence.cpp
+    src/cadence.cpp
     src/server.cpp)
 add_executable(v06x ${SOURCE_FILES} boots.o)
 
@@ -64,6 +64,9 @@ include_directories(${SDL2_INCLUDE_DIR} ${SDL2_IMAGE_INCLUDE_DIRS})
 
 find_package(OpenGL)
 message("OPENGL_FOUND: ${OPENGL_FOUND}")
+if (${OPENGL_FOUND})
+    add_definitions(-DHAVE_OPENGL=1)
+endif()
 
 target_link_libraries(v06x ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARIES} ${Boost_LIBRARIES} ${OPENGL_LIBRARIES})
 

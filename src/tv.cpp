@@ -6,12 +6,16 @@
 #include "tv.h"
 
 
+#if HAVE_OPENGL
+
 #ifdef __APPLE__
 #include <OpenGL/GL.h>
 #include <OpenGL/glext.h>
 #else
 #include <GL/gl.h>
 #include <GL/glext.h>
+#endif
+
 #endif
 
 #if HAS_IMAGE
@@ -201,6 +205,7 @@ void print_tex_format_info(GLenum internalformat)
 
 void TV::init_opengl()
 {
+#if HAVE_OPENGL
     int window_height = Options.screen_height * 2;
     int window_width = window_height * 5 / 4;
 
@@ -226,11 +231,13 @@ void TV::init_opengl()
     print_tex_format_info(GL_RGB8);
     print_tex_format_info(GL_RGBA8);
     init_gl_textures();
+#endif
 }
 
 
 void TV::init_gl_textures()
 {
+#if HAVE_OPENGL
     printf("Texture size: %dx%d\n", Options.screen_width, Options.screen_height);
     this->pixelformat = SDL_PIXELFORMAT_ARGB8888;
     glGenTextures(1, &this->gl_textures[0]);
@@ -246,6 +253,7 @@ void TV::init_gl_textures()
             /* format */ GL_RGBA, 
             /* type */   GL_UNSIGNED_BYTE, 
             (uint8_t*)this->bmp);
+#endif
 }
 
 bool TV::handle_keyboard_event(SDL_KeyboardEvent & event)

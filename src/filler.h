@@ -183,5 +183,10 @@ public:
     int fill2(int clocks);
     int fill3(int clocks);
     int fill4(int clocks);
+    #if ZEALOUS_LOCALITY
+    bool advanceLine(int & _raster_pixel, int & _raster_line, bool & _vborder, 
+        bool & _visible, bool updateScreen);
+    #else
     void advanceLine(bool updateScreen);
+    #endif
 };

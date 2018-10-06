@@ -77,7 +77,7 @@ int PixelFiller::fill1(int clocks, int commit_time, int commit_time_pal, bool up
     return clk;
 }
 
-bool advanceLine(int & _raster_pixel, int & _raster_line, 
+bool PixelFiller::advanceLine(int & _raster_pixel, int & _raster_line, 
         bool & _vborder, bool & _visible, bool updateScreen) {
     _raster_pixel = 0;
     _raster_line += 1;
