@@ -33,9 +33,6 @@ private:
     int sound_accu_int, sound_accu_top;
 
     Resampler resampler;
-
-    //coredsp::IIR<6, coreutil::simd_t<double>> resample_iir;
-
     WavRecorder * rec;
 
 public:

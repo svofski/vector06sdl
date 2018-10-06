@@ -29,7 +29,9 @@ private:
     int screen_width;
 
     uint32_t pixel32;
+#if USE_BIT_PERMUTE
     uint32_t pixel32_grouped;
+#endif
     uint32_t * mem32;
 
     Memory & memory;
@@ -91,7 +93,7 @@ public:
     void fetchPixels() 
     {
         size_t addr = ((this->fb_column & 0xff) << 8) | (this->fb_row & 0xff);
-        uint32_t x = this->pixel32 = this->mem32[0x2000 + addr];
+        this->pixel32 = this->mem32[0x2000 + addr];
 
 #if USE_BIT_PERMUTE
         // h/t Code generator for bit permutations
@@ -99,6 +101,7 @@ public:
         // Input:
         // 31 23 15 7 30 22 14 6 29 21 13 5 28 20 12 4 27 19 11 3 26 18 10 2 25 17 9 1  24 16 8 0
         // LSB, indices refer to source, Beneš/BPC
+        uint32_t x = this->pixel32;
         x = bit_permute_step(x, 0x00550055, 9);  // Bit index swap+complement 0,3
         x = bit_permute_step(x, 0x00003333, 18);  // Bit index swap+complement 1,4
         x = bit_permute_step(x, 0x000f000f, 12);  // Bit index swap+complement 2,3

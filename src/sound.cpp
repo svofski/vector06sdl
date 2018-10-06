@@ -38,7 +38,7 @@ void Soundnik::init(WavRecorder * _rec)
     }
 
     SDL_AudioSpec want, have;
-    SDL_memset(&want, 0, sizeof(want)); /* or SDL_zero(want) */
+    SDL_memset(&want, 0, sizeof(want)); 
     want.freq = 48000;
     want.format = AUDIO_F32;
     want.channels = 2;
@@ -48,7 +48,7 @@ void Soundnik::init(WavRecorder * _rec)
     }
 
     want.samples = this->sound_frame_size;
-    want.callback = Soundnik::callback;  // you wrote this function elsewhere.
+    want.callback = Soundnik::callback; 
     want.userdata = (void *)this;
 
     SDL_Init(SDL_INIT_AUDIO);
