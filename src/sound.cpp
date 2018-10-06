@@ -10,6 +10,25 @@
 
 #define BIQUAD_FLOAT 1
 
+static int print_driver_info() 
+{
+    /* Print available audio drivers */
+    int n = SDL_GetNumAudioDrivers();
+    if (n == 0) {
+        SDL_Log("No built-in audio drivers\n\n");
+    } else {
+        int i;
+        SDL_Log("Built-in audio drivers:\n");
+        for (i = 0; i < n; ++i) {
+            SDL_Log("  %d: %s\n", i, SDL_GetAudioDriver(i));
+        }
+        SDL_Log("Select a driver with the SDL_AUDIODRIVER environment variable.\n");
+    }
+
+    SDL_Log("Using audio driver: %s\n\n", SDL_GetCurrentAudioDriver());
+    return 1;
+}
+
 void Soundnik::init(WavRecorder * _rec) 
 {
     this->rec = _rec;
@@ -33,6 +52,8 @@ void Soundnik::init(WavRecorder * _rec)
     want.userdata = (void *)this;
 
     SDL_Init(SDL_INIT_AUDIO);
+
+    Options.log.audio && ::print_driver_info();
 
     if(!(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO)) {
         fprintf(stderr, "SDL audio error: SDL_INIT_AUDIO not initialized\n");
