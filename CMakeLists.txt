@@ -12,6 +12,8 @@ add_definitions(-fpermissive)
 add_definitions(-O3)
 add_definitions(-Rpass=loop-vectorize)
 
+#add_definitions(-DZEALOUS_LOCALITY=1)
+
 include_directories(fast-filters/sources)
 include_directories(coreutil/sources)
 
