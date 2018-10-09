@@ -1,19 +1,19 @@
 #pragma once
 
-#include <functional>
-
 class Resampler {
 public:
-    typedef std::function<float(float)> samplefunc;
-
     Resampler();
     ~Resampler();
-    void set_passthrough();
-    samplefunc sample;
+    void set_passthrough(bool thru);
+    float sample(float s);
 
 private:
-    void * filter;
-    std::function<void(void)> cleanup;
-
     void create_filter();
+
+private:
+    static constexpr int nlevels = 6;
+    void *f[nlevels];
+    int ctr[nlevels];
+    float out;
+    bool thru;
 };

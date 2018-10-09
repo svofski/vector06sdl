@@ -107,7 +107,7 @@ void Soundnik::init(WavRecorder * _rec)
 
     // filters
     if (Options.nofilter) {
-        resampler.set_passthrough();
+        resampler.set_passthrough(true);
     }
 }
 

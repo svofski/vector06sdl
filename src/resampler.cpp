@@ -1,56 +1,86 @@
 #include "resampler.h"
+#include "biquad.h"
 #include "coredsp/filter.h"
+#include <unistd.h>
+#include <fcntl.h>
+
+#define DECIMATE 2
 
 using namespace std;
 
-typedef coredsp::IIR<6, coreutil::simd_t<double>> iir6_t;
+typedef coredsp::FIR<33, coreutil::simd_t<float>> fir_t;
 
-void init_iir6(iir6_t & filter) 
+void init_halfband(fir_t & filter)
 {
-    // pretty open still, but can't close more: gets unstable
-    // [b,a] = cheby2(5,62,10000/1.5e6*2*3.131);
-    float cheby2b[] = {
-        0.0002431447672463337285157780609523570092278532683849334716796875,
-        -0.0007128289616887240835035877140057891665492206811904907226562500,
-        0.0004699117780832894161920088027528663587872870266437530517578125,
-        0.0004699117780832894161920088027528663587872870266437530517578125,
-        -0.0007128289616887240835035877140057891665492206811904907226562500,
-        0.0002431447672463337014107237488147461590415332466363906860351562,
-    };
-
-    float cheby2a[] = {
-        1.0000000000000000000000000000000000000000000000000000000000000000,
-        -4.8253882333290443185092044586781412363052368164062500000000000000,
-        9.3167053593195738869781052926555275917053222656250000000000000000,
-        -8.9969767456033036268081559683196246623992919921875000000000000000,
-        4.3454171650598842902013529965188354253768920898437500000000000000,
-        -0.8397570902798295877644818574481178075075149536132812500000000000,
-    };
-    filter.reset();
-    filter.coefs(cheby2b, cheby2a);
+#include "../filters/halfband.h"
+    filter.coefs(coefs);
 }
 
-Resampler::Resampler() : filter(0), cleanup(nullptr)
+void init_endstage(fir_t & filter)
+{
+#include "../filters/endstage.h"
+    filter.coefs(coefs);
+}
+
+Resampler::Resampler() 
 {
     create_filter();
+    thru = false;
 }
+
 
 void Resampler::create_filter()
 {
-    iir6_t * iir = new iir6_t();
-    init_iir6(*iir);
-    this->filter = iir;
+    for (int i = 0; i < nlevels; ++i) {
+        fir_t * fir = new fir_t();
+        if (i < nlevels - 1) {
+            init_halfband(*fir);
+        } 
+        else {
+            init_endstage(*fir);
+        }
+        this->f[i] = fir;
 
-    sample = [iir](float s) { return iir->tick(s); };
-    cleanup = [=] {delete (iir6_t *)this->filter; };
+        ctr[i] = 0;
+    }
+}
+
+/* 6 cascades of half-band filters (the last one has narrower passband) 
+ * Each level always takes in an input, but computes output only when
+ * the result is needed. This means 1/2 multiplications per cascade.
+ */
+float Resampler::sample(float s)
+{
+    if (!this->thru) {
+        float o = s;
+        for (int level = 0; level < nlevels; ++level) {
+            ((fir_t *)f[level])->in(o);         // take a sample
+            if (++ctr[level] == DECIMATE) {
+                ctr[level] = 0;
+                o = ((fir_t *)f[level])->out(); // calculate stage output
+                if (level == nlevels - 1) {
+                    this->out = o;
+                }
+                continue;
+            }
+            break;
+        }
+    }
+    else {
+        this->out = s;
+    }
+
+    return this->out;
 }
 
 Resampler::~Resampler()
 {
-    if (cleanup) cleanup();
+    for (int i = 0; i < nlevels; ++i) {
+        delete (fir_t *)this->f[i];
+    }
 }
 
-void Resampler::set_passthrough() 
+void Resampler::set_passthrough(bool thru_) 
 {
-    sample = [] (float s) { return s; };
+    this->thru = thru_;
 }
