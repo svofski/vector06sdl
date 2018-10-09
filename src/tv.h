@@ -36,6 +36,7 @@ private:
     void init_regular();
     void init_opengl();
     void init_gl_textures();
+    void window_resized(SDL_Event & event);
 
 public:
     TV();

@@ -1,8 +1,6 @@
 #include "resampler.h"
 #include "biquad.h"
 #include "coredsp/filter.h"
-#include <unistd.h>
-#include <fcntl.h>
 
 #define DECIMATE 2
 

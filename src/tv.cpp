@@ -156,6 +156,9 @@ void TV::init_regular()
 #endif
                 );
     }
+    else {
+        SDL_SetWindowPosition(this->window, 100, 100);
+    }
 
     this->tex_width = Options.screen_width;
     this->tex_height = Options.screen_height;
@@ -231,6 +234,19 @@ void TV::init_opengl()
     print_tex_format_info(GL_RGB8);
     print_tex_format_info(GL_RGBA8);
     init_gl_textures();
+
+    if (!Options.window) {
+        SDL_SetWindowFullscreen(this->window, 
+#if __MACOSX__
+                SDL_WINDOW_FULLSCREEN
+#else
+                SDL_WINDOW_FULLSCREEN_DESKTOP
+#endif
+                );
+    }
+    else {
+        SDL_SetWindowPosition(this->window, 100, 100);
+    }
 #endif
 }
 
@@ -276,8 +292,35 @@ bool TV::handle_keyboard_event(SDL_KeyboardEvent & event)
     return false;
 }
 
+void TV::window_resized(SDL_Event & event)
+{
+#if HAVE_OPENGL
+    if (Options.opengl) {
+        int window_width, window_height;
+        SDL_GetWindowSize(this->window, &window_width, &window_height);
+
+    	int ww = window_height * 5 / 4;
+        int wh = window_height;
+        if (ww > window_width) {
+            ww = window_width;
+            wh = window_width * 4 / 5;
+        }
+        int ox = window_width/2 - ww/2;
+        int oy = window_height/2 - wh/2;
+        glViewport(ox, oy, ww, wh);
+    }
+#endif
+}
+
 void TV::handle_window_event(SDL_Event & event)
 {
+    switch (event.window.event) {
+        case SDL_WINDOWEVENT_RESIZED:
+        case SDL_WINDOWEVENT_EXPOSED:
+        case SDL_WINDOWEVENT_SIZE_CHANGED:
+            window_resized(event);
+            break;
+        }    
 }
 
 void TV::toggle_fullscreen()
@@ -369,9 +412,7 @@ void TV::render_single_regular()
 
 void TV::render_single_opengl()
 {
-    const int w = Options.screen_width, h = Options.screen_height;
-
-    //this->texture_n = (this->texture_n + 1) & 1;
+    const int w = Options.screen_width, h = Options.screen_height;   // 576x288
 
     glBindTexture(GL_TEXTURE_2D, this->gl_textures[0]);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, 
