@@ -59,7 +59,7 @@ h[abs(h) <= 1e-4] = 0.
 (w,H) = signal.freqz(h)
 
 # ~~[Filter Design with Windowed freq]~~
-b = signal.firwin(N+1, 0.5)
+b = signal.firwin(N+1, 0.37)
 b[abs(h) <= 1e-4] = 0.
 (wb, Hb) = signal.freqz(b)
 
@@ -76,6 +76,9 @@ export_header("coefs", b, "halfband.h")
 # 0.35 is a bit muffled
 # 0.4 is a bit whistly
 final_b = signal.firwin(N+1, 0.37)
+#bands = numpy.array([0., .22, .28, .5])
+#final_b = signal.remez(N+1, bands, [1,0], [1,1])
+
 final_b[abs(final_b) <= 1e-4] = 0.
 plot_filter(final_b, "end stage", "res_final.png")
 export_header("coefs", final_b, "endstage.h")

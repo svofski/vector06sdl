@@ -2,6 +2,14 @@
 #include "biquad.h"
 #include "coredsp/filter.h"
 
+#if SAVERAW
+#include "stdio.h"
+float buf[8192];
+int   bptr = 0;
+FILE *raw;
+
+#endif
+
 #define DECIMATE 2
 
 using namespace std;
@@ -24,6 +32,9 @@ Resampler::Resampler()
 {
     create_filter();
     thru = false;
+#if SAVERAW
+    raw = fopen("float32.raw", "wb");
+#endif
 }
 
 
@@ -49,26 +60,30 @@ void Resampler::create_filter()
  */
 float Resampler::sample(float s)
 {
+#if SAVERAW
+    buf[bptr++] = s;
+    if (bptr >= 8192) {
+        bptr = 0;
+        fwrite(buf, 1, sizeof(buf), raw);
+    }
+#endif
+    in[0] = s;
     if (!this->thru) {
-        float o = s;
         for (int level = 0; level < nlevels; ++level) {
-            ((fir_t *)f[level])->in(o);         // take a sample
+            ((fir_t *)f[level])->in(in[level]);         // take a sample
             if (++ctr[level] == DECIMATE) {
                 ctr[level] = 0;
-                o = ((fir_t *)f[level])->out(); // calculate stage output
-                if (level == nlevels - 1) {
-                    this->out = o;
-                }
+                in[level+1] = ((fir_t *)f[level])->out(); // calculate stage output
                 continue;
             }
             break;
         }
     }
     else {
-        this->out = s;
+        this->in[nlevels] = s;
     }
 
-    return this->out;
+    return this->in[nlevels];
 }
 
 Resampler::~Resampler()
@@ -76,6 +91,10 @@ Resampler::~Resampler()
     for (int i = 0; i < nlevels; ++i) {
         delete (fir_t *)this->f[i];
     }
+
+#if SAVERAW
+    fclose(raw);
+#endif
 }
 
 void Resampler::set_passthrough(bool thru_) 
