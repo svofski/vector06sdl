@@ -2,6 +2,8 @@
 #include "biquad.h"
 #include "coredsp/filter.h"
 
+#define SAVERAW 0
+
 #if SAVERAW
 #include "stdio.h"
 float buf[8192];
@@ -60,7 +62,7 @@ void Resampler::create_filter()
  */
 float Resampler::sample(float s)
 {
-#if SAVERAW
+#if 0 & SAVERAW
     buf[bptr++] = s;
     if (bptr >= 8192) {
         bptr = 0;
@@ -74,7 +76,16 @@ float Resampler::sample(float s)
             if (++ctr[level] == DECIMATE) {
                 ctr[level] = 0;
                 in[level+1] = ((fir_t *)f[level])->out(); // calculate stage output
-                continue;
+#if SAVERAW
+                if (level == nlevels - 1) {
+                    buf[bptr++] = in[nlevels];
+                    if (bptr >= 8192) {
+                        bptr = 0;
+                        fwrite(buf, 1, sizeof(buf), raw);
+                    }
+                }
+#endif
+                 continue;
             }
             break;
         }
