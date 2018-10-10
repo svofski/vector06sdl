@@ -3,6 +3,7 @@
 #include "coredsp/filter.h"
 
 #define SAVERAW 0
+#define SAVERAW_DOWNSAMPLED 0
 
 #if SAVERAW
 #include "stdio.h"
@@ -62,7 +63,7 @@ void Resampler::create_filter()
  */
 float Resampler::sample(float s)
 {
-#if 0 & SAVERAW
+#if SAVERAW
     buf[bptr++] = s;
     if (bptr >= 8192) {
         bptr = 0;
@@ -76,7 +77,7 @@ float Resampler::sample(float s)
             if (++ctr[level] == DECIMATE) {
                 ctr[level] = 0;
                 in[level+1] = ((fir_t *)f[level])->out(); // calculate stage output
-#if SAVERAW
+#if SAVERAW_DOWNSAMPLED
                 if (level == nlevels - 1) {
                     buf[bptr++] = in[nlevels];
                     if (bptr >= 8192) {
