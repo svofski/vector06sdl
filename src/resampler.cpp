@@ -13,21 +13,15 @@ FILE *raw;
 
 #endif
 
-#define DECIMATE 2
+#define DECIMATE 5
 
 using namespace std;
 
-typedef coredsp::FIR<33, coreutil::simd_t<float>> fir_t;
+typedef coredsp::FIR<1025, coreutil::simd_t<float>> fir_t;
 
-void init_halfband(fir_t & filter)
+void init_interp(fir_t & filter)
 {
-#include "../filters/halfband.h"
-    filter.coefs(coefs);
-}
-
-void init_endstage(fir_t & filter)
-{
-#include "../filters/endstage.h"
+#include "../filters/interp.h"
     filter.coefs(coefs);
 }
 
@@ -45,22 +39,15 @@ void Resampler::create_filter()
 {
     for (int i = 0; i < nlevels; ++i) {
         fir_t * fir = new fir_t();
-        if (i < nlevels - 1) {
-            init_halfband(*fir);
-        } 
-        else {
-            init_endstage(*fir);
-        }
+        init_interp(*fir);
         this->f[i] = fir;
 
         ctr[i] = 0;
     }
+    dcm_ctr = 0;
+    iidx = 0;
 }
 
-/* 6 cascades of half-band filters (the last one has narrower passband) 
- * Each level always takes in an input, but computes output only when
- * the result is needed. This means 1/2 multiplications per cascade.
- */
 float Resampler::sample(float s)
 {
 #if SAVERAW
@@ -70,25 +57,17 @@ float Resampler::sample(float s)
         fwrite(buf, 1, sizeof(buf), raw);
     }
 #endif
-    in[0] = s;
     if (!this->thru) {
-        for (int level = 0; level < nlevels; ++level) {
-            ((fir_t *)f[level])->in(in[level]);         // take a sample
-            if (++ctr[level] == DECIMATE) {
-                ctr[level] = 0;
-                in[level+1] = ((fir_t *)f[level])->out(); // calculate stage output
-#if SAVERAW_DOWNSAMPLED
-                if (level == nlevels - 1) {
-                    buf[bptr++] = in[nlevels];
-                    if (bptr >= 8192) {
-                        bptr = 0;
-                        fwrite(buf, 1, sizeof(buf), raw);
-                    }
-                }
-#endif
-                 continue;
+        for (int i = 0; i < 4; ++i) {
+            //interp_buf[iidx] = ((fir_t *)f[0])->tick(i==0?s:0);
+
+            ((fir_t *)f[0])->in(i==0?s:0);
+            if (++dcm_ctr == 125) {
+                dcm_ctr = 0;
+                this->in[nlevels] = 4 * ((fir_t *)f[0])->out();
+                this->egg = true;
             }
-            break;
+            iidx = (iidx + 1) & 127;
         }
     }
     else {

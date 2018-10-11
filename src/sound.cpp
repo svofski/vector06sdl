@@ -99,6 +99,8 @@ void Soundnik::init(WavRecorder * _rec)
     this->sound_accu_top = (int)(0.5 + 100.0 * timer_cycles_per_second / this->sampleRate); 
     this->sound_accu_int = 0;
 
+    printf("sound_accu_top=%d\n", sound_accu_top);
+
     Options.log.audio && 
     printf("SDL audio dev: %d, sample rate=%d "
             "have.samples=%d have.channels=%d have.format=%d have.size=%d\n", 
@@ -119,19 +121,22 @@ void Soundnik::soundStep(int step, int tapeout, int covox, int tapein)
 #if BIQUAD_FLOAT
     float soundf = this->timerwrapper.step(step/2) + tapeout + tapein;
     if (Options.nosound) return; /* but then we can return if nosound */
-    //soundf = this->resample_iir.tick(soundf * 0.2f);
     soundf = this->resampler.sample(soundf * 0.2f);
-    //printf("%f\n", soundf);
 #else
     int soundi = (this->timerwrapper.step(step / 2) + tapeout + tapein) << 21;
     if (Options.nosound) return;
 
 #endif
 
-    this->sound_accu_int += 100;
-    if (this->sound_accu_int >= this->sound_accu_top) {
-        this->sound_accu_int -= this->sound_accu_top;
+    //static int between = 0;
 
+    this->sound_accu_int += 100;
+    //between++;
+    //if (this->sound_accu_int >= this->sound_accu_top) {
+    //    this->sound_accu_int -= this->sound_accu_top;
+        //printf("[%d] ", between); between = 0;
+    if (resampler.egg) {
+        resampler.egg = false;
 #if BIQUAD_FLOAT
         float sound = soundf + ay * 0.2;// + covox/256.0;
 #else
