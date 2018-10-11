@@ -17,7 +17,7 @@ FILE *raw;
 
 using namespace std;
 
-typedef coredsp::FIR<1025, coreutil::simd_t<float>> fir_t;
+typedef coredsp::FIR<1281, coreutil::simd_t<float>> fir_t;
 
 void init_interp(fir_t & filter)
 {
@@ -45,7 +45,6 @@ void Resampler::create_filter()
         ctr[i] = 0;
     }
     dcm_ctr = 0;
-    iidx = 0;
 }
 
 float Resampler::sample(float s)
@@ -58,16 +57,13 @@ float Resampler::sample(float s)
     }
 #endif
     if (!this->thru) {
-        for (int i = 0; i < 4; ++i) {
-            //interp_buf[iidx] = ((fir_t *)f[0])->tick(i==0?s:0);
-
+        for (int i = 0; i < 5; ++i) {
             ((fir_t *)f[0])->in(i==0?s:0);
-            if (++dcm_ctr == 125) {
+            if (++dcm_ctr == 156) {
                 dcm_ctr = 0;
-                this->in[nlevels] = 4 * ((fir_t *)f[0])->out();
+                this->in[nlevels] = 5 * ((fir_t *)f[0])->out();
                 this->egg = true;
             }
-            iidx = (iidx + 1) & 127;
         }
     }
     else {
