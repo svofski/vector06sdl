@@ -99,8 +99,6 @@ void Soundnik::init(WavRecorder * _rec)
     this->sound_accu_top = (int)(0.5 + 100.0 * timer_cycles_per_second / this->sampleRate); 
     this->sound_accu_int = 0;
 
-    printf("sound_accu_top=%d\n", sound_accu_top);
-
     Options.log.audio && 
     printf("SDL audio dev: %d, sample rate=%d "
             "have.samples=%d have.channels=%d have.format=%d have.size=%d\n", 
@@ -176,7 +174,8 @@ void Soundnik::callback(void * userdata, uint8_t * stream, int len)
             fprintf(stderr, "starve rdbuf=%d wrbuf=%d en manque=%d\n", 
                     that->rdbuf, that->wrbuf, that->sound_frame_size - that->wrptr/2);
         that->wrptr = 0;
-    } else {
+    } else
+    {
         memcpy(stream, that->buffer[that->rdbuf], len);
         if (++that->rdbuf == Soundnik::NBUFFERS) {
             that->rdbuf = 0;

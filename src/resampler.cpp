@@ -15,7 +15,21 @@ FILE *raw;
 
 using namespace std;
 
-static constexpr int ALLTAPS = 911-215;
+/* Nice filter parameters calculated as:
+ * L=5; M=156
+ * N=182*L
+ * fw = signal.firwin(N+1, .6/M, window=('kaiser', 7.8562))
+ *
+ * But this gives plenty of zeroes at both ends, so:
+ *
+ * trim=fw[214:len(fw)-214]
+ *
+ * And from 911 taps we arrive at 483 taps. Divided by 5 phases
+ * this makes only 97 taps per phase.
+ *
+ * NB: firwin filter is symmetrical so this could also be folded.
+ */
+static constexpr int ALLTAPS = 483;
 static constexpr int NTAPS = (ALLTAPS+Resampler::UP)/Resampler::UP;
 typedef coredsp::FIR<NTAPS, coreutil::simd_t<float>> fir_t;
 
@@ -33,14 +47,14 @@ void Resampler::create_filter()
 {
 #include "../filters/interp.h"
 
-    double padded[ALLTAPS + UP];
-    double n[NTAPS];
+    float padded[ALLTAPS + UP];
+    float n[NTAPS];
 
     for (int i = 0; i < ALLTAPS; ++i) padded[i] = coefs[i];
     for (int i = ALLTAPS; i < ALLTAPS + UP; ++i) padded[i] = 0;
 
     for (int phase = 0; phase < UP; ++phase) {
-        for (int i = phase, k = 0; i < ALLTAPS; i += UP, k += 1) {
+        for (int i = phase, k = 0; k < NTAPS; i += UP, k += 1) {
             n[k] = padded[i];
         }
         fir_t * fir = new fir_t();
@@ -61,28 +75,51 @@ float Resampler::sample(float s)
     }
 #endif
     if (!this->thru) {
-        /* filterbank at input samplerate */
+        /* Rational resampler as described in 
+         * "Introduction to Digital Resampling" by Dr. Mike Porteous
+         * Upsample UP times by zero insetions, interpolate using FIR filter,
+         * then pick every DOWN sample.
+         * FIR filter is decomposed in a bank of UP phase filters. Each phase
+         * is fed at the input samplerate. The output of interpolator is
+         * selected by a commutator running at the rate of input * UP.
+         *
+         * Only the filter required for the current output is computed.
+         * So this implementation is pretty efficient. 
+         */
+
+        /* Feed filters at input samplerate, only push the samples */
         for (int i = 0; i < UP; ++i) {
             ((fir_t *)filterbank[i])->in(s);
         }
 
-        /* phase commutator works at samplerate * UP */
+        /* Pick the output phase: the  commutator runs  at samplerate * UP.
+         * This part is merged with the decimator. When the output sample
+         * is needed, it is computed from the corresponding phase filter.
+         */
+#if 0
         for (int i = 0; i < UP; ++i) {
             if (++dcm_ctr == DOWN) {
                 dcm_ctr = 0;
-                this->out = ((fir_t *)filterbank[i])->out();
+                this->out = UP * ((fir_t *)filterbank[i])->out();
                 this->egg = true;
             }
         }
-        //dcm_ctr += UP;
-        //if (dcm_ctr >= DOWN) {
-        //    dcm_ctr -= DOWN;
-        //    -- what is really the phase here -- 
-        //    this->out = ((fir_t *)filterbank[??])->out();
-        //    this->egg = true;
-        //}
+#else
+        dcm_ctr += UP;
+        if (dcm_ctr >= DOWN) {
+            dcm_ctr -= DOWN;
+            int phase = UP - dcm_ctr - 1;
+            this->out = UP * ((fir_t *)filterbank[phase])->out();
+            this->egg = true;
+        }
+#endif
     }
     else {
+        dcm_ctr += UP;
+        if (dcm_ctr >= DOWN) {
+            dcm_ctr -= DOWN;
+            this->egg = true;
+        }
         this->out = s;
     }
 
