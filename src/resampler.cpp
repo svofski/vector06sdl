@@ -51,7 +51,7 @@ void Resampler::create_filter()
         double ratio = maxsum/sum[phase];
         sum[phase] = 0;
         for (int i = phase, k = 0; i < ALLTAPS; i += UP, k += 1) {
-            n[k] = coefs[i] * ratio;
+            n[k] = coefs[i];// * ratio;
             sum[phase] += n[k];
         }
         fir_t * fir = new fir_t();
@@ -78,10 +78,15 @@ float Resampler::sample(float s)
         for (int i = 0; i < UP; ++i) {
             ((fir_t *)filterbank[i])->in(s);
         }
+
         /* phase commutator works at samplerate * UP */
         for (int i = 0; i < UP; ++i) {
             if (++dcm_ctr == DOWN) {
                 dcm_ctr = 0;
+                //float o = 0;
+                //for (int p = 0; p < UP; ++p) {
+                //    o += ((fir_t *)filterbank[p])->out();
+                //}
                 this->out = ((fir_t *)filterbank[i])->out();
                 this->egg = true;
             }
