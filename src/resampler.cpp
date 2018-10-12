@@ -15,7 +15,7 @@ FILE *raw;
 
 using namespace std;
 
-static constexpr int ALLTAPS = 911;
+static constexpr int ALLTAPS = 911-215;
 static constexpr int NTAPS = (ALLTAPS+Resampler::UP)/Resampler::UP;
 typedef coredsp::FIR<NTAPS, coreutil::simd_t<float>> fir_t;
 
