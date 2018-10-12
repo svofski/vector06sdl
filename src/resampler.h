@@ -12,15 +12,17 @@ public:
 private:
     void create_filter();
 
+public:
+    static constexpr int UP = 5;
+    static constexpr int DOWN = 156;
+
 private:
-    static constexpr int nlevels = 1;
 
-    float interp_buf[128];
-    int iidx;
     int dcm_ctr;
+    int phase;
 
-    void *f[nlevels];
-    int ctr[nlevels];
-    float in[nlevels + 1];
+    void *filterbank[UP];
+
+    float out;
     bool thru;
 };

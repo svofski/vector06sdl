@@ -13,17 +13,11 @@ FILE *raw;
 
 #endif
 
-#define DECIMATE 5
-
 using namespace std;
 
-typedef coredsp::FIR<1281, coreutil::simd_t<float>> fir_t;
-
-void init_interp(fir_t & filter)
-{
-#include "../filters/interp.h"
-    filter.coefs(coefs);
-}
+static constexpr int ALLTAPS = 1285;
+static constexpr int NTAPS = ALLTAPS/Resampler::UP;
+typedef coredsp::FIR<NTAPS, coreutil::simd_t<float>> fir_t;
 
 Resampler::Resampler() 
 {
@@ -37,14 +31,37 @@ Resampler::Resampler()
 
 void Resampler::create_filter()
 {
-    for (int i = 0; i < nlevels; ++i) {
-        fir_t * fir = new fir_t();
-        init_interp(*fir);
-        this->f[i] = fir;
+#include "../filters/interp.h"
 
-        ctr[i] = 0;
+    double n[NTAPS];
+    double maxsum = -100500;
+    double sum[UP];
+
+    for (int phase = 0; phase < UP; ++phase) {
+        sum[phase] = 0;
+        for (int i = phase, k = 0; i < ALLTAPS; i += UP, k += 1) {
+            sum[phase] += coefs[i];
+        }
+        printf("phase %d sum=%f\n", phase, sum[phase]);
+        if (sum[phase] > maxsum) maxsum = sum[phase];
     }
+
+
+    for (int phase = 0; phase < UP; ++phase) {
+        double ratio = maxsum/sum[phase];
+        sum[phase] = 0;
+        for (int i = phase, k = 0; i < ALLTAPS; i += UP, k += 1) {
+            n[k] = coefs[i] * ratio;
+            sum[phase] += n[k];
+        }
+        fir_t * fir = new fir_t();
+        fir->coefs(n);
+        this->filterbank[phase] = fir;
+        printf("phase %d sum=%f\n", phase, sum[phase]);
+    }
+
     dcm_ctr = 0;
+    phase = 0;
 }
 
 float Resampler::sample(float s)
@@ -57,26 +74,37 @@ float Resampler::sample(float s)
     }
 #endif
     if (!this->thru) {
-        for (int i = 0; i < 5; ++i) {
-            ((fir_t *)f[0])->in(i==0?s:0);
-            if (++dcm_ctr == 156) {
+        /* filterbank at input samplerate */
+        for (int i = 0; i < UP; ++i) {
+            ((fir_t *)filterbank[i])->in(s);
+        }
+        /* phase commutator works at samplerate * UP */
+        for (int i = 0; i < UP; ++i) {
+            if (++dcm_ctr == DOWN) {
                 dcm_ctr = 0;
-                this->in[nlevels] = 5 * ((fir_t *)f[0])->out();
+                this->out = ((fir_t *)filterbank[i])->out();
                 this->egg = true;
             }
         }
+        //dcm_ctr += UP;
+        //if (dcm_ctr >= DOWN) {
+        //    dcm_ctr -= DOWN;
+        //    -- what is really the phase here -- 
+        //    this->out = ((fir_t *)filterbank[??])->out();
+        //    this->egg = true;
+        //}
     }
     else {
-        this->in[nlevels] = s;
+        this->out = s;
     }
 
-    return this->in[nlevels];
+    return this->out;
 }
 
 Resampler::~Resampler()
 {
-    for (int i = 0; i < nlevels; ++i) {
-        delete (fir_t *)this->f[i];
+    for (int i = 0; i < UP; ++i) {
+        delete (fir_t *)this->filterbank[i];
     }
 
 #if SAVERAW

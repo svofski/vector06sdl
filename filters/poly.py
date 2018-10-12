@@ -48,7 +48,7 @@ def plot_filter(coefs_m, legend_m, figfilename):
 Fs=1.5e6
 L = 5 # interpolation
 M = 156 # decimation
-N = 256 * L # is perfect but fat
+N = 1284 # 256 * L # is perfect but fat
 
 # ~~[Filter Design with Windowed freq]~~
 fw = signal.firwin(N+1, 1./M, window=('kaiser', 7.8562))
