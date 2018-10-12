@@ -15,8 +15,8 @@ FILE *raw;
 
 using namespace std;
 
-static constexpr int ALLTAPS = 1285;
-static constexpr int NTAPS = ALLTAPS/Resampler::UP;
+static constexpr int ALLTAPS = 911;
+static constexpr int NTAPS = (ALLTAPS+Resampler::UP)/Resampler::UP;
 typedef coredsp::FIR<NTAPS, coreutil::simd_t<float>> fir_t;
 
 Resampler::Resampler() 
@@ -33,35 +33,22 @@ void Resampler::create_filter()
 {
 #include "../filters/interp.h"
 
+    double padded[ALLTAPS + UP];
     double n[NTAPS];
-    double maxsum = -100500;
-    double sum[UP];
+
+    for (int i = 0; i < ALLTAPS; ++i) padded[i] = coefs[i];
+    for (int i = ALLTAPS; i < ALLTAPS + UP; ++i) padded[i] = 0;
 
     for (int phase = 0; phase < UP; ++phase) {
-        sum[phase] = 0;
         for (int i = phase, k = 0; i < ALLTAPS; i += UP, k += 1) {
-            sum[phase] += coefs[i];
-        }
-        printf("phase %d sum=%f\n", phase, sum[phase]);
-        if (sum[phase] > maxsum) maxsum = sum[phase];
-    }
-
-
-    for (int phase = 0; phase < UP; ++phase) {
-        double ratio = maxsum/sum[phase];
-        sum[phase] = 0;
-        for (int i = phase, k = 0; i < ALLTAPS; i += UP, k += 1) {
-            n[k] = coefs[i];// * ratio;
-            sum[phase] += n[k];
+            n[k] = padded[i];
         }
         fir_t * fir = new fir_t();
         fir->coefs(n);
         this->filterbank[phase] = fir;
-        printf("phase %d sum=%f\n", phase, sum[phase]);
     }
 
     dcm_ctr = 0;
-    phase = 0;
 }
 
 float Resampler::sample(float s)
@@ -83,10 +70,6 @@ float Resampler::sample(float s)
         for (int i = 0; i < UP; ++i) {
             if (++dcm_ctr == DOWN) {
                 dcm_ctr = 0;
-                //float o = 0;
-                //for (int p = 0; p < UP; ++p) {
-                //    o += ((fir_t *)filterbank[p])->out();
-                //}
                 this->out = ((fir_t *)filterbank[i])->out();
                 this->egg = true;
             }

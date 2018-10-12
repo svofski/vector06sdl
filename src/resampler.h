@@ -19,7 +19,6 @@ public:
 private:
 
     int dcm_ctr;
-    int phase;
 
     void *filterbank[UP];
 

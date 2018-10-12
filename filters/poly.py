@@ -30,8 +30,8 @@ def plot_filter(coefs_m, legend_m, figfilename):
     #ax1.axvspan(bx[1], bx[2], facecolor='g', alpha=0.33)
     ax1.plot(pi/2, -6, 'go')
     ax1.axvline(pi/2, color='g', linestyle='--')
-    ax1.axis([0,pi * 44e3/1.5e6,-64,3])
-    #ax1.axis([0,pi,-64,3])
+    #ax1.axis([0,pi * 44e3/1.5e6,-64,3])
+    ax1.axis([0,pi,-64,3])
     ax1.grid(True)
     ax1.set_ylabel('Magnitude (dB)')
     ax1.set_xlabel('Normalized Frequency (radians)')
@@ -48,10 +48,16 @@ def plot_filter(coefs_m, legend_m, figfilename):
 Fs=1.5e6
 L = 5 # interpolation
 M = 156 # decimation
-N = 1284 # 256 * L # is perfect but fat
+#N = 1284 # 256 * L # is perfect but fat
+N = 128 * L # + firwin = almost perfect but a bit whistly on serduk
+N = 132 * L # + firwin = almost perfect but a bit whistly on serduk
+N = 152 * L # + firwin = almost perfect but a bit whistly on serduk
+N = 182 * L # + firwin .7/M = whistle only heard after normalisation in atrocity
+#N = 333 * L 
 
 # ~~[Filter Design with Windowed freq]~~
-fw = signal.firwin(N+1, 1./M, window=('kaiser', 7.8562))
+fw = signal.firwin(N+1, .6/M, window=('kaiser', 7.8562))
+#fw = signal.remez(N+1, [0, 0.7/M, 1./M, 0.5], [1,0], [1,1])
 fw[abs(fw) <= 1e-4] = 0.
 print(fw)
 print "N+1=", N+1
