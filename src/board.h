@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <vector>
 #include <functional>
+#include <boost/thread.hpp>
+#include <boost/thread/concurrent_queues/sync_queue.hpp>
+
 #include "i8080.h"
 #include "filler.h"
 #include "sound.h"
@@ -65,10 +68,17 @@ public:
     int execute_frame(bool update_screen);
     void single_step(bool update_screen);
     int loop_frame();
+    void render_frame(bool executed) { tv.render(executed); };
     bool cadence_allows();
     int loop_frame_vsync();
     int loop_frame_userevent();
+
     void handle_event(SDL_Event & event);
+    void handle_keyup(SDL_KeyboardEvent & key);
+    void handle_keydown(SDL_KeyboardEvent & key);
+    void handle_quit();
+    bool terminating() const { return io.the_keyboard().terminate; };
+
     void dump_memory(int start, int count);
     std::string read_memory(int start, int count);
     void write_memory_byte(int addr, int value);
@@ -84,4 +94,43 @@ public:
     std::string remove_breakpoint(int type, int addr, int kind);
     bool check_breakpoint();
     void check_watchpoint(uint32_t addr, uint8_t value, int how);
+
+    void pause_sound(bool topause) { soundnik.pause((int)topause); }
+};
+
+class Emulator {
+private:
+    enum event_type {
+        EXECUTE_FRAME,
+        KEYDOWN,
+        KEYUP,
+        QUIT,
+
+        RENDER,
+    };
+
+    struct threadevent {
+        event_type type;
+        int data;
+        SDL_KeyboardEvent key;
+        threadevent() {}
+        threadevent(event_type t, int d) : type(t), data(d) {}
+        threadevent(event_type t, int d, SDL_KeyboardEvent k) : 
+            type(t), data(d), key(k) {}
+    };
+
+    boost::thread thread;
+    Board & board;
+
+    boost::sync_queue<threadevent> ui_to_engine_queue;
+    boost::sync_queue<threadevent> engine_to_ui_queue;
+
+public:
+    Emulator(Board & borat);
+    void threadfunc();
+    void handle_threadevent(threadevent & ev);
+    void start_emulator_thread();
+    void run_event_loop();
+    void join_emulator_thread();
+
 };

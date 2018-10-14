@@ -13,6 +13,7 @@
 #include "ay.h"
 #include "wav.h"
 #include "server.h"
+#include "SDL.h"
 
 #if HAVE_GPERFTOOLS
 #include <gperftools/profiler.h>
@@ -148,13 +149,6 @@ int main(int argc, char ** argv)
 
     atexit(SDL_Quit);
 
-    const int startframe = Options.vsync ? 20 : -1;
-    if (startframe == -1) {
-        // soundnik provides frame sync evens when there is no vsync
-        // so it must be started, or we're going to be stuck waiting for event
-        soundnik.pause(0);
-    }
-
     board.poll_debugger = [](void) {
         gdbserver.poll();
     };
@@ -166,24 +160,10 @@ int main(int argc, char ** argv)
     }
 #endif
 
-    for(int i = 0;; ++i) {
-        int executed = board.loop_frame();
-        if (i == startframe) {
-            soundnik.pause(0);
-            printf("Starting audio\n");
-        }
-        tv.render(executed);
-
-        if (Options.save_frames.size() && i == Options.save_frames[0])
-        {
-            tv.save_frame(Options.path_for_frame(i));
-            Options.save_frames.erase(Options.save_frames.begin());
-        }
-
-        if (keyboard.terminate || i == Options.max_frame) {
-            break;
-        }
-    }
+    Emulator lator(board);
+    lator.start_emulator_thread();
+    lator.run_event_loop();
+    lator.join_emulator_thread();
 
 #if HAVE_GPERFTOOLS
     if (Options.profile) {
