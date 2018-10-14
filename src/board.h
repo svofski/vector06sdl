@@ -52,6 +52,8 @@ private:
 public:
     std::function<void(void)> poll_debugger;
     std::function<void(void)> onbreakpoint;
+    
+    std::function<void(void)> onframetimer;
 
 private:
     void refresh_watchpoint_listeners(void);
@@ -132,5 +134,5 @@ public:
     void start_emulator_thread();
     void run_event_loop();
     void join_emulator_thread();
-
+    void inject_timer_event();
 };

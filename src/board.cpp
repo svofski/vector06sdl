@@ -523,6 +523,9 @@ bool Board::check_breakpoint()
 
 Emulator::Emulator(Board & borat) : board(borat)
 {
+    board.onframetimer = [=]() {
+        ui_to_engine_queue.push(threadevent(EXECUTE_FRAME, 0));
+    };
 }
 
 /* handle sdl events in the main thread */

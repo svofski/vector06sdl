@@ -63,6 +63,7 @@ void i8080_hal_iff(int on)
  * rate using the timer. Audio callback is a very consistent source though */
 uint32_t timer_callback(uint32_t interval, void * param)
 {
+#if 0
     static ptrdiff_t frame_number;
     SDL_Event event;
     SDL_UserEvent userevent;
@@ -76,6 +77,9 @@ uint32_t timer_callback(uint32_t interval, void * param)
     event.user = userevent;
 
     SDL_PushEvent(&event);
+#else
+    board->onframetimer();
+#endif
     return(interval);
 }
 
