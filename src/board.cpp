@@ -123,6 +123,11 @@ int Board::execute_frame(bool update_screen)
     return 1;
 }
 
+int Board::execute_frame_with_cadence(bool update_screen)
+{
+    return cadence_allows() && execute_frame(update_screen);
+}
+
 void Board::single_step(bool update_screen)
 {
     this->instr_time += i8080_instruction(&this->last_opcode);
@@ -202,12 +207,15 @@ void Board::single_step(bool update_screen)
 
 int Board::loop_frame()
 {
+#if 0
     if (Options.vsync /* && !this->debugger_interrupt*/ ) {
         return loop_frame_vsync();
     }
     else {
         return loop_frame_userevent();
     }
+#endif
+    return 0;
 }
 
 #if 0
@@ -249,6 +257,7 @@ int Board::loop_frame_vsync()
 #if 0
     measure_framerate();
 #endif
+#if 0
     SDL_Event event;
     int result = 0;
     do {
@@ -260,10 +269,13 @@ int Board::loop_frame_vsync()
         }
     } while(0);
     return result;
+#endif
+    return 0;
 }
 
 int Board::loop_frame_userevent()
 {
+#if 0
     SDL_Event event;
     bool frame = false;
     while(!frame) {
@@ -280,6 +292,8 @@ int Board::loop_frame_userevent()
         }
     }
     return 1;
+#endif
+    return 0;
 }
 
 void Board::handle_event(SDL_Event & event)
@@ -305,9 +319,9 @@ void Board::handle_event(SDL_Event & event)
 
 void Board::handle_keydown(SDL_KeyboardEvent & key)
 {
-    if (!this->tv.handle_keyboard_event(key)) {
-        this->io.the_keyboard().key_down(key);
-    }
+    //if (!this->tv.handle_keyboard_event(key)) {
+    this->io.the_keyboard().key_down(key);
+    //}
 }
 
 void Board::handle_keyup(SDL_KeyboardEvent & key)
@@ -320,6 +334,20 @@ void Board::handle_quit()
     this->io.the_keyboard().terminate = true;
 }
 
+void Board::render_frame(bool executed)
+{
+    tv.render(executed);
+    if (Options.vsync) {
+        extern uint32_t timer_callback(uint32_t interval, void * param);
+        timer_callback(0, 0);
+        //putchar('S'); fflush(stdout);
+    }
+    if (Options.save_frames.size() && this->frame_no == Options.save_frames[0])
+    {
+        tv.save_frame(Options.path_for_frame(this->frame_no));
+        Options.save_frames.erase(Options.save_frames.begin());
+    }
+}
 
 void Board::dump_memory(int start, int count)
 {
@@ -528,6 +556,26 @@ Emulator::Emulator(Board & borat) : board(borat)
     };
 }
 
+bool Emulator::handle_keyboard_event(SDL_KeyboardEvent & event)
+{
+    switch (event.keysym.scancode) 
+    {
+        case SDL_SCANCODE_RETURN:
+#if __WIN32__
+            if (event.keysym.mod & KMOD_ALT) {	
+#else 
+                if (event.keysym.mod & KMOD_GUI) {
+#endif
+                    board.toggle_fullscreen();
+                    return true;
+                }
+            break;
+        default:
+            break;
+    }
+    return false;
+}
+
 /* handle sdl events in the main thread */
 void Emulator::run_event_loop()
 {
@@ -543,12 +591,16 @@ void Emulator::run_event_loop()
                         //printf("exec\n");
                         ui_to_engine_queue.push(threadevent(EXECUTE_FRAME, 0));
                     } else if (event.user.code & 0x80) {
-                        //printf("render\n");
+                        //putchar('r');
                         board.render_frame(event.user.code & 1);
+                        //putchar('R');
+                        fflush(stdout);
                     }
                     break;
                 case SDL_KEYDOWN:
-                    ui_to_engine_queue.push(threadevent(KEYDOWN, 0, event.key));
+                    if (!this->handle_keyboard_event(event.key)) {
+                        ui_to_engine_queue.push(threadevent(KEYDOWN, 0, event.key));
+                    }
                     break;
                 case SDL_KEYUP:
                     ui_to_engine_queue.push(threadevent(KEYUP, 0, event.key));
@@ -592,20 +644,32 @@ void Emulator::handle_threadevent(threadevent & event)
             board.handle_keyup(event.key);
             break;
         case EXECUTE_FRAME:
-            //printf("threadfunc: execute_frame\n");
-            board.execute_frame(true);
-            //ui_to_engine_queue.push(threadevent(RENDER, 0));
             {
+                int executed;
+                if (Options.vsync) {
+                    executed = board.execute_frame_with_cadence(true);
+                } 
+                else {
+                    //putchar('e'); fflush(stdout);
+                    executed = board.execute_frame(true);
+                }
+                {
                 SDL_Event event;
                 SDL_UserEvent userevent;
 
-                userevent.type = SDL_USEREVENT;
-                userevent.code = 0x81;
-                userevent.data1 = userevent.data2 = 0;
+                if (SDL_PeepEvents(&event, 1, SDL_PEEKEVENT, SDL_USEREVENT,SDL_USEREVENT) == 0) {
 
-                event.type = SDL_USEREVENT;
-                event.user = userevent;
-                SDL_PushEvent(&event);
+                    userevent.type = SDL_USEREVENT;
+                    userevent.code = 0x80 | executed;
+                    userevent.data1 = userevent.data2 = 0;
+
+                    event.type = SDL_USEREVENT;
+                    event.user = userevent;
+                    SDL_PushEvent(&event);
+                } else {
+                    printf("have render in queue already\n");
+                }
+                }
             }
             break;
         case QUIT:
@@ -620,34 +684,30 @@ void Emulator::handle_threadevent(threadevent & event)
 /* emulator thread body */
 void Emulator::threadfunc()
 {
-    const int startframe = Options.vsync ? 20 : -1;
-    if (startframe == -1) {
+    //const int startframe;
+    //const int startframe = Options.vsync ? 20 : -1;
+    //if (startframe == -1) {
         // soundnik provides frame sync evens when there is no vsync
         // so it must be started, or we're going to be stuck waiting for event
         board.pause_sound(0);
+    //}
+
+    if (Options.vsync) {
+        extern uint32_t timer_callback(uint32_t interval, void * param);
+        timer_callback(0, 0);
+        //putchar('K'); fflush(stdout);
     }
 
     for(int i = 0; !this->board.terminating(); ++i) {
-        //int executed = board.loop_frame();
-        // pick event from queue
-        // execute frame
-        // profit
         threadevent ev;
         if (ui_to_engine_queue.wait_pull(ev) == boost::queue_op_status::closed)
             break;
         handle_threadevent(ev);
 
-        if (i == startframe) {
-            board.pause_sound(0);
-            printf("Starting audio\n");
-        }
-        // -> tv.render(executed);
-
-        //->if (Options.save_frames.size() && i == Options.save_frames[0])
-        //->{
-        //->    tv.save_frame(Options.path_for_frame(i));
-        //->    Options.save_frames.erase(Options.save_frames.begin());
-        //->}
+        //if (i == startframe) {
+        //    board.pause_sound(0);
+        //    printf("Starting audio\n");
+        //}
 
         //->if (keyboard.terminate || i == Options.max_frame) {
         //->    break;

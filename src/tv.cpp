@@ -272,26 +272,6 @@ void TV::init_gl_textures()
 #endif
 }
 
-bool TV::handle_keyboard_event(SDL_KeyboardEvent & event)
-{
-    switch (event.keysym.scancode) 
-    {
-        case SDL_SCANCODE_RETURN:
-#if __WIN32__
-            if (event.keysym.mod & KMOD_ALT) {	
-#else 
-                if (event.keysym.mod & KMOD_GUI) {
-#endif
-                    this->toggle_fullscreen();
-                    return true;
-                }
-            break;
-        default:
-            break;
-    }
-    return false;
-}
-
 void TV::window_resized(SDL_Event & event)
 {
 #if HAVE_OPENGL

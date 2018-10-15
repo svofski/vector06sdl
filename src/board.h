@@ -68,9 +68,10 @@ public:
     /* Fuses together inner CPU logic and Vector-06c interrupt logic */
     bool check_interrupt();
     int execute_frame(bool update_screen);
+    int execute_frame_with_cadence(bool update_screen);
     void single_step(bool update_screen);
     int loop_frame();
-    void render_frame(bool executed) { tv.render(executed); };
+    void render_frame(bool executed); 
     bool cadence_allows();
     int loop_frame_vsync();
     int loop_frame_userevent();
@@ -80,6 +81,7 @@ public:
     void handle_keydown(SDL_KeyboardEvent & key);
     void handle_quit();
     bool terminating() const { return io.the_keyboard().terminate; };
+    void toggle_fullscreen() { tv.toggle_fullscreen(); }
 
     void dump_memory(int start, int count);
     std::string read_memory(int start, int count);
@@ -135,4 +137,5 @@ public:
     void run_event_loop();
     void join_emulator_thread();
     void inject_timer_event();
+    bool handle_keyboard_event(SDL_KeyboardEvent & event);
 };

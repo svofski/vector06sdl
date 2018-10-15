@@ -50,6 +50,5 @@ public:
     /* executed: 1 if the frame was real, 0 if the frame is a skip frame */
     void render(int executed);
     int get_refresh_rate() const;
-    bool handle_keyboard_event(SDL_KeyboardEvent & event);
     void handle_window_event(SDL_Event & event);
 };
