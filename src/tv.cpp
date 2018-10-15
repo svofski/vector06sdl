@@ -162,11 +162,10 @@ void TV::init_regular()
 
     this->tex_width = Options.screen_width;
     this->tex_height = Options.screen_height;
-    this->texture[0] = SDL_CreateTexture(this->renderer, this->pixelformat,
-            SDL_TEXTUREACCESS_STREAMING, this->tex_width, this->tex_height);
-
-    this->texture[1] = SDL_CreateTexture(this->renderer, this->pixelformat,
-            SDL_TEXTUREACCESS_STREAMING, this->tex_width, this->tex_height);
+    for (int i = 0; i < TV::NTEXTURES; ++i) {
+        this->texture[i] = SDL_CreateTexture(this->renderer, this->pixelformat,
+                SDL_TEXTUREACCESS_STREAMING, this->tex_width, this->tex_height);
+    }
     this->texture_n = 0;
 
     SDL_RenderSetLogicalSize(this->renderer, window_width, window_height);
@@ -382,12 +381,12 @@ void TV::render_single_regular()
     int t = this->texture_n;
     SDL_UnlockTexture(this->texture[t]);
     this->bmp = NULL;
-    SDL_SetTextureBlendMode(this->texture[t], 
-            SDL_BLENDMODE_NONE);
+    SDL_SetTextureBlendMode(this->texture[t], SDL_BLENDMODE_NONE);
     SDL_SetTextureAlphaMod(this->texture[t], 255);
     SDL_RenderClear(this->renderer);
     SDL_RenderCopy(this->renderer, this->texture[t], NULL, NULL);
-    this->texture_n = (this->texture_n + 1) & 1;
+    this->texture_n = this->texture_n + 1;
+    if (this->texture_n >= TV::NTEXTURES) this->texture_n = 0;
 }
 
 void TV::render_single_opengl()

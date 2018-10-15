@@ -14,9 +14,11 @@ extern "C" DECLSPEC int SDLCALL IMG_SavePNG(SDL_Surface *surface, const char *fi
 class TV
 {
 private:
+    static constexpr int NTEXTURES = 2;
+
     SDL_Window * window;
     SDL_Renderer * renderer;
-    SDL_Texture * texture[2];
+    SDL_Texture * texture[NTEXTURES];
     uint32_t * bmp;
     int tex_width;
     int tex_height;
@@ -26,7 +28,7 @@ private:
     uint32_t pixelformat;
 
     SDL_GLContext gl_context;
-    GLuint gl_textures[2];
+    GLuint gl_textures[NTEXTURES];
 
 private:
     void render_with_blend(int src_alpha);

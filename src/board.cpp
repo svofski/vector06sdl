@@ -101,7 +101,6 @@ int Board::execute_frame(bool update_screen)
 
     ++this->frame_no;
     this->filler.reset();
-
     this->irq_carry = false; // imitates cpu waiting after T2 when INTE
 
     // 59904 
@@ -576,6 +575,39 @@ bool Emulator::handle_keyboard_event(SDL_KeyboardEvent & event)
     return false;
 }
 
+/* wow bob wow */
+int
+xSDL_WaitEventTimeout(SDL_Event * event, int timeout)
+{
+    Uint32 expiration = 0;
+
+    if (timeout > 0)
+        expiration = SDL_GetTicks() + timeout;
+
+    for (;;) {
+        SDL_PumpEvents();
+        switch (SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT)) {
+        case -1:
+            return 0;
+        case 0:
+            if (timeout == 0) {
+                /* Polling and no events, just return */
+                return 0;
+            }
+            if (timeout > 0 && SDL_TICKS_PASSED(SDL_GetTicks(), expiration)) {
+                /* Timeout expired and no events */
+                return 0;
+            }
+            SDL_Delay(1);
+            break;
+        default:
+            /* Has events */
+            return 1;
+        }
+    }
+}
+
+
 /* handle sdl events in the main thread */
 void Emulator::run_event_loop()
 {
@@ -584,7 +616,7 @@ void Emulator::run_event_loop()
     SDL_Event event;
     bool end = false;
     while(!end) {
-        if (SDL_WaitEvent(&event)) {
+        if (xSDL_WaitEventTimeout(&event, -1)) {
             switch(event.type) {
                 case SDL_USEREVENT:
                     if (event.user.code == 0) {
@@ -654,10 +686,10 @@ void Emulator::handle_threadevent(threadevent & event)
                     executed = board.execute_frame(true);
                 }
                 {
-                SDL_Event event;
-                SDL_UserEvent userevent;
+                    SDL_Event event;
+                    SDL_UserEvent userevent;
 
-                if (SDL_PeepEvents(&event, 1, SDL_PEEKEVENT, SDL_USEREVENT,SDL_USEREVENT) == 0) {
+                    //if (SDL_PeepEvents(&event, 1, SDL_PEEKEVENT, SDL_USEREVENT,SDL_USEREVENT) == 0) {
 
                     userevent.type = SDL_USEREVENT;
                     userevent.code = 0x80 | executed;
@@ -666,9 +698,9 @@ void Emulator::handle_threadevent(threadevent & event)
                     event.type = SDL_USEREVENT;
                     event.user = userevent;
                     SDL_PushEvent(&event);
-                } else {
-                    printf("have render in queue already\n");
-                }
+                    //} else {
+                    //    printf("have render in queue already\n");
+                    //}
                 }
             }
             break;
