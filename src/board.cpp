@@ -576,8 +576,7 @@ bool Emulator::handle_keyboard_event(SDL_KeyboardEvent & event)
 }
 
 /* wow bob wow */
-int
-xSDL_WaitEventTimeout(SDL_Event * event, int timeout)
+int Emulator::wait_event(SDL_Event * event, int timeout)
 {
     Uint32 expiration = 0;
 
@@ -598,7 +597,18 @@ xSDL_WaitEventTimeout(SDL_Event * event, int timeout)
                 /* Timeout expired and no events */
                 return 0;
             }
-            SDL_Delay(1);
+            //SDL_Delay(10); pizdec
+            {
+                threadevent ev;
+                if (engine_to_ui_queue.
+                        pull_for(boost::chrono::milliseconds(10), ev) ==
+                        boost::queue_op_status::success) {
+                    event->type = SDL_USEREVENT;
+                    event->user.code = 0x81;
+                    return 1;
+                }
+            }
+        //if (engine_to_ui_queue.try_pull(ev) == boost::queue_op_status::success)
             break;
         default:
             /* Has events */
@@ -616,7 +626,7 @@ void Emulator::run_event_loop()
     SDL_Event event;
     bool end = false;
     while(!end) {
-        if (xSDL_WaitEventTimeout(&event, -1)) {
+        if (this->wait_event(&event, -1)) {
             switch(event.type) {
                 case SDL_USEREVENT:
                     if (event.user.code == 0) {
@@ -685,23 +695,25 @@ void Emulator::handle_threadevent(threadevent & event)
                     //putchar('e'); fflush(stdout);
                     executed = board.execute_frame(true);
                 }
-                {
-                    SDL_Event event;
-                    SDL_UserEvent userevent;
-
-                    //if (SDL_PeepEvents(&event, 1, SDL_PEEKEVENT, SDL_USEREVENT,SDL_USEREVENT) == 0) {
-
-                    userevent.type = SDL_USEREVENT;
-                    userevent.code = 0x80 | executed;
-                    userevent.data1 = userevent.data2 = 0;
-
-                    event.type = SDL_USEREVENT;
-                    event.user = userevent;
-                    SDL_PushEvent(&event);
-                    //} else {
-                    //    printf("have render in queue already\n");
-                    //}
-                }
+                engine_to_ui_queue.push(threadevent(RENDER, executed));
+//              fuck sdl and it's retarded event queue
+//                {
+//                    SDL_Event event;
+//                    SDL_UserEvent userevent;
+//
+//                    //if (SDL_PeepEvents(&event, 1, SDL_PEEKEVENT, SDL_USEREVENT,SDL_USEREVENT) == 0) {
+//
+//                    userevent.type = SDL_USEREVENT;
+//                    userevent.code = 0x80 | executed;
+//                    userevent.data1 = userevent.data2 = 0;
+//
+//                    event.type = SDL_USEREVENT;
+//                    event.user = userevent;
+//                    SDL_PushEvent(&event);
+//                    //} else {
+//                    //    printf("have render in queue already\n");
+//                    //}
+//                }
             }
             break;
         case QUIT:

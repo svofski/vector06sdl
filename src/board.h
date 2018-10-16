@@ -5,7 +5,8 @@
 #include <functional>
 #include <boost/thread.hpp>
 #include <boost/thread/concurrent_queues/sync_queue.hpp>
-
+#include <boost/thread/concurrent_queues/sync_priority_queue.hpp>
+#include "SDL.h"
 #include "i8080.h"
 #include "filler.h"
 #include "sound.h"
@@ -121,13 +122,18 @@ private:
         threadevent(event_type t, int d) : type(t), data(d) {}
         threadevent(event_type t, int d, SDL_KeyboardEvent k) : 
             type(t), data(d), key(k) {}
+
+        bool operator <(const threadevent& other) const
+        {
+            return false;
+        }
     };
 
     boost::thread thread;
     Board & board;
 
     boost::sync_queue<threadevent> ui_to_engine_queue;
-    boost::sync_queue<threadevent> engine_to_ui_queue;
+    boost::sync_priority_queue<threadevent> engine_to_ui_queue;
 
 public:
     Emulator(Board & borat);
@@ -138,4 +144,5 @@ public:
     void join_emulator_thread();
     void inject_timer_event();
     bool handle_keyboard_event(SDL_KeyboardEvent & event);
+    int wait_event(SDL_Event * event, int timeout);
 };

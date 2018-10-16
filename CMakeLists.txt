@@ -45,7 +45,7 @@ add_executable(v06x ${SOURCE_FILES} boots.o)
 
 
 set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost COMPONENTS thread system filesystem program_options REQUIRED)
+find_package(Boost COMPONENTS thread system filesystem program_options chrono REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
