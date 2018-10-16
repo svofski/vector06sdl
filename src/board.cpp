@@ -625,9 +625,10 @@ int Emulator::wait_event(SDL_Event * event, int timeout)
                         boost::queue_op_status::success) {
                     event->type = SDL_USEREVENT;
                     event->user.code = 0x80 | ev.data;
-                    if (engine_to_ui_queue.nonblocking_pull(ev) ==
-                            boost::queue_op_status::success) 
-                        printf("purged render\n");
+                    int purgatron = 0;
+                    while(engine_to_ui_queue.nonblocking_pull(ev) ==
+                            boost::queue_op_status::success) ++purgatron;
+                    purgatron && printf("purged render(%d)\n", purgatron);
                     return 1;
                 }
             }
