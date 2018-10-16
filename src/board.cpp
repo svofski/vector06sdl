@@ -316,21 +316,28 @@ void Board::handle_event(SDL_Event & event)
     }
 }
 
+/* emulator thread */
 void Board::handle_keydown(SDL_KeyboardEvent & key)
 {
-    //if (!this->tv.handle_keyboard_event(key)) {
     this->io.the_keyboard().key_down(key);
-    //}
 }
 
+/* emulator thread */
 void Board::handle_keyup(SDL_KeyboardEvent & key)
 {
     this->io.the_keyboard().key_up(key);
 }
 
+/* emulator thread */
 void Board::handle_quit()
 {
     this->io.the_keyboard().terminate = true;
+}
+
+/* ui thread */
+void Board::handle_window_event(SDL_Event & event)
+{
+    this->tv.handle_window_event(event);
 }
 
 void Board::render_frame(bool executed)
@@ -339,7 +346,7 @@ void Board::render_frame(bool executed)
     if (Options.vsync) {
         extern uint32_t timer_callback(uint32_t interval, void * param);
         timer_callback(0, 0);
-        //putchar('S'); fflush(stdout);
+        putchar('S'); fflush(stdout);
     }
     if (Options.save_frames.size() && this->frame_no == Options.save_frames[0])
     {
@@ -575,7 +582,19 @@ bool Emulator::handle_keyboard_event(SDL_KeyboardEvent & event)
     return false;
 }
 
-/* wow bob wow */
+/* This part is copied from SDL_events.c SDL_WaitEventTimeout().
+ * It is not acceptable to wait 10ms as written in the original code.
+ * Because this loop is also used to receive render requests from the engine,
+ * 10ms may create frame dropouts and it looks awful.
+ *
+ * The place of SDL_Delay(10) is now taken by sync_priority_queue<>::pull_for() 
+ * with a timeout. I'm not sure why boost only has timed-out pull for priority
+ * queues and not for regular ones.
+ *
+ * When the engine is done executing a frame, it posts a threadevent(RENDER)
+ * to engine_to_ui_queue and it's supposed to instantly wake up the main
+ * thread. 
+ */
 int Emulator::wait_event(SDL_Event * event, int timeout)
 {
     Uint32 expiration = 0;
@@ -604,11 +623,10 @@ int Emulator::wait_event(SDL_Event * event, int timeout)
                         pull_for(boost::chrono::milliseconds(10), ev) ==
                         boost::queue_op_status::success) {
                     event->type = SDL_USEREVENT;
-                    event->user.code = 0x81;
+                    event->user.code = 0x80 | ev.data;
                     return 1;
                 }
             }
-        //if (engine_to_ui_queue.try_pull(ev) == boost::queue_op_status::success)
             break;
         default:
             /* Has events */
@@ -617,14 +635,19 @@ int Emulator::wait_event(SDL_Event * event, int timeout)
     }
 }
 
+static void kickstart_timer()
+{
+    extern uint32_t timer_callback(uint32_t interval, void * param);
+    timer_callback(0, 0);
+    putchar('K'); fflush(stdout);
+}
 
 /* handle sdl events in the main thread */
 void Emulator::run_event_loop()
 {
-    // poll events
-    // put requests in queue
     SDL_Event event;
     bool end = false;
+    bool kickstart = true;
     while(!end) {
         if (this->wait_event(&event, -1)) {
             switch(event.type) {
@@ -633,9 +656,9 @@ void Emulator::run_event_loop()
                         //printf("exec\n");
                         ui_to_engine_queue.push(threadevent(EXECUTE_FRAME, 0));
                     } else if (event.user.code & 0x80) {
-                        //putchar('r');
+                        putchar('r');
                         board.render_frame(event.user.code & 1);
-                        //putchar('R');
+                        putchar('R');
                         fflush(stdout);
                     }
                     break;
@@ -648,10 +671,16 @@ void Emulator::run_event_loop()
                     ui_to_engine_queue.push(threadevent(KEYUP, 0, event.key));
                     break;
                 // this is to be handled in the ui thread
-                //case SDL_WINDOWEVENT:
-                //    msg = {WINDOW, event.window.event};
-                //    ui_to_engine_queue.push(msg);
-                //    break;
+                case SDL_WINDOWEVENT:
+                    printf("windowevent: %x\n", event.window.event);
+                    if (event.window.event == SDL_WINDOWEVENT_ENTER) {
+                        if (kickstart) {
+                            kickstart_timer();
+                            kickstart = false;
+                        }
+                    }
+                    board.handle_window_event(event);
+                    break;
                 case SDL_QUIT:
                     ui_to_engine_queue.push(threadevent(QUIT, 0));
                     end = true;
@@ -660,17 +689,6 @@ void Emulator::run_event_loop()
                     break;
             }
         }
-        //threadevent ev;
-        //if (engine_to_ui_queue.try_pull(ev) == boost::queue_op_status::success)
-        //{
-        //    printf("sukex!\n");
-        //    switch (ev.type) {
-        //        case RENDER:
-        //            printf("render\n");
-        //            board.render_frame(true);
-        //            break;
-        //    }
-        //}
     }
 }
 
@@ -689,31 +707,14 @@ void Emulator::handle_threadevent(threadevent & event)
             {
                 int executed;
                 if (Options.vsync) {
+                    putchar('E'); fflush(stdout);
                     executed = board.execute_frame_with_cadence(true);
                 } 
                 else {
-                    //putchar('e'); fflush(stdout);
+                    putchar('e'); fflush(stdout);
                     executed = board.execute_frame(true);
                 }
                 engine_to_ui_queue.push(threadevent(RENDER, executed));
-//              fuck sdl and it's retarded event queue
-//                {
-//                    SDL_Event event;
-//                    SDL_UserEvent userevent;
-//
-//                    //if (SDL_PeepEvents(&event, 1, SDL_PEEKEVENT, SDL_USEREVENT,SDL_USEREVENT) == 0) {
-//
-//                    userevent.type = SDL_USEREVENT;
-//                    userevent.code = 0x80 | executed;
-//                    userevent.data1 = userevent.data2 = 0;
-//
-//                    event.type = SDL_USEREVENT;
-//                    event.user = userevent;
-//                    SDL_PushEvent(&event);
-//                    //} else {
-//                    //    printf("have render in queue already\n");
-//                    //}
-//                }
             }
             break;
         case QUIT:
@@ -728,34 +729,14 @@ void Emulator::handle_threadevent(threadevent & event)
 /* emulator thread body */
 void Emulator::threadfunc()
 {
-    //const int startframe;
-    //const int startframe = Options.vsync ? 20 : -1;
-    //if (startframe == -1) {
-        // soundnik provides frame sync evens when there is no vsync
-        // so it must be started, or we're going to be stuck waiting for event
-        board.pause_sound(0);
-    //}
-
-    if (Options.vsync) {
-        extern uint32_t timer_callback(uint32_t interval, void * param);
-        timer_callback(0, 0);
-        //putchar('K'); fflush(stdout);
-    }
-
     for(int i = 0; !this->board.terminating(); ++i) {
         threadevent ev;
         if (ui_to_engine_queue.wait_pull(ev) == boost::queue_op_status::closed)
             break;
         handle_threadevent(ev);
-
-        //if (i == startframe) {
-        //    board.pause_sound(0);
-        //    printf("Starting audio\n");
-        //}
-
-        //->if (keyboard.terminate || i == Options.max_frame) {
-        //->    break;
-        //->}
+        if (i == 0) {
+            board.pause_sound(0);
+        }
     }
 }
 

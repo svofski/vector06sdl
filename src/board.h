@@ -80,6 +80,7 @@ public:
     void handle_event(SDL_Event & event);
     void handle_keyup(SDL_KeyboardEvent & key);
     void handle_keydown(SDL_KeyboardEvent & key);
+    void handle_window_event(SDL_Event & event);
     void handle_quit();
     bool terminating() const { return io.the_keyboard().terminate; };
     void toggle_fullscreen() { tv.toggle_fullscreen(); }

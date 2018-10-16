@@ -194,7 +194,7 @@ void Soundnik::callback(void * userdata, uint8_t * stream, int len)
     if (!Options.vsync) {
         extern uint32_t timer_callback(uint32_t interval, void * param);
         timer_callback(0, 0);
-        //putchar('s'); fflush(stdout);
+        putchar('s'); fflush(stdout);
     }
 }
 
