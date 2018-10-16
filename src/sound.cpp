@@ -160,8 +160,6 @@ void Soundnik::pause(int pause)
     this->sound_accu_int = 0;
 }
 
-static int manquator = 0;
-
 void Soundnik::callback(void * userdata, uint8_t * stream, int len)
 {
     Soundnik * that = (Soundnik *)userdata;
@@ -171,9 +169,6 @@ void Soundnik::callback(void * userdata, uint8_t * stream, int len)
         memcpy(stream, that->buffer[that->rdbuf], that->wrptr * sizeof(float));
         for (int i = that->wrptr, end = that->sound_frame_size * 2; i < end; ++i) {
             fstream[i] = that->last_value;
-        }
-        if (++manquator == 10) {
-            printf("SPECIAL PLACe\n");
         }
         Options.log.audio &&
             fprintf(stderr, "starve rdbuf=%d wrbuf=%d en manque=%d\n", 
@@ -191,10 +186,10 @@ void Soundnik::callback(void * userdata, uint8_t * stream, int len)
         that->rec->record_buffer(fstream, that->sound_frame_size * 2);
 
     /* sound callback is also our frame interrupt source */
-    if (!Options.vsync) {
+    if (!(Options.vsync && Options.vsync_enable)) {
         extern uint32_t timer_callback(uint32_t interval, void * param);
         timer_callback(0, 0);
-        putchar('s'); fflush(stdout);
+        DBG_QUEUE(putchar('s'); fflush(stdout););
     }
 }
 

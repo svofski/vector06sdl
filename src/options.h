@@ -33,6 +33,8 @@ struct _options
 
     bool profile;       /* enable gperftools CPU profiler */
 
+    bool vsync_enable;  /* true if window has mouse focus */
+
     std::string path_for_frame(int n);
     std::vector<std::string> fddfile;
     std::vector<int> save_frames;

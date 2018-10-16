@@ -122,9 +122,10 @@ int Board::execute_frame(bool update_screen)
     return 1;
 }
 
-int Board::execute_frame_with_cadence(bool update_screen)
+int Board::execute_frame_with_cadence(bool update_screen, bool use_cadence)
 {
-    return cadence_allows() && execute_frame(update_screen);
+    volatile bool c = cadence_allows();
+    return (c || !use_cadence) && execute_frame(update_screen);
 }
 
 void Board::single_step(bool update_screen)
@@ -343,10 +344,10 @@ void Board::handle_window_event(SDL_Event & event)
 void Board::render_frame(bool executed)
 {
     tv.render(executed);
-    if (Options.vsync) {
+    if (Options.vsync && Options.vsync_enable) {
         extern uint32_t timer_callback(uint32_t interval, void * param);
         timer_callback(0, 0);
-        putchar('S'); fflush(stdout);
+        DBG_QUEUE(putchar('S'); fflush(stdout););
     }
     if (Options.save_frames.size() && this->frame_no == Options.save_frames[0])
     {
@@ -639,7 +640,7 @@ static void kickstart_timer()
 {
     extern uint32_t timer_callback(uint32_t interval, void * param);
     timer_callback(0, 0);
-    putchar('K'); fflush(stdout);
+    DBG_QUEUE(putchar('K'); fflush(stdout););
 }
 
 /* handle sdl events in the main thread */
@@ -648,6 +649,7 @@ void Emulator::run_event_loop()
     SDL_Event event;
     bool end = false;
     bool kickstart = true;
+    bool enabling_vsync = false;
     while(!end) {
         if (this->wait_event(&event, -1)) {
             switch(event.type) {
@@ -656,10 +658,14 @@ void Emulator::run_event_loop()
                         //printf("exec\n");
                         ui_to_engine_queue.push(threadevent(EXECUTE_FRAME, 0));
                     } else if (event.user.code & 0x80) {
-                        putchar('r');
+                        DBG_QUEUE(putchar('r'); putchar('0' + (event.user.code & 1)););
                         board.render_frame(event.user.code & 1);
-                        putchar('R');
-                        fflush(stdout);
+                        if (enabling_vsync) {
+                            enabling_vsync = false;
+                            Options.vsync_enable = true;
+                            kickstart_timer();
+                        }
+                        DBG_QUEUE(putchar('R'); fflush(stdout););
                     }
                     break;
                 case SDL_KEYDOWN:
@@ -672,12 +678,20 @@ void Emulator::run_event_loop()
                     break;
                 // this is to be handled in the ui thread
                 case SDL_WINDOWEVENT:
-                    printf("windowevent: %x\n", event.window.event);
-                    if (event.window.event == SDL_WINDOWEVENT_ENTER) {
+                    //printf("windowevent: %x\n", event.window.event);
+                    if (event.window.event == SDL_WINDOWEVENT_EXPOSED) {
                         if (kickstart) {
                             kickstart_timer();
                             kickstart = false;
                         }
+                    } 
+                    else if (event.window.event == SDL_WINDOWEVENT_ENTER) {
+                        enabling_vsync = true;
+                        //Options.vsync_enable = true;
+                        //kickstart_timer();
+                    }
+                    else if (event.window.event == SDL_WINDOWEVENT_LEAVE) {
+                        Options.vsync_enable = false;
                     }
                     board.handle_window_event(event);
                     break;
@@ -706,13 +720,13 @@ void Emulator::handle_threadevent(threadevent & event)
         case EXECUTE_FRAME:
             {
                 int executed;
-                if (Options.vsync) {
-                    putchar('E'); fflush(stdout);
-                    executed = board.execute_frame_with_cadence(true);
+                if (Options.vsync && Options.vsync_enable) {
+                    DBG_QUEUE(putchar('E'); fflush(stdout););
+                    executed = board.execute_frame_with_cadence(true, true);
                 } 
                 else {
-                    putchar('e'); fflush(stdout);
-                    executed = board.execute_frame(true);
+                    DBG_QUEUE(putchar('e'); fflush(stdout););
+                    executed = board.execute_frame_with_cadence(true, false);
                 }
                 engine_to_ui_queue.push(threadevent(RENDER, executed));
             }

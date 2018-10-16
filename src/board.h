@@ -69,7 +69,7 @@ public:
     /* Fuses together inner CPU logic and Vector-06c interrupt logic */
     bool check_interrupt();
     int execute_frame(bool update_screen);
-    int execute_frame_with_cadence(bool update_screen);
+    int execute_frame_with_cadence(bool update_screen, bool use_cadence);
     void single_step(bool update_screen);
     int loop_frame();
     void render_frame(bool executed); 
