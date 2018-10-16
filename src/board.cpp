@@ -625,6 +625,9 @@ int Emulator::wait_event(SDL_Event * event, int timeout)
                         boost::queue_op_status::success) {
                     event->type = SDL_USEREVENT;
                     event->user.code = 0x80 | ev.data;
+                    if (engine_to_ui_queue.nonblocking_pull(ev) ==
+                            boost::queue_op_status::success) 
+                        printf("purged render\n");
                     return 1;
                 }
             }
@@ -686,9 +689,8 @@ void Emulator::run_event_loop()
                         }
                     } 
                     else if (event.window.event == SDL_WINDOWEVENT_ENTER) {
-                        enabling_vsync = true;
-                        //Options.vsync_enable = true;
-                        //kickstart_timer();
+                        //enabling_vsync = true;
+                        //don't enable vsync smart stuff in the internals
                     }
                     else if (event.window.event == SDL_WINDOWEVENT_LEAVE) {
                         Options.vsync_enable = false;
