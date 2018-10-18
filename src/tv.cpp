@@ -16,6 +16,36 @@
 #include <GL/glext.h>
 #endif
 
+#include <iostream>
+#include <string>
+#include <streambuf>
+#include <fstream>
+
+PFNGLCREATESHADERPROC glCreateShader;
+PFNGLSHADERSOURCEPROC glShaderSource;
+PFNGLCOMPILESHADERPROC glCompileShader;
+PFNGLGETSHADERIVPROC glGetShaderiv;
+PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
+PFNGLDELETESHADERPROC glDeleteShader;
+PFNGLATTACHSHADERPROC glAttachShader;
+PFNGLCREATEPROGRAMPROC glCreateProgram;
+PFNGLLINKPROGRAMPROC glLinkProgram;
+PFNGLVALIDATEPROGRAMPROC glValidateProgram;
+PFNGLGETPROGRAMIVPROC glGetProgramiv;
+PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
+PFNGLUSEPROGRAMPROC glUseProgram;
+PFNGLDELETEPROGRAMPROC glDeleteProgram;
+PFNGLDETACHSHADERPROC glDetachShader;
+
+PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
+PFNGLPROGRAMUNIFORM1IPROC glProgramUniform1i;
+PFNGLPROGRAMUNIFORM1FPROC glProgramUniform1f;
+PFNGLPROGRAMUNIFORM2FPROC glProgramUniform2f;
+PFNGLPROGRAMUNIFORM3FPROC glProgramUniform3f;
+
+bool initGLExtensions();
+bool init_shaders(GLuint & program_id);
+
 #endif
 
 #if HAS_IMAGE
@@ -121,7 +151,6 @@ void TV::init_regular()
             (rinfo.flags & SDL_RENDERER_TARGETTEXTURE) ? "yes" : "no");
 
     uint32_t window_pixelformat = SDL_GetWindowPixelFormat(this->window);
-    //this->pixelformat = SDL_PIXELFORMAT_ABGR8888;
     switch (window_pixelformat) {
         /* in theory we should follow native format, but on linux vm
          * I'm getting native format RGB888, which gets internally
@@ -219,6 +248,13 @@ void TV::init_opengl()
             window_width, window_height, window_options);
     gl_context = SDL_GL_CreateContext(window);
 
+
+    if (initGLExtensions()) {
+        init_shaders(this->gl_program_id);
+    } else {
+        fprintf(stderr, "Could not init gl extensions require for loading shaders\n");
+    }
+
     const GLubyte* openGLVersion = glGetString(GL_VERSION);
     printf("GL_VERSION: %s\n", openGLVersion);
     //glEnable(GL_DEBUG_OUTPUT);
@@ -284,6 +320,9 @@ void TV::window_resized(SDL_Event & event)
             ww = window_width;
             wh = window_width * 4 / 5;
         }
+        this->gl_window_width = ww;
+        this->gl_window_height = wh;
+
         int ox = window_width/2 - ww/2;
         int oy = window_height/2 - wh/2;
         glViewport(ox, oy, ww, wh);
@@ -392,8 +431,30 @@ void TV::render_single_regular()
 void TV::render_single_opengl()
 {
     const int w = Options.screen_width, h = Options.screen_height;   // 576x288
+    int old_program_id;
 
     glBindTexture(GL_TEXTURE_2D, this->gl_textures[0]);
+    if (this->gl_program_id) {
+        GLuint pid = this->gl_program_id;
+        glGetIntegerv(GL_CURRENT_PROGRAM, &old_program_id);
+        glUseProgram(pid);
+
+        GLuint tex0 = glGetUniformLocation(pid, "Texture0");
+        glProgramUniform1i(pid, tex0, 0);
+
+        GLuint tex0sz = glGetUniformLocation(pid, "color_texture_sz");
+        glProgramUniform3f(pid, tex0sz, (float)w, (float)h, 0.0f);
+
+        GLuint screensz = glGetUniformLocation(pid, "screen_texture_sz");
+        glProgramUniform2f(pid, screensz, (float)this->gl_window_width, 
+                (float)this->gl_window_height);
+
+        GLuint filter_gain = glGetUniformLocation(pid, "filter_gain");
+        glProgramUniform1f(pid, filter_gain, 1.0f);
+
+        GLuint filter_invgain = glGetUniformLocation(pid, "filter_invgain");
+        glProgramUniform1f(pid, filter_invgain, 1.6f);
+    }
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, 
             GL_BGRA, GL_UNSIGNED_BYTE, (GLvoid*)this->bmp);
 
@@ -412,6 +473,10 @@ void TV::render_single_opengl()
     glTexCoord2f(1, 1); glVertex2f(w,h);
     glTexCoord2f(0, 1); glVertex2f(0,h);
     glEnd();
+    
+    if (this->gl_program_id) {
+        glUseProgram(old_program_id);
+    }
 }
 
 /* executed: 1 if the frame was real, 0 if the frame is a skip frame */
@@ -482,3 +547,185 @@ std::function<uint32_t(uint8_t,uint8_t,uint8_t)> TV::get_rgb2pixelformat() const
     printf("Impossible pixelformat: %08x\n", this->pixelformat);
     return nullptr;
 }
+
+#if HAVE_OPENGL
+std::string read_file(const char * filename)
+{
+    std::string text;
+    try {
+    std::ifstream vsh(filename,  std::ifstream::in);
+    vsh.seekg(0, std::ios::end);
+    text.reserve(vsh.tellg());
+    vsh.seekg(0, std::ios::beg);
+    text.assign((std::istreambuf_iterator<char>(vsh)),
+            std::istreambuf_iterator<char>());
+    } 
+    catch (...){
+        printf("Failed to load %s\n", filename);
+    }
+    return text;
+}
+
+std::string get_vertex_src()
+{
+    return read_file("../shaders/singlepass.vsh");
+}
+
+std::string get_frag_src()
+{
+    return read_file("../shaders/singlepass.fsh");
+}
+
+// gracias a Augusto Ruiz https://github.com/AugustoRuiz/sdl2glsl
+// -----------------------------------------
+bool initGLExtensions() {
+    glCreateShader = (PFNGLCREATESHADERPROC)SDL_GL_GetProcAddress("glCreateShader");
+    glShaderSource = (PFNGLSHADERSOURCEPROC)SDL_GL_GetProcAddress("glShaderSource");
+    glCompileShader = (PFNGLCOMPILESHADERPROC)SDL_GL_GetProcAddress("glCompileShader");
+    glGetShaderiv = (PFNGLGETSHADERIVPROC)SDL_GL_GetProcAddress("glGetShaderiv");
+    glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)SDL_GL_GetProcAddress("glGetShaderInfoLog");
+    glDeleteShader = (PFNGLDELETESHADERPROC)SDL_GL_GetProcAddress("glDeleteShader");
+    glAttachShader = (PFNGLATTACHSHADERPROC)SDL_GL_GetProcAddress("glAttachShader");
+    glDetachShader = (PFNGLDETACHSHADERPROC)SDL_GL_GetProcAddress("glDetachShader");
+    glCreateProgram = (PFNGLCREATEPROGRAMPROC)SDL_GL_GetProcAddress("glCreateProgram");
+    glDeleteProgram = (PFNGLDELETEPROGRAMPROC)SDL_GL_GetProcAddress("glDeleteProgram");
+    glLinkProgram = (PFNGLLINKPROGRAMPROC)SDL_GL_GetProcAddress("glLinkProgram");
+    glValidateProgram = (PFNGLVALIDATEPROGRAMPROC)SDL_GL_GetProcAddress("glValidateProgram");
+    glGetProgramiv = (PFNGLGETPROGRAMIVPROC)SDL_GL_GetProcAddress("glGetProgramiv");
+    glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC)SDL_GL_GetProcAddress("glGetProgramInfoLog");
+    glUseProgram = (PFNGLUSEPROGRAMPROC)SDL_GL_GetProcAddress("glUseProgram");
+
+    glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)SDL_GL_GetProcAddress("glGetUniformLocation");
+    glProgramUniform1i = (PFNGLPROGRAMUNIFORM1IPROC)SDL_GL_GetProcAddress("glProgramUniform1i");
+    glProgramUniform1f = (PFNGLPROGRAMUNIFORM1FPROC)SDL_GL_GetProcAddress("glProgramUniform1f");
+    glProgramUniform2f = (PFNGLPROGRAMUNIFORM2FPROC)SDL_GL_GetProcAddress("glProgramUniform2f");
+    glProgramUniform3f = (PFNGLPROGRAMUNIFORM3FPROC)SDL_GL_GetProcAddress("glProgramUniform3f");
+
+    return glCreateShader && glShaderSource && glCompileShader && glGetShaderiv && 
+        glGetShaderInfoLog && glDeleteShader && glAttachShader && glCreateProgram &&
+        glLinkProgram && glValidateProgram && glGetProgramiv && glGetProgramInfoLog &&
+        glUseProgram && glDeleteProgram && glDetachShader &&
+        glProgramUniform1i && glProgramUniform1f && glProgramUniform2f && 
+        glProgramUniform3f;
+}
+// ----------------------------------------
+
+bool init_shaders(GLuint & program_id)
+{
+    std::string vertexSource = get_vertex_src();
+    std::string fragmentSource = get_frag_src();
+
+    // Create an empty vertex shader handle
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+
+    // Send the vertex shader source code to GL
+    // Note that std::string's .c_str is NULL character terminated.
+    const GLchar *source = (const GLchar *)vertexSource.c_str();
+    glShaderSource(vertexShader, 1, &source, 0);
+
+    // Compile the vertex shader
+    glCompileShader(vertexShader);
+
+    GLint isCompiled = 0;
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &isCompiled);
+    if(isCompiled == GL_FALSE)
+    {
+        GLint maxLength = 0;
+        glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &maxLength);
+
+	// The maxLength includes the NULL character
+	std::vector<GLchar> infoLog(maxLength);
+	glGetShaderInfoLog(vertexShader, maxLength, &maxLength, &infoLog[0]);
+
+	// We don't need the shader anymore.
+        glDeleteShader(vertexShader);
+
+	// Use the infoLog as you see fit.
+        fprintf(stderr, "Vertex shader compile error: %s\n", &infoLog[0]);
+
+	// In this simple program, we'll just leave
+        return false;
+    }
+
+    // Create an empty fragment shader handle
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    // Send the fragment shader source code to GL
+    // Note that std::string's .c_str is NULL character terminated.
+    source = (const GLchar *)fragmentSource.c_str();
+    glShaderSource(fragmentShader, 1, &source, 0);
+
+    // Compile the fragment shader
+    glCompileShader(fragmentShader);
+
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &isCompiled);
+    if (isCompiled == GL_FALSE)
+    {
+	GLint maxLength = 0;
+	glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &maxLength);
+
+	// The maxLength includes the NULL character
+	std::vector<GLchar> infoLog(maxLength);
+	glGetShaderInfoLog(fragmentShader, maxLength, &maxLength, &infoLog[0]);
+
+	// We don't need the shader anymore.
+	glDeleteShader(fragmentShader);
+	// Either of them. Don't leak shaders.
+	glDeleteShader(vertexShader);
+
+	// Use the infoLog as you see fit.
+        fprintf(stderr, "Vertex shader compile error: %s\n", &infoLog[0]);
+
+	// In this simple program, we'll just leave
+	return false;
+    }
+
+    // Vertex and fragment shaders are successfully compiled.
+    // Now time to link them together into a program.
+    // Get a program object.
+    GLuint program = glCreateProgram();
+
+
+    // Attach our shaders to our program
+    glAttachShader(program, vertexShader);
+    glAttachShader(program, fragmentShader);
+
+    // Link our program
+    glLinkProgram(program);
+
+    // Note the different functions here: glGetProgram* instead of glGetShader*.
+    GLint isLinked = 0;
+    glGetProgramiv(program, GL_LINK_STATUS, (int *)&isLinked);
+    if (isLinked == GL_FALSE)
+    {
+	GLint maxLength = 0;
+	glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
+
+	// The maxLength includes the NULL character
+	std::vector<GLchar> infoLog(maxLength);
+	glGetProgramInfoLog(program, maxLength, &maxLength, &infoLog[0]);
+
+	// We don't need the program anymore.
+	glDeleteProgram(program);
+	// Don't leak shaders either.
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
+	// Use the infoLog as you see fit.
+        fprintf(stderr, "Vertex shader compile error: %s\n", &infoLog[0]);
+
+	// In this simple program, we'll just leave
+	return false;
+    }
+
+    // Always detach shaders after a successful link.
+    glDetachShader(program, vertexShader);
+    glDetachShader(program, fragmentShader);
+
+    program_id = program;
+    return true;
+}
+
+
+
+#endif

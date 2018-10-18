@@ -29,6 +29,8 @@ private:
 
     SDL_GLContext gl_context;
     GLuint gl_textures[NTEXTURES];
+    GLuint gl_program_id;
+    int gl_window_width, gl_window_height;
 
 private:
     void render_with_blend(int src_alpha);
