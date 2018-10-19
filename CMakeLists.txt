@@ -40,8 +40,9 @@ set(SOURCE_FILES src/main.cpp src/memory.cpp src/tv.cpp src/board.cpp
     src/hal.cpp src/i8080.cpp src/options.cpp src/sound.cpp src/filler.cpp
     src/resampler.cpp src/biquad.cpp
     src/cadence.cpp
+    src/glextns.cpp src/shaders.cpp
     src/server.cpp)
-add_executable(v06x ${SOURCE_FILES} boots.o)
+add_executable(v06x ${SOURCE_FILES} boots.o singlepass_vsh.o singlepass_fsh.o)
 
 
 set(Boost_USE_STATIC_LIBS ON)
@@ -77,26 +78,50 @@ if (PERFTOOLS_H)
     set(EXTRA_LIBS ${EXTRA_LIBS} -lprofiler)
 endif()
 
-# Have boots.bin copied first to avoid using long paths
-# objcopy generates absurd names if paths are used
-set(BOOT_BIN ${CMAKE_CURRENT_SOURCE_DIR}/boot/boots.bin)
-file(COPY ${BOOT_BIN} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
-# On Linux and Windows we have objcopy
+# On Linux and Windows we have objcopy...
 find_program(OBJCOPY objcopy)
-if(USE_XXD OR (${OBJCOPY} STREQUAL "OBJCOPY-NOTFOUND")) 
-    # But Darwin is retarded so we must make do with something else
-    add_custom_command(OUTPUT boots.c COMMAND xxd -i boots.bin boots.c)
-    add_custom_command(OUTPUT boots.o COMMAND cc -c boots.c DEPENDS boots.c)
-    add_definitions(-DUSED_XXD=1)
-else()
-    add_custom_command(
-        OUTPUT boots.o
-        COMMAND ${OBJCOPY} -I binary ${BFDNAME} boots.bin boots.o
-        #DEPENDS boots.bin
-        )
 
-endif()
+macro(BIN2OBJ infile basename)
+    if(USE_XXD OR (${OBJCOPY} STREQUAL "OBJCOPY-NOTFOUND")) 
+        # ...but Darwin is retarded so we must make do with something else
+        add_custom_command(OUTPUT ${basename}.c COMMAND xxd -i ${infile} ${basename}.c)
+        add_custom_command(OUTPUT ${basename}.o COMMAND cc -c ${basename}.c DEPENDS ${basename}.c)
+        add_definitions(-DUSED_XXD=1)
+    else()
+        add_custom_command(
+            OUTPUT ${basename}.o
+            COMMAND ${OBJCOPY} -I binary ${BFDNAME} ${infile} ${basename}.o
+            DEPENDS ${infile}
+            )
+    endif()
+endmacro()
+
+add_custom_target(boots.bin
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/boot/boots.bin ${CMAKE_CURRENT_BINARY_DIR})
+add_custom_target(singlepass.vsh
+    COMMAND ${CMAKE_COMMAND} -E copy ../shaders/singlepass.vsh ${CMAKE_CURRENT_BINARY_DIR})
+add_custom_target(singlepass.fsh
+    COMMAND ${CMAKE_COMMAND} -E copy ../shaders/singlepass.fsh ${CMAKE_CURRENT_BINARY_DIR})
+    
+
+BIN2OBJ(boots.bin boots)
+BIN2OBJ(singlepass.vsh singlepass_vsh)
+BIN2OBJ(singlepass.fsh singlepass_fsh)
+
+#find_program(OBJCOPY objcopy)
+#if(USE_XXD OR (${OBJCOPY} STREQUAL "OBJCOPY-NOTFOUND")) 
+#    # But Darwin is retarded so we must make do with something else
+#    add_custom_command(OUTPUT boots.c COMMAND xxd -i boots.bin boots.c)
+#    add_custom_command(OUTPUT boots.o COMMAND cc -c boots.c DEPENDS boots.c)
+#    add_definitions(-DUSED_XXD=1)
+#else()
+#    add_custom_command(
+#        OUTPUT boots.o
+#        COMMAND ${OBJCOPY} -I binary ${BFDNAME} boots.bin boots.o
+#        #DEPENDS boots.bin
+#        )
+#
+#endif()
 message("objcopy is ${OBJCOPY}")
 
 target_link_libraries(v06x ${BOOT_O} ${EXTRA_LIBS})
