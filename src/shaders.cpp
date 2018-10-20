@@ -6,25 +6,31 @@
 #include <streambuf>
 #include <fstream>
 
+#include "options.h"
 #include "shaders.h"
 #include "glextns.h"
 
-#if USED_XXD
-extern "C" unsigned char * singlepass_vsh_bin;
-extern "C" unsigned int singlepass_vsh_len;
-#else
 
-extern "C" uint8_t * _binary_singlepass_vsh_start;
-extern "C" uint8_t * _binary_singlepass_vsh_end;
-extern "C" size_t    _binary_singlepass_vsh_size;
+#if USED_XXD 
 
-#define boots_bin (_binary_boots_bin_start)
-#define boots_bin_len (&_binary_boots_bin_size)
+#define IMPORT(ID) \
+    extern "C" unsigned char * ID; \
+    extern "C" unsigned int ID##_len; 
+#else 
+
+#define IMPORT(ID) \
+    extern "C" uint8_t * _binary_##ID##_start; \
+    extern "C" uint8_t * _binary_##ID##_end; \
+    extern "C" size_t    _binary_##ID##_size; \
+    static const uint8_t * ID = (uint8_t *) &_binary_##ID##_start; \
+    static const size_t ID##_len = &_binary_##ID##_size;
 
 #endif
 
+IMPORT(singlepass_vsh)
+IMPORT(singlepass_fsh)
 
-std::string read_file(const char * filename)
+std::string read_file(const std::string & filename)
 {
     std::string text;
     try {
@@ -36,20 +42,29 @@ std::string read_file(const char * filename)
                 std::istreambuf_iterator<char>());
     } 
     catch (...){
-        printf("Failed to load %s\n", filename);
+        printf("Failed to load %s\n", filename.c_str());
     }
     return text;
 }
 
 std::string get_vertex_src()
 {
-    return read_file("../shaders/singlepass.vsh");
+    if (Options.gl.default_shader) {
+        return std::string((char *)singlepass_vsh, (size_t)singlepass_vsh_len);
+    }
+    else {
+        return read_file(Options.gl.shader_basename + std::string(".vsh"));
+    }
 }
 
 std::string get_frag_src()
 {
-    return read_file("../shaders/singlepass.fsh");
-    //return read_file("../shaders/singlescan1.fsh");
+    if (Options.gl.default_shader) {
+        return std::string((char *)singlepass_fsh, (size_t)singlepass_fsh_len);
+    }
+    else {
+        return read_file(Options.gl.shader_basename + std::string(".fsh"));
+    }
 }
 
 bool init_shaders(GLuint & program_id)

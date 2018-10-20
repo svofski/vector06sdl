@@ -6,6 +6,7 @@
 #include "boost/property_tree/json_parser.hpp"
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
+#include "boost/algorithm/string/predicate.hpp"
 #include "globaldefs.h"
 #include "options.h"
 
@@ -24,6 +25,10 @@ _options Options =
 
 void options(int argc, char ** argv)
 {
+    Options.gl.use_shader = true;
+    Options.gl.default_shader = true;
+    Options.gl.filtering = true;
+
     try {
         std::string conf = Options.get_config_path();
         Options.load(conf);
@@ -44,7 +49,12 @@ void options(int argc, char ** argv)
         ("max-frame", po::value<int>(), "run emulation for this many frames then exit")
         ("save-frame", po::value<std::vector<int>>(), "save frame with these numbers (multiple)")
         ("novideo", "do not output video")
-        ("opengl", "use OpenGL for rendering")
+        ("opengl", po::value<std::vector<std::string>>(), 
+         "use OpenGL for rendering, can take parameters:\n"
+         "shader:filename - user shaders in filename.{vsh,fsh}\n"
+         "shader:default - use default builtin shader\n"
+         "shader:none - disable shaders\n"
+         "filtering:no - disable texture filtering (use nearest)\n")
         ("nosound", "stay silent")
         ("nofdc", "detach floppy disk controller")
         ("window", "run in a window, not fullscreen")
@@ -176,6 +186,38 @@ void options(int argc, char ** argv)
             Options.audio_rec_path = vm["record-audio"].as<std::string>();
         }
 
+        Options.profile = vm.count("profile") > 0;
+
+        if (vm.count("opengl") > 0) {
+            Options.opengl = vm.count("opengl") > 0;
+
+            static const std::string p_shader("shader:");
+            static const std::string p_filtering("filtering:");
+
+            auto glopts = vm["opengl"].as<std::vector<std::string>>();
+            for (auto o : glopts) {
+                if (boost::algorithm::starts_with(o, p_shader)) {
+                    auto rem = o.substr(p_shader.length());
+                    if (rem == "none") {
+                        Options.gl.use_shader = false;
+                        continue;
+                    }
+                    if (rem == "default") { 
+                        Options.gl.default_shader = true;
+                        continue;
+                    }
+                    Options.gl.shader_basename = rem;
+                    printf("Will use shaders: %s.vsh and %s.fsh\n",
+                            Options.gl.shader_basename.c_str(),
+                            Options.gl.shader_basename.c_str());
+                }
+                else if (boost::algorithm::starts_with(o, p_filtering)) {
+                    Options.gl.filtering = 
+                        o.substr(p_filtering.length()) == "yes";
+                }
+            }
+        }
+
         if (vm.count("saveconfig")) {
             std::string conf = Options.get_config_path();
             try {
@@ -186,10 +228,6 @@ void options(int argc, char ** argv)
                 printf("There was an error saving config to %s\n", conf.c_str());
             }
         }
-
-        Options.profile = vm.count("profile") > 0;
-
-        Options.opengl = vm.count("opengl") > 0;
     }
     catch(po::error & err) {
         std::cerr << err.what() << std::endl;
@@ -262,6 +300,12 @@ void _options::load(const std::string & filename)
     nofdc = pt.get<bool>("peripheral.nofdc");
     log.fdc = pt.get<bool>("log.fdc");
     log.audio = pt.get<bool>("log.audio");
+
+    opengl = pt.get<bool>("video.opengl");
+    gl.shader_basename = pt.get<std::string>("video.opengl_shader_basename");
+    gl.use_shader = pt.get<bool>("video.opengl_use_shader");
+    gl.default_shader = pt.get<bool>("video.opengl_default_shader");
+    gl.filtering = pt.get<bool>("video.opengl_filtering");
 }
 
 void _options::save(const std::string & filename)
@@ -278,6 +322,15 @@ void _options::save(const std::string & filename)
     pt.put("peripheral.nofdc", nofdc);
     pt.put("log.fdc", log.fdc);
     pt.put("log.audio", log.audio);
+
+    pt.put("video.opengl", opengl);
+    if (gl.shader_basename.length() > 0) {
+        pt.put("video.opengl_shader_basename", gl.shader_basename);
+    }
+    pt.put("video.opengl_use_shader", gl.use_shader);
+    pt.put("video.opengl_default_shader", gl.default_shader);
+    pt.put("video.opengl_filtering", gl.filtering);
+
     write_json(filename, pt);
 }
 

@@ -24,7 +24,15 @@ struct _options
     bool window;        /* run in a window */
     bool nofilter;      /* bypass audio filter */
     int blendmode;      /* 0: no blend, 1: mix in doubled frames */
+
     bool opengl;
+    struct _opengl_opts {
+        /* e.g. myshader for myshader.vsh/fsh for use shader */
+        std::string shader_basename; 
+        bool use_shader;
+        bool default_shader;
+        bool filtering;
+    } gl;
 
     struct _log {
         bool fdc;

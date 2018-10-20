@@ -190,15 +190,18 @@ void TV::init_opengl()
             window_width, window_height, window_options);
     gl_context = SDL_GL_CreateContext(window);
 
-
-    if (initGLExtensions()) {
-        init_shaders(this->gl_program_id);
-    } else {
-        fprintf(stderr, "Could not init gl extensions require for loading shaders\n");
-    }
-
     const GLubyte* openGLVersion = glGetString(GL_VERSION);
     printf("GL_VERSION: %s\n", openGLVersion);
+
+    this->gl_program_id = 0;
+    if (Options.gl.use_shader) {
+        if (initGLExtensions()) {
+            init_shaders(this->gl_program_id);
+        } else {
+            fprintf(stderr, 
+                    "Could not init gl extensions, shaders will not be used\n"); 
+        }
+    }
 
     SDL_GL_SetSwapInterval(Options.vsync ? 1 : 0);
 
@@ -233,11 +236,15 @@ void TV::init_gl_textures()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 
-    //glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    if (Options.gl.filtering) {
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,
+                GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    } 
+    else {
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+    }
 
     glTexImage2D(GL_TEXTURE_2D, 0, 
             /* internalformat */ GL_RGBA8,
