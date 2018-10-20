@@ -1,0 +1,1 @@
+magick convert icon64.png icon64.rgba

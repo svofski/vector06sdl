@@ -40,9 +40,10 @@ set(SOURCE_FILES src/main.cpp src/memory.cpp src/tv.cpp src/board.cpp
     src/hal.cpp src/i8080.cpp src/options.cpp src/sound.cpp src/filler.cpp
     src/resampler.cpp src/biquad.cpp
     src/cadence.cpp
+    src/icon.cpp
     src/glextns.cpp src/shaders.cpp
     src/server.cpp)
-add_executable(v06x ${SOURCE_FILES} boots.o singlepass_vsh.o singlepass_fsh.o)
+add_executable(v06x ${SOURCE_FILES} boots.o singlepass_vsh.o singlepass_fsh.o icon64.o)
 
 
 set(Boost_USE_STATIC_LIBS ON)
@@ -96,32 +97,29 @@ macro(BIN2OBJ infile basename)
     endif()
 endmacro()
 
-add_custom_target(boots.bin
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/boot/boots.bin ${CMAKE_CURRENT_BINARY_DIR})
-add_custom_target(singlepass.vsh
-    COMMAND ${CMAKE_COMMAND} -E copy ../shaders/singlepass.vsh ${CMAKE_CURRENT_BINARY_DIR})
-add_custom_target(singlepass.fsh
-    COMMAND ${CMAKE_COMMAND} -E copy ../shaders/singlepass.fsh ${CMAKE_CURRENT_BINARY_DIR})
+add_custom_command(OUTPUT boots.bin
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/boot/boots.bin ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/boot/boots.bin)
+
+add_custom_command(OUTPUT singlepass.vsh
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/shaders/singlepass.vsh ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/singlepass.vsh )
+
+add_custom_command(OUTPUT singlepass.fsh
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/shaders/singlepass.fsh ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/singlepass.fsh)
+
+add_custom_command(OUTPUT icon64.rgba
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/res/icon64.rgba ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/res/icon64.rgba)
+
     
 
 BIN2OBJ(boots.bin boots)
 BIN2OBJ(singlepass.vsh singlepass_vsh)
 BIN2OBJ(singlepass.fsh singlepass_fsh)
+BIN2OBJ(icon64.rgba icon64)
 
-#find_program(OBJCOPY objcopy)
-#if(USE_XXD OR (${OBJCOPY} STREQUAL "OBJCOPY-NOTFOUND")) 
-#    # But Darwin is retarded so we must make do with something else
-#    add_custom_command(OUTPUT boots.c COMMAND xxd -i boots.bin boots.c)
-#    add_custom_command(OUTPUT boots.o COMMAND cc -c boots.c DEPENDS boots.c)
-#    add_definitions(-DUSED_XXD=1)
-#else()
-#    add_custom_command(
-#        OUTPUT boots.o
-#        COMMAND ${OBJCOPY} -I binary ${BFDNAME} boots.bin boots.o
-#        #DEPENDS boots.bin
-#        )
-#
-#endif()
 message("objcopy is ${OBJCOPY}")
 
 target_link_libraries(v06x ${BOOT_O} ${EXTRA_LIBS})

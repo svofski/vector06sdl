@@ -4,6 +4,7 @@
 #include "SDL_opengl.h"
 #include "options.h"
 #include "tv.h"
+#include "icon.h"
 
 
 #if HAVE_OPENGL
@@ -171,6 +172,8 @@ void TV::init_regular()
     this->texture_n = 0;
 
     SDL_RenderSetLogicalSize(this->renderer, window_width, window_height);
+
+    icon_set(this->window);
 }
 
 void TV::init_opengl()
