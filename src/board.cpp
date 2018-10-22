@@ -578,7 +578,7 @@ int Emulator::wait_event(SDL_Event * event, int timeout)
                         boost::queue_op_status::success) {
                     event->type = SDL_USEREVENT;
                     event->user.code = 0x80 | ev.data;
-                    event->user.data1 = (void *) ev.frame_no;
+                    event->user.data1 = reinterpret_cast<void *>(ev.frame_no);
                     int purge = 0;
                     while(engine_to_ui_queue.nonblocking_pull(ev) ==
                             boost::queue_op_status::success) ++purge;
@@ -597,7 +597,7 @@ int Emulator::wait_event(SDL_Event * event, int timeout)
 void Emulator::handle_renderqueue(SDL_Event & event, bool & stopping)
 {
     if (event.user.code & 0x80) {
-        int frame_no = (int)event.user.data1;
+        int frame_no = ((intptr_t)event.user.data1) & 0xffffffff;
         bool executed = event.user.code & 1;
         DBG_QUEUE(putchar('r'); putchar('0' + (event.user.code & 1)););
         board.render_frame(frame_no, executed);

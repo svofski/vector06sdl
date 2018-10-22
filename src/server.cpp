@@ -259,7 +259,7 @@ public:
             int addr = stoul(parts.at(0), nullptr, 16);
             int len = stoul(parts.at(1), nullptr, 16);
             return board.read_memory(addr, len);
-        } catch(invalid_argument) {
+        } catch(invalid_argument&) {
             return STD_ERROR;
         }
     }
@@ -285,7 +285,7 @@ public:
             }
 
             return STD_OK;
-        } catch(invalid_argument) {
+        } catch(invalid_argument&) {
             return STD_ERROR;
         }
     }
@@ -298,7 +298,7 @@ public:
         for (size_t i = 0; i < sizeof(regs); ++i) {
             try {
                 regs[i] = std::stoul(string(&cstr[i*2], 2), nullptr, 16);
-            } catch(invalid_argument) {
+            } catch(invalid_argument&) {
                 return STD_ERROR;
             }
         }
@@ -318,7 +318,7 @@ public:
             int kind = stoul(parts.at(2), nullptr, 10);
 
             return board.insert_breakpoint(type, addr, kind);
-        } catch (invalid_argument) {
+        } catch (invalid_argument&) {
             return STD_ERROR;
         }
     }
@@ -335,7 +335,7 @@ public:
             int kind = stoul(parts.at(2), nullptr, 10);
 
             return board.remove_breakpoint(type, addr, kind);
-        } catch (invalid_argument) {
+        } catch (invalid_argument&) {
             return STD_ERROR;
         }
     }
