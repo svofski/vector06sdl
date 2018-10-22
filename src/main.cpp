@@ -6,6 +6,7 @@
 #include "io.h"
 #include "tv.h"
 #include "board.h"
+#include "emulator.h"
 #include "options.h"
 #include "keyboard.h"
 #include "8253.h"
@@ -163,7 +164,6 @@ int main(int argc, char ** argv)
     Emulator lator(board);
     lator.start_emulator_thread();
     lator.run_event_loop();
-    lator.join_emulator_thread();
 
 #if HAVE_GPERFTOOLS
     if (Options.profile) {

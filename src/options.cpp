@@ -54,6 +54,7 @@ void options(int argc, char ** argv)
         ("opengl", po::value<std::vector<std::string>>()->
          required()->implicit_value(nothing, ""), 
          "use OpenGL for rendering, can take parameters:\n"
+         "disable - disable OpenGL (useful to override config setting)\n"
          "shader:filename - user shaders in filename.{vsh,fsh}\n"
          "shader:default - use default builtin shader\n"
          "shader:none - disable shaders\n"
@@ -217,6 +218,9 @@ void options(int argc, char ** argv)
                 else if (boost::algorithm::starts_with(o, p_filtering)) {
                     Options.gl.filtering = 
                         o.substr(p_filtering.length()) == "yes";
+                }
+                else if (o == "disable") {
+                    Options.opengl = false;
                 }
             }
         }

@@ -15,6 +15,9 @@ add_definitions(-O3)
 include_directories(fast-filters/sources)
 include_directories(coreutil/sources)
 
+add_definitions(-ffunction-sections -fdata-sections 
+    -Wl,--gc-sections)
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     message("This is Windows. Assuming MinGW from https://nuwen.net/mingw.html")
     set(EXTRA_LIBS -limm32 -lwinmm -lversion -lws2_32 -lmswsock)
@@ -36,7 +39,7 @@ else()
     endif()	
 endif() 
 
-set(SOURCE_FILES src/main.cpp src/memory.cpp src/tv.cpp src/board.cpp 
+set(SOURCE_FILES src/main.cpp src/memory.cpp src/tv.cpp src/board.cpp src/emulator.cpp
     src/hal.cpp src/i8080.cpp src/options.cpp src/sound.cpp src/filler.cpp
     src/resampler.cpp src/biquad.cpp
     src/cadence.cpp

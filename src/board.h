@@ -3,9 +3,6 @@
 #include <stdio.h>
 #include <vector>
 #include <functional>
-#include <boost/thread.hpp>
-#include <boost/thread/concurrent_queues/sync_queue.hpp>
-#include <boost/thread/concurrent_queues/sync_priority_queue.hpp>
 #include "SDL.h"
 #include "i8080.h"
 #include "filler.h"
@@ -65,25 +62,22 @@ public:
 
     void init();
     void reset(bool blkvvod);    // true: power-on reset, false: boot loaded prog
-    void interrupt(bool on);
-    /* Fuses together inner CPU logic and Vector-06c interrupt logic */
-    bool check_interrupt();
-    int execute_frame(bool update_screen);
-    int execute_frame_with_cadence(bool update_screen, bool use_cadence);
-    void single_step(bool update_screen);
-    void render_frame(int frame, bool executed); 
-    bool cadence_allows();
     int get_frame_no() const { return frame_no; }
+    void handle_quit();
+    bool terminating() const { return io.the_keyboard().terminate; };
+    void interrupt(bool on);
 
     void handle_event(SDL_Event & event);
     void handle_keyup(SDL_KeyboardEvent & key);
     void handle_keydown(SDL_KeyboardEvent & key);
     void handle_window_event(SDL_Event & event);
-    void handle_quit();
-    bool terminating() const { return io.the_keyboard().terminate; };
     void toggle_fullscreen() { tv.toggle_fullscreen(); }
+    void render_frame(int frame, bool executed); 
+    void pause_sound(bool topause) { soundnik.pause((int)topause); }
+    int execute_frame_with_cadence(bool update_screen, bool use_cadence);
+    void single_step(bool update_screen);
 
-    void dump_memory(int start, int count);
+public:
     std::string read_memory(int start, int count);
     void write_memory_byte(int addr, int value);
     /* AA FF BB CC DD EE HH LL 00 00 00 00 SS PP 
@@ -99,53 +93,13 @@ public:
     bool check_breakpoint();
     void check_watchpoint(uint32_t addr, uint8_t value, int how);
 
-    void pause_sound(bool topause) { soundnik.pause((int)topause); }
-};
 
-class Emulator {
 private:
-    enum event_type {
-        EXECUTE_FRAME,
-        KEYDOWN,
-        KEYUP,
-        QUIT,
-
-        RENDER,
-    };
-
-    struct threadevent {
-        event_type type;
-        int data;
-        int frame_no;
-        SDL_KeyboardEvent key;
-        threadevent() {}
-        threadevent(event_type t, int d) : type(t), data(d) {}
-        threadevent(event_type t, int d, int frameno) : type(t), data(d),
-            frame_no(frameno) {}
-        threadevent(event_type t, int d, SDL_KeyboardEvent k) : 
-            type(t), data(d), key(k) {}
-
-        bool operator <(const threadevent& other) const
-        {
-            return false;
-        }
-    };
-
-    boost::thread thread;
-    Board & board;
-
-    boost::sync_queue<threadevent> ui_to_engine_queue;
-    boost::sync_priority_queue<threadevent> engine_to_ui_queue;
-
-public:
-    Emulator(Board & borat);
-    void threadfunc();
-    void handle_threadevent(threadevent & ev);
-    void handle_renderqueue(SDL_Event & event, bool & stopping);
-    void start_emulator_thread();
-    void run_event_loop();
-    void join_emulator_thread();
-    void inject_timer_event();
-    bool handle_keyboard_event(SDL_KeyboardEvent & event);
-    int wait_event(SDL_Event * event, int timeout);
+    /* Fuses together inner CPU logic and Vector-06c interrupt logic */
+    bool check_interrupt();
+    int execute_frame(bool update_screen);
+    bool cadence_allows();
+    void dump_memory(int start, int count);
 };
+
+
