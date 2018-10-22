@@ -223,6 +223,7 @@ void TV::init_opengl()
         SDL_SetWindowPosition(this->window, 100, 100);
     }
 #endif
+    icon_set(this->window);
 }
 
 
