@@ -34,11 +34,15 @@ You'll need ```cmake```, ```sdl2```. The tests also use ```sdl2_image```, Python
 
 I like nuwen.net MinGW distro: https://nuwen.net/mingw.html It already has libboost and SDL2 pre-packaged, which is a huge time saver. Alternatively, it should not be a problem to build using the toolchain supplied with Code::Blocks. 
 
+SDL2_Image is not a part of this distro. You can get one pre-built from https://www.libsdl.org/projects/SDL_image 
+Specify the path to SDL_image in SDL2IMAGEDIR environment variable before running cmake.
+
 Open the environment using C:\MinGW\open_distro_window.bat. Now it's almost as on a real system, but you need to specify a magic parameter to cmake:
 ```
 git clone --depth=1 https://github.com/svofski/vector06sdl
 cd vector06sdl
 mkdir build && cd build
+set SDL2IMAGEDIR=<fully-qualified path to SDL2_image-2.0.3\x86_64-w64-mingw32>
 cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release ..
 make -j4
 ```

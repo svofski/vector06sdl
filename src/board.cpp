@@ -26,6 +26,13 @@ extern "C" size_t    _binary_boots_bin_size;
 
 #endif
 
+static void kick_timer()
+{
+    extern uint32_t timer_callback(uint32_t interval, void * param);
+    timer_callback(0, 0);
+    DBG_QUEUE(putchar('K'); fflush(stdout););
+}
+
 Board::Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd, 
         TV & _tv, WavPlayer & _tape_player) 
     : memory(_memory), io(_io), filler(_filler), soundnik(_snd), tv(_tv), 
@@ -205,19 +212,6 @@ void Board::single_step(bool update_screen)
     }
 }
 
-int Board::loop_frame()
-{
-#if 0
-    if (Options.vsync /* && !this->debugger_interrupt*/ ) {
-        return loop_frame_vsync();
-    }
-    else {
-        return loop_frame_userevent();
-    }
-#endif
-    return 0;
-}
-
 #if 0
 int measured_framerate;
 uint32_t ticks_start;
@@ -250,50 +244,6 @@ bool Board::cadence_allows()
         return this->cadence_frames[seq] != 0;
     }
     return true;
-}
-
-int Board::loop_frame_vsync()
-{
-#if 0
-    measure_framerate();
-#endif
-#if 0
-    SDL_Event event;
-    int result = 0;
-    do {
-        if (cadence_allows()) {
-            result = this->execute_frame(true);
-        }
-        while (SDL_PollEvent(&event)) {
-            handle_event(event);
-        }
-    } while(0);
-    return result;
-#endif
-    return 0;
-}
-
-int Board::loop_frame_userevent()
-{
-#if 0
-    SDL_Event event;
-    bool frame = false;
-    while(!frame) {
-        if (SDL_WaitEvent(&event)) {
-            switch(event.type) {
-                case SDL_USEREVENT:
-                    this->execute_frame(true);
-                    frame = true;
-                    break;
-                default:
-                    handle_event(event);
-                    break;
-            }
-        }
-    }
-    return 1;
-#endif
-    return 0;
 }
 
 void Board::handle_event(SDL_Event & event)
@@ -341,17 +291,18 @@ void Board::handle_window_event(SDL_Event & event)
     this->tv.handle_window_event(event);
 }
 
-void Board::render_frame(bool executed)
+/* ui thread: can't use this->frame_no */
+void Board::render_frame(int frame, bool executed)
 {
     tv.render(executed);
     if (Options.vsync && Options.vsync_enable) {
-        extern uint32_t timer_callback(uint32_t interval, void * param);
-        timer_callback(0, 0);
-        DBG_QUEUE(putchar('S'); fflush(stdout););
+        kick_timer();
     }
-    if (Options.save_frames.size() && this->frame_no == Options.save_frames[0])
+    if (Options.save_frames.size() && frame == Options.save_frames[0])
     {
-        tv.save_frame(Options.path_for_frame(this->frame_no));
+        fprintf(stderr, "Saving frame %d to %s\n", 
+                frame, Options.path_for_frame(frame).c_str());
+        tv.save_frame(Options.path_for_frame(frame));
         Options.save_frames.erase(Options.save_frames.begin());
     }
 }
@@ -605,7 +556,9 @@ int Emulator::wait_event(SDL_Event * event, int timeout)
 
     for (;;) {
         SDL_PumpEvents();
-        switch (SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT)) {
+        switch (SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, 
+                    SDL_LASTEVENT)) 
+        {
         case -1:
             return 0;
         case 0:
@@ -625,10 +578,11 @@ int Emulator::wait_event(SDL_Event * event, int timeout)
                         boost::queue_op_status::success) {
                     event->type = SDL_USEREVENT;
                     event->user.code = 0x80 | ev.data;
-                    int purgatron = 0;
+                    event->user.data1 = (void *) ev.frame_no;
+                    int purge = 0;
                     while(engine_to_ui_queue.nonblocking_pull(ev) ==
-                            boost::queue_op_status::success) ++purgatron;
-                    purgatron && printf("purged render(%d)\n", purgatron);
+                            boost::queue_op_status::success) ++purge;
+                    purge && fprintf(stderr,"purged render(%d)\n", purge);
                     return 1;
                 }
             }
@@ -640,11 +594,23 @@ int Emulator::wait_event(SDL_Event * event, int timeout)
     }
 }
 
-static void kickstart_timer()
+void Emulator::handle_renderqueue(SDL_Event & event, bool & stopping)
 {
-    extern uint32_t timer_callback(uint32_t interval, void * param);
-    timer_callback(0, 0);
-    DBG_QUEUE(putchar('K'); fflush(stdout););
+    if (event.user.code & 0x80) {
+        int frame_no = (int)event.user.data1;
+        bool executed = event.user.code & 1;
+        DBG_QUEUE(putchar('r'); putchar('0' + (event.user.code & 1)););
+        board.render_frame(frame_no, executed);
+        if (Options.nosound && Options.novideo) {
+            /* tests: kick-spin the event loop */
+            kick_timer();
+        }
+        DBG_QUEUE(putchar('R'); fflush(stdout););
+        if (Options.max_frame >= 0 && frame_no >= Options.max_frame) {
+            ui_to_engine_queue.push(threadevent(QUIT, 0));
+            stopping = true;
+        }
+    }
 }
 
 /* handle sdl events in the main thread */
@@ -653,28 +619,23 @@ void Emulator::run_event_loop()
     SDL_Event event;
     bool end = false;
     bool kickstart = true;
-    bool enabling_vsync = false;
+    /* tests: kick-spin the event loop */
+    if (Options.nosound && Options.novideo) {
+        kick_timer();
+    }
     while(!end) {
         if (this->wait_event(&event, -1)) {
             switch(event.type) {
                 case SDL_USEREVENT:
-                    if (event.user.code == 0) {
-                        //printf("exec\n");
-                        ui_to_engine_queue.push(threadevent(EXECUTE_FRAME, 0));
-                    } else if (event.user.code & 0x80) {
-                        DBG_QUEUE(putchar('r'); putchar('0' + (event.user.code & 1)););
-                        board.render_frame(event.user.code & 1);
-                        if (enabling_vsync) {
-                            enabling_vsync = false;
-                            Options.vsync_enable = true;
-                            kickstart_timer();
-                        }
-                        DBG_QUEUE(putchar('R'); fflush(stdout););
+                    handle_renderqueue(event, end);
+                    if (end) {
+                        join_emulator_thread();
                     }
                     break;
                 case SDL_KEYDOWN:
                     if (!this->handle_keyboard_event(event.key)) {
-                        ui_to_engine_queue.push(threadevent(KEYDOWN, 0, event.key));
+                        ui_to_engine_queue.push(threadevent(KEYDOWN, 0, 
+                                    event.key));
                     }
                     break;
                 case SDL_KEYUP:
@@ -685,17 +646,10 @@ void Emulator::run_event_loop()
                     //printf("windowevent: %x\n", event.window.event);
                     if (event.window.event == SDL_WINDOWEVENT_EXPOSED) {
                         if (kickstart) {
-                            kickstart_timer();
+                            kick_timer();
                             kickstart = false;
                         }
                     } 
-                    else if (event.window.event == SDL_WINDOWEVENT_ENTER) {
-                        //enabling_vsync = true;
-                        //don't enable vsync smart stuff in the internals
-                    }
-                    else if (event.window.event == SDL_WINDOWEVENT_LEAVE) {
-                        Options.vsync_enable = false;
-                    }
                     board.handle_window_event(event);
                     break;
                 case SDL_QUIT:
@@ -731,7 +685,8 @@ void Emulator::handle_threadevent(threadevent & event)
                     DBG_QUEUE(putchar('e'); fflush(stdout););
                     executed = board.execute_frame_with_cadence(true, false);
                 }
-                engine_to_ui_queue.push(threadevent(RENDER, executed));
+                engine_to_ui_queue.push(threadevent(RENDER, executed, 
+                            board.get_frame_no()));
             }
             break;
         case QUIT:

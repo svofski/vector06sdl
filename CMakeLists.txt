@@ -53,6 +53,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 find_package(SDL2 REQUIRED)
+set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_STATIC_LIBRARY_SUFFIX})
 find_package(SDL2_image)
 if (${SDL2_image_FOUND}) 
     add_definitions(-DHAS_IMAGE=1)

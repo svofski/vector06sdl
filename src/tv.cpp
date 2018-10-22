@@ -312,7 +312,10 @@ void TV::save_frame(std::string path)
             Options.screen_width, Options.screen_height, 32, 
             4*Options.screen_width, this->pixelformat);
 
-    IMG_SavePNG(s, path.c_str());
+    if (IMG_SavePNG(s, path.c_str()) < 0) {
+        const char * msg = SDL_GetError();
+        fprintf(stderr, "Error saving %s: %s\n", path.c_str(), msg);
+    };
 
     SDL_FreeSurface(s);
 #endif

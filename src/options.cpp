@@ -36,6 +36,8 @@ void options(int argc, char ** argv)
     }
     catch(...) {}
 
+    std::vector<std::string> nothing;
+
     namespace po = boost::program_options;
     po::options_description descr("Parameters");
     descr.add_options()
@@ -49,7 +51,8 @@ void options(int argc, char ** argv)
         ("max-frame", po::value<int>(), "run emulation for this many frames then exit")
         ("save-frame", po::value<std::vector<int>>(), "save frame with these numbers (multiple)")
         ("novideo", "do not output video")
-        ("opengl", po::value<std::vector<std::string>>(), 
+        ("opengl", po::value<std::vector<std::string>>()->
+         required()->implicit_value(nothing, ""), 
          "use OpenGL for rendering, can take parameters:\n"
          "shader:filename - user shaders in filename.{vsh,fsh}\n"
          "shader:default - use default builtin shader\n"

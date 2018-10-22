@@ -71,11 +71,9 @@ public:
     int execute_frame(bool update_screen);
     int execute_frame_with_cadence(bool update_screen, bool use_cadence);
     void single_step(bool update_screen);
-    int loop_frame();
-    void render_frame(bool executed); 
+    void render_frame(int frame, bool executed); 
     bool cadence_allows();
-    int loop_frame_vsync();
-    int loop_frame_userevent();
+    int get_frame_no() const { return frame_no; }
 
     void handle_event(SDL_Event & event);
     void handle_keyup(SDL_KeyboardEvent & key);
@@ -118,9 +116,12 @@ private:
     struct threadevent {
         event_type type;
         int data;
+        int frame_no;
         SDL_KeyboardEvent key;
         threadevent() {}
         threadevent(event_type t, int d) : type(t), data(d) {}
+        threadevent(event_type t, int d, int frameno) : type(t), data(d),
+            frame_no(frameno) {}
         threadevent(event_type t, int d, SDL_KeyboardEvent k) : 
             type(t), data(d), key(k) {}
 
@@ -140,6 +141,7 @@ public:
     Emulator(Board & borat);
     void threadfunc();
     void handle_threadevent(threadevent & ev);
+    void handle_renderqueue(SDL_Event & event, bool & stopping);
     void start_emulator_thread();
     void run_event_loop();
     void join_emulator_thread();

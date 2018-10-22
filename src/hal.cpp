@@ -54,48 +54,30 @@ void i8080_hal_io_output(int port, int value)
 
 void i8080_hal_iff(int on)
 {
-    //printf("i8080_hal_iff %d\n", on);
-    //io->interrupt(on);
     board->interrupt(on);
 }
 
-/* Ideally this should be timer-driven but it's hard to get consistent
- * rate using the timer. Audio callback is a very consistent source though */
 uint32_t timer_callback(uint32_t interval, void * param)
 {
-#if 0
-    static ptrdiff_t frame_number;
-    SDL_Event event;
-    SDL_UserEvent userevent;
-
-    userevent.type = SDL_USEREVENT;
-    userevent.code = 0;
-    userevent.data1 = (void *)frame_number++;
-    userevent.data2 = NULL;
-
-    event.type = SDL_USEREVENT;
-    event.user = userevent;
-
-    SDL_PushEvent(&event);
-#else
     board->onframetimer();
-#endif
     return(interval);
 }
 
 /* If there is no audio buffer to drive the frame rate, use the timer */
 void create_timer()
 {
+    if (Options.nosound && Options.novideo) {
+        /* Used in tests, event loop kick-spins itself without timers. */
+        return;
+    }
+
     if (Options.nosound) {
         printf("create_timer(): nosound is set, will use SDL timer for frames\n");
         SDL_Init(SDL_INIT_TIMER);
         uint32_t period = 1000 / 50;
-        if (Options.novideo) {
-            period = 1; // full throttle if there's no audio or video, for tests
-        }
         SDL_TimerID sometimer = SDL_AddTimer(period, timer_callback, NULL);
         if (sometimer == 0) {
-            printf("SDL_AddTimer %s\n", SDL_GetError());
+            fprintf(stderr, "SDL_AddTimer %s\n", SDL_GetError());
         }
     }
 }
