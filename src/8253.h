@@ -43,9 +43,9 @@ public:
         this->delay = LATCH_DELAY;
 
         this->bcd = new_bcd_mode;
-        if ((new_mode & 0x04) == 2) {
+        if ((new_mode & 0x03) == 2) {
             this->mode_int = 2;
-        } else if ((new_mode & 0x04) == 3) {
+        } else if ((new_mode & 0x03) == 3) {
             this->mode_int = 3;
         } else {
             this->mode_int = new_mode;
