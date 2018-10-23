@@ -53,6 +53,19 @@ bool compare_u16d(uint16_t exp, uint16_t act, const char * msg)
     return false;
 }
 
+bool compare_bool(bool exp, bool act, const char * msg)
+{
+    printf("\t%s: ", msg);
+    if (exp == act) {
+        printf("pass\n");
+        return true;
+    }
+    printf("\033[41;97m ERROR: \033[0m EXP=%s ACT=%s\n", 
+            exp ? "true" : "false", act ? "true" : "false");
+    return false;
+}
+
+
 int test_tobcd() 
 {
     return Test("test_tobcd()")
@@ -74,8 +87,74 @@ int test_frombcd()
         && compare_u16d(9999, CounterUnit::frombcd(0xffff), "frombcd(0xffff)");
 }
 
+class TestOfCounterUnit {
+public:
+    bool test_SetMode()
+    {
+        bool res = true;
+        CounterUnit cu;
+        cu.SetMode(0, 0, 0); 
+        res &= compare_u16x(0, cu.mode_int, "set mode 0, mode_int=0");
+        res &= compare_u16x(0, cu.out, "out=0");
+        res &= compare_bool(true, cu.armed, "armed");
+        res &= compare_bool(false, cu.enabled, "enabled");
+
+        cu.SetMode(1, 0, 0);
+        res &= compare_u16x(1, cu.mode_int, "set mode 1, mode_int=1");
+        res &= compare_u16x(1, cu.out, "out=1");
+        res &= compare_bool(true, cu.armed, "armed");
+        res &= compare_bool(false, cu.enabled, "enabled");
+
+        cu.SetMode(2, 0, 0);
+        res &= compare_u16x(2, cu.mode_int, "set mode 2, mode_int=2");
+        res &= compare_u16x(1, cu.out, "out=1");
+        res &= compare_bool(true, cu.armed, "armed");
+        res &= compare_bool(false, cu.enabled, "enabled");
+
+        cu.SetMode(3, 0, 0);
+        res &= compare_u16x(3, cu.mode_int, "set mode 3, mode_int=3");
+        res &= compare_u16x(1, cu.out, "out=1");
+        res &= compare_bool(true, cu.armed, "armed");
+        res &= compare_bool(false, cu.enabled, "enabled");
+
+        cu.SetMode(4, 0, 0);
+        res &= compare_u16x(4, cu.mode_int, "set mode 4, mode_int=4");
+        res &= compare_u16x(1, cu.out, "out=1");
+        res &= compare_bool(true, cu.armed, "armed");
+        res &= compare_bool(false, cu.enabled, "enabled");
+
+        cu.SetMode(5, 0, 0);
+        res &= compare_u16x(5, cu.mode_int, "set mode 5, mode_int=5");
+        res &= compare_u16x(1, cu.out, "out=1");
+        res &= compare_bool(true, cu.armed, "armed");
+        res &= compare_bool(false, cu.enabled, "enabled");
+
+        cu.SetMode(6, 0, 0);
+        res &= compare_u16x(2, cu.mode_int, "set mode 6, mode_int=2");
+        res &= compare_u16x(1, cu.out, "out=1");
+        res &= compare_bool(true, cu.armed, "armed");
+        res &= compare_bool(false, cu.enabled, "enabled");
+
+        cu.SetMode(7, 0, 0);
+        res &= compare_u16x(3, cu.mode_int, "set mode 7, mode_int=3");
+        res &= compare_u16x(1, cu.out, "out=1");
+        res &= compare_bool(true, cu.armed, "armed");
+        res &= compare_bool(false, cu.enabled, "enabled");
+
+        return res;
+    }
+};
+
+int test_SetMode()
+{
+    TestOfCounterUnit fuc;
+    Test t("SetMode()");
+    return fuc.test_SetMode();
+}
+
 int main(int argc, char ** argv)
 {
     test_tobcd();
     test_frombcd();
+    test_SetMode();
 }

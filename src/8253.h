@@ -8,6 +8,8 @@
 
 class CounterUnit
 {
+    friend class TestOfCounterUnit;
+
     int latch_value;
     int write_state;
     int latch_mode;
@@ -59,17 +61,18 @@ public:
                 break;
             case 1:
                 this->out = 1;
-                this->enabled = false;
                 this->armed = true;
+                this->enabled = false;
                 break;
             case 2:
                 this->out = 1;
                 this->enabled = false;
+                // armed?
                 break;
             default:
                 this->out = 1;
                 this->enabled = false;
-
+                // armed?
                 break;
         }
         this->load = false;
@@ -199,14 +202,10 @@ public:
             }
         } else if (this->latch_mode == 1) {
             // lsb only
-            //this->value = (this->value & 0xff00) | w8;
-            //this->value = w8;
-            //this->value &= 0xffff;
-            this->loadvalue = w8;//this->value;
+            this->loadvalue = w8;
             this->load = true;
         } else if (this->latch_mode == 2) {
             // msb only 
-            //this->value = (this->value & 0x00ff) | (w8 << 8);
             this->value = w8 << 8;
             this->value &= 0xffff;
             this->loadvalue = this->value;
