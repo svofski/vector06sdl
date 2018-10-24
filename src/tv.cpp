@@ -386,7 +386,11 @@ void TV::render_single_opengl()
     const int w = Options.screen_width, h = Options.screen_height;   // 576x288
     int old_program_id;
 
-    glActiveTexture(GL_TEXTURE0);
+    /* This should be done but there's an linkage error with mingw.
+     * We only have one texture anyway so whatevs..*/
+#ifndef __MINGW32__
+     glActiveTexture(GL_TEXTURE0); 
+#endif
     glBindTexture(GL_TEXTURE_2D, this->gl_textures[0]);
     if (this->gl_program_id) {
         GLuint pid = this->gl_program_id;
