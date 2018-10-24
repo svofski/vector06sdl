@@ -21,7 +21,6 @@ add_definitions(-ffunction-sections -fdata-sections
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     message("This is Windows. Assuming MinGW from https://nuwen.net/mingw.html")
     set(EXTRA_LIBS -limm32 -lwinmm -lversion -lws2_32 -lmswsock)
-    #target_link_libraries(v06x ws2_32 mswsock)
     set(BFDNAME -O pe-x86-64 -B i386:x86-64)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     message("Must be a macOS, will use xxd")
@@ -32,7 +31,6 @@ else()
         message("Assuming this is Linux on Raspberry Pi")
         set(BFDNAME -O elf32-littlearm -B arm)
         add_definitions(-mfpu=neon-vfpv4 -mfloat-abi=hard -mcpu=cortex-a53 -funsafe-math-optimizations -ftree-vectorize -ftree-vectorizer-verbose=2 -fopt-info-vec)
-        #add_definitions(-fopt-info-vec-all)
     else()
         message("Looks like it's a desktop Linux on amd64, will use xxd")
         set(USE_XXD true) 
@@ -56,8 +54,16 @@ include_directories(${Boost_INCLUDE_DIRS})
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 find_package(SDL2 REQUIRED)
-set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_STATIC_LIBRARY_SUFFIX})
+
+# prefer static linkage of SDL2_image, but on macos all hell breaks lose 
+# so screw it
+set(OLD_CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
+if(NOT (${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
+    set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_STATIC_LIBRARY_SUFFIX})
+endif()
 find_package(SDL2_image)
+set(CMAKE_FIND_LIBRARY_SUFFIXES ${OLD_CMAKE_FIND_LIBRARY_SUFFIXES})
+
 if (${SDL2_image_FOUND}) 
     add_definitions(-DHAS_IMAGE=1)
 else()
@@ -89,7 +95,8 @@ find_program(OBJCOPY objcopy)
 macro(BIN2OBJ infile basename)
     if(USE_XXD OR (${OBJCOPY} STREQUAL "OBJCOPY-NOTFOUND")) 
         # ...but Darwin is retarded so we must make do with something else
-        add_custom_command(OUTPUT ${basename}.c COMMAND xxd -i ${infile} ${basename}.c)
+        add_custom_command(OUTPUT ${basename}.c COMMAND xxd -i ${infile} ${basename}.c
+            DEPENDS ${infile})
         add_custom_command(OUTPUT ${basename}.o COMMAND cc -c ${basename}.c DEPENDS ${basename}.c)
         add_definitions(-DUSED_XXD=1)
     else()

@@ -4,9 +4,7 @@ uniform sampler2D Texture0;
 #define color_texture Texture0
 #define TEXCOORD gl_TexCoord[0].st
 
-//uniform vec2 color_texture_sz;
-uniform vec3 color_texture_sz;
-
+uniform vec2 color_texture_sz;
 uniform vec2 screen_texture_sz;
 
 uniform float filter_gain;
@@ -108,12 +106,10 @@ float scanline(float y, float luma) {
     sinw = (1.0 - PROMINENCE) + sinw * PROMINENCE;    
 
     return sinw;
-    //return 1.0;
 }
 
 
 void main(void) {
-    //vec2 xy = gl_TexCoord[0].st;
     vec2 xy = TEXCOORD;
 
     width_ratio = color_texture_sz.x / (FSC / FLINE);
@@ -140,6 +136,4 @@ void main(void) {
     vec3 yuv_result = scanline(xy.y, luma) * vec3(luma, filtered.x, filtered.y);
 
     gl_FragColor = vec4(YUV_to_RGB * yuv_result, 1.0);
-    //gl_FragColor = vec4(1.0,0.8,0.8,1.0);
-    //gl_FragColor = texture2D(color_texture, TEXCOORD);
 }

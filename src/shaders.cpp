@@ -6,6 +6,10 @@
 #include <streambuf>
 #include <fstream>
 
+#include "SDL.h"
+#include "SDL_opengl.h"
+#include "glextns.h"
+
 #include "options.h"
 #include "shaders.h"
 #include "glextns.h"
@@ -14,8 +18,9 @@
 #if USED_XXD 
 
 #define IMPORT(ID) \
-    extern "C" unsigned char * ID; \
+    extern "C" unsigned char ID[]; \
     extern "C" unsigned int ID##_len; 
+
 #else 
 
 #define IMPORT(ID) \
@@ -24,7 +29,6 @@
     extern "C" size_t    _binary_##ID##_size; \
     static const uint8_t * ID = (uint8_t *) &_binary_##ID##_start; \
     static const size_t ID##_len = &_binary_##ID##_size;
-
 #endif
 
 IMPORT(singlepass_vsh)
@@ -131,7 +135,7 @@ bool init_shaders(GLuint & program_id)
 	glDeleteShader(vertexShader);
 
 	// Use the infoLog as you see fit.
-        fprintf(stderr, "Vertex shader compile error: %s\n", &infoLog[0]);
+        fprintf(stderr, "Fragment shader compile error: %s\n", &infoLog[0]);
 
 	// In this simple program, we'll just leave
 	return false;
