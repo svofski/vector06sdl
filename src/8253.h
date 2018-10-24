@@ -34,7 +34,8 @@ class CounterUnit
     int delay;
 
 public:
-    CounterUnit() : latch_value(-1), write_state(0), value(0)
+    CounterUnit() : latch_value(-1), write_state(0), value(0), mode_int(0),
+        loadvalue(0), flags(0), delay(0)
     {
 
     }

@@ -91,6 +91,8 @@ class TestOfCounterUnit {
 public:
     bool test_SetMode()
     {
+        Test t("CounterUnit::SetMode()");
+
         bool res = true;
         CounterUnit cu;
         cu.SetMode(0, 0, 0); 
@@ -143,18 +145,53 @@ public:
 
         return res;
     }
+
+    bool test_loadvalue16(int mode, int lsb, int msb, int counts, int expect)
+    {
+        char msg[128];
+        Test t("CounterUnit load value mode 1 LSB-MSB");
+
+        bool res = true;
+
+        CounterUnit cu;
+        cu.SetMode(mode, 3, 0);    // latch mode 3: read/load LSB, then MSB
+        cu.write_value(lsb);
+        sprintf(msg, "load mode %d lsb write value", mode);
+        res &= compare_u16x(0, cu.value, msg);
+
+        cu.write_value(msb);
+        sprintf(msg, "load mode %d msb write value", mode);
+        res &= compare_u16x(0, cu.value, msg);
+        
+        for (int i = 0; i < counts; ++i) cu.Count(1);
+
+        sprintf(msg, "load mode %d lsb-msb write value", mode);
+        res &= compare_u16x(expect, cu.value, msg);
+
+        return res;
+    }
+
+    bool test_loadvalue()
+    {
+        return test_loadvalue16(0, 0x34, 0x12, 4, 0x1233) &&
+            test_loadvalue16(1, 0x34, 0x12, 4, 0x1234) &&
+            test_loadvalue16(2, 0x34, 0x12, 4, 0x1233) &&
+            test_loadvalue16(3, 0x34, 0x12, 4, 0x1232);
+    }
 };
 
-int test_SetMode()
+int test_CounterUnit()
 {
     TestOfCounterUnit fuc;
-    Test t("SetMode()");
-    return fuc.test_SetMode();
+    fuc.test_SetMode();
+    fuc.test_loadvalue();
+
+    return 1;
 }
 
 int main(int argc, char ** argv)
 {
     test_tobcd();
     test_frombcd();
-    test_SetMode();
+    test_CounterUnit();
 }
