@@ -52,7 +52,7 @@ void options(int argc, char ** argv)
         ("save-frame", po::value<std::vector<int>>(), "save frame with these numbers (multiple)")
         ("novideo", "do not output video")
         ("opengl", po::value<std::vector<std::string>>()->
-         required()->implicit_value(nothing, ""), 
+             required()->implicit_value(nothing, ""), 
          "use OpenGL for rendering, can take parameters:\n"
          "disable - disable OpenGL (useful to override config setting)\n"
          "shader:filename - user shaders in filename.{vsh,fsh}\n"
@@ -204,6 +204,7 @@ void options(int argc, char ** argv)
                     auto rem = o.substr(p_shader.length());
                     if (rem == "none") {
                         Options.gl.use_shader = false;
+                        Options.gl.default_shader = false;
                         continue;
                     }
                     if (rem == "default") { 
@@ -211,6 +212,7 @@ void options(int argc, char ** argv)
                         continue;
                     }
                     Options.gl.shader_basename = rem;
+                    Options.gl.default_shader = false;
                     printf("Will use shaders: %s.vsh and %s.fsh\n",
                             Options.gl.shader_basename.c_str(),
                             Options.gl.shader_basename.c_str());

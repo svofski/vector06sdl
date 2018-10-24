@@ -24,6 +24,11 @@ PFNGLPROGRAMUNIFORM1FPROC glProgramUniform1f;
 PFNGLPROGRAMUNIFORM2FPROC glProgramUniform2f;
 PFNGLPROGRAMUNIFORM3FPROC glProgramUniform3f;
 
+PFNGLUNIFORM1IPROC glUniform1i;
+PFNGLUNIFORM1FPROC glUniform1f;
+PFNGLUNIFORM2FPROC glUniform2f;
+PFNGLUNIFORM3FPROC glUniform3f;
+
 bool initGLExtensions();
 
 //
@@ -52,12 +57,20 @@ bool initGLExtensions() {
     glProgramUniform2f = (PFNGLPROGRAMUNIFORM2FPROC)SDL_GL_GetProcAddress("glProgramUniform2f");
     glProgramUniform3f = (PFNGLPROGRAMUNIFORM3FPROC)SDL_GL_GetProcAddress("glProgramUniform3f");
 
+    glUniform1i = (PFNGLUNIFORM1IPROC)SDL_GL_GetProcAddress("glUniform1i");
+    glUniform1f = (PFNGLUNIFORM1FPROC)SDL_GL_GetProcAddress("glUniform1f");
+    glUniform2f = (PFNGLUNIFORM2FPROC)SDL_GL_GetProcAddress("glUniform2f");
+    glUniform3f = (PFNGLUNIFORM3FPROC)SDL_GL_GetProcAddress("glUniform3f");
+
     return glCreateShader && glShaderSource && glCompileShader && glGetShaderiv && 
         glGetShaderInfoLog && glDeleteShader && glAttachShader && glCreateProgram &&
         glLinkProgram && glValidateProgram && glGetProgramiv && glGetProgramInfoLog &&
         glUseProgram && glDeleteProgram && glDetachShader &&
         glProgramUniform1i && glProgramUniform1f && glProgramUniform2f && 
-        glProgramUniform3f;
+        glProgramUniform3f &&
+        glUniform1i && glUniform1f && glUniform2f && 
+        glUniform3f;
+        
 }
 // ----------------------------------------
 

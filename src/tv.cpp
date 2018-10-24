@@ -382,30 +382,32 @@ void TV::render_single_regular()
 
 void TV::render_single_opengl()
 {
+#if HAVE_OPENGL
     const int w = Options.screen_width, h = Options.screen_height;   // 576x288
     int old_program_id;
 
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, this->gl_textures[0]);
     if (this->gl_program_id) {
         GLuint pid = this->gl_program_id;
         glGetIntegerv(GL_CURRENT_PROGRAM, &old_program_id);
         glUseProgram(pid);
 
-        GLuint tex0 = glGetUniformLocation(pid, "Texture0");
-        glProgramUniform1i(pid, tex0, 0);
+        GLint tex0 = glGetUniformLocation(pid, "Texture0");
+        glUniform1i(tex0, 0);
 
-        GLuint tex0sz = glGetUniformLocation(pid, "color_texture_sz");
-        glProgramUniform3f(pid, tex0sz, (float)w, (float)h, 0.0f);
+        GLint tex0sz = glGetUniformLocation(pid, "color_texture_sz");
+        glUniform2f(tex0sz, (float)w, (float)h);
 
-        GLuint screensz = glGetUniformLocation(pid, "screen_texture_sz");
-        glProgramUniform2f(pid, screensz, (float)this->gl_window_width, 
+        GLint screensz = glGetUniformLocation(pid, "screen_texture_sz");
+        glUniform2f(screensz, (float)this->gl_window_width, 
                 (float)this->gl_window_height);
 
-        GLuint filter_gain = glGetUniformLocation(pid, "filter_gain");
-        glProgramUniform1f(pid, filter_gain, 1.6f);
+        GLint filter_gain = glGetUniformLocation(pid, "filter_gain");
+        glUniform1f(filter_gain, 1.6f);
 
-        GLuint filter_invgain = glGetUniformLocation(pid, "filter_invgain");
-        glProgramUniform1f(pid, filter_invgain, 1.6f);
+        GLint filter_invgain = glGetUniformLocation(pid, "filter_invgain");
+        glUniform1f(filter_invgain, 1.6f);
     }
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, 
             GL_BGRA, GL_UNSIGNED_BYTE, (GLvoid*)this->bmp);
@@ -429,6 +431,7 @@ void TV::render_single_opengl()
     if (this->gl_program_id) {
         glUseProgram(old_program_id);
     }
+#endif
 }
 
 /* executed: 1 if the frame was real, 0 if the frame is a skip frame */
