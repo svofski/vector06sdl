@@ -37,7 +37,7 @@ public:
             AY & _ay, WavPlayer & _tape_player) 
         : kvaz(_memory), keyboard(_keyboard), timer(_timer), fdc(_fdc), ay(_ay),
         tape_player(_tape_player),
-        CW(0), PA(0xff), PB(0xff), PC(0xff), CW2(0), PA2(0xff), PB2(0xff), PC2(0xff)
+        CW(0x08), PA(0xff), PB(0xff), PC(0xff), CW2(0), PA2(0xff), PB2(0xff), PC2(0xff)
     {
         for (unsigned i = 0; i < sizeof(palette)/sizeof(palette[0]); ++i) {
             palette[i] = 0xff000000;
@@ -67,17 +67,16 @@ public:
                 result = 0xff;
                 break;
             case 0x01:
-                if ((this->CW & 0x80) == 0) { // BSR
-                    result = this->PC;
-                } else {     /* PC.low in  ? */
-                    auto pclow = (this->CW & 0x01) ? 0x0b : (this->PC & 0x0f);
-                    /* PC.high in ? */
-                    auto pcupp = (this->CW & 0x08) ? 
-                         ((this->tape_player.sample() << 4) |
-                         (this->keyboard.ss ? 0 : (1 << 5)) |
-                         (this->keyboard.us ? 0 : (1 << 6)) |
-                         (this->keyboard.rus ? 0 : (1 << 7))) : (this->PC & 0xf0);
-                    result = pclow | pcupp;
+                {
+                /* PC.low input ? */
+                auto pclow = (this->CW & 0x01) ? 0x0b : (this->PC & 0x0f);
+                /* PC.high input ? */
+                auto pcupp = (this->CW & 0x08) ? 
+                    ((this->tape_player.sample() << 4) |
+                     (this->keyboard.ss ? 0 : (1 << 5)) |
+                     (this->keyboard.us ? 0 : (1 << 6)) |
+                     (this->keyboard.rus ? 0 : (1 << 7))) : (this->PC & 0xf0);
+                result = pclow | pcupp;
                 }
                 break;
             case 0x02:
@@ -173,20 +172,20 @@ public:
             // PIA 
             case 0x00:
                 this->PIA1_last = w8;
-                this->CW = w8;
                 ruslat = this->PC & 8;
-                if ((this->CW & 0x80) == 0) {
+                if ((w8 & 0x80) == 0) {
                     // port C BSR: 
                     //   bit 0: 1 = set, 0 = reset
                     //   bit 1-3: bit number
-                    int bit = (this->CW >> 1) & 7;
-                    if ((this->CW & 1) == 1) {
+                    int bit = (w8 >> 1) & 7;
+                    if ((w8 & 1) == 1) {
                         this->PC |= 1 << bit;
                     } else {
                         this->PC &= ~(1 << bit);
                     }
                     //this->ontapeoutchange(this->PC & 1);
                 } else {
+                    this->CW = w8;
                     this->realoutput(1, 0);
                     this->realoutput(2, 0);
                     this->realoutput(3, 0);
