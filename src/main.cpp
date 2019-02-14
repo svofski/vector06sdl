@@ -140,7 +140,8 @@ int main(int argc, char ** argv)
         load_rom(memory);
         board.reset(false);
     }
-    else if (Options.wavfile.length() != 0) {
+
+    if (Options.wavfile.length() != 0) {
         load_wav(wav, Options.wavfile);
     }
 
