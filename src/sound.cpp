@@ -119,24 +119,18 @@ void Soundnik::soundStep(int step, int tapeout, int covox, int tapein)
 #if BIQUAD_FLOAT
     float soundf = this->timerwrapper.step(step/2) + tapeout + tapein;
     if (Options.nosound) return; /* but then we can return if nosound */
-    soundf = this->resampler.sample(soundf * 0.2f);
+    soundf = this->resampler.sample((ay + soundf) * 0.2f);
 #else
     int soundi = (this->timerwrapper.step(step / 2) + tapeout + tapein) << 21;
     if (Options.nosound) return;
 
 #endif
 
-    //static int between = 0;
-
     this->sound_accu_int += 100;
-    //between++;
-    //if (this->sound_accu_int >= this->sound_accu_top) {
-    //    this->sound_accu_int -= this->sound_accu_top;
-        //printf("[%d] ", between); between = 0;
     if (resampler.egg) {
         resampler.egg = false;
 #if BIQUAD_FLOAT
-        float sound = soundf + ay * 0.2;// + covox/256.0;
+        float sound = soundf;// + covox/256.0;
 #else
         float sound = soundi / 16277216.0 + ay * 0.2;// + covox/256.0;
 #endif
