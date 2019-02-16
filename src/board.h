@@ -52,6 +52,11 @@ public:
     std::function<void(void)> onbreakpoint;
     
     std::function<void(void)> onframetimer;
+    
+    struct {
+        std::function<void(int)> frame;
+        std::function<void(int)> jump;
+    } hooks;
 
 private:
     void refresh_watchpoint_listeners(void);
@@ -92,7 +97,6 @@ public:
     std::string remove_breakpoint(int type, int addr, int kind);
     bool check_breakpoint();
     void check_watchpoint(uint32_t addr, uint8_t value, int how);
-
 
 private:
     /* Fuses together inner CPU logic and Vector-06c interrupt logic */

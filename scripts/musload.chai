@@ -1,0 +1,119 @@
+/* 
+ * Робот-жонглер позволяет печатать на клавиатуре заданную последовательность,
+ * делать паузы и вызывать колбеки. 
+ * С его помощью сделана программа загрузки музыкальной системы и музыкальной 
+ * партитуры в нее.
+ *
+ * Файлы .rk загружаются скриптом rkload.chai
+ */
+class Robotnik {
+    var queue
+    var busy
+    var release_at
+    var scancode
+
+    def Robotnik() {
+        this.queue = Vector()
+        this.busy = 0
+        this.release_at = -1
+        this.scancode = 0
+    }
+
+    /* Массив keys может содержать:
+     *    строки                    - названия сканкодов из SDL_Keys
+     *    целые числа               - задержки в кадрах
+     *    функции без аргументов    - колбеки
+     */
+    def types(keys) {
+        for (what : keys) {
+            this.queue.push_back(what)
+        }
+    }
+
+    /* Эта функция вызывается каждый кадр */
+    def onframe() {
+        if (this.busy == 0) {
+            if (!this.queue.empty()) {
+                var bu = this.queue[0]
+                this.queue.erase_at(0);
+
+                switch (bu.get_type_info().name()) {
+                    case("string") {
+                        this.scancode = scancode_from_name(bu)
+                        keydown(this.scancode)
+                        this.release_at = 3
+                        this.busy = 5
+                        break
+                    }
+                    case ("int") {
+                        this.busy = bu
+                        break
+                    }
+                    case ("Function") {
+                        bu() 
+                        this.busy = 5
+                        break
+                    }
+                }
+            }
+        }
+        else if (this.busy == this.release_at) {
+            keyup(this.scancode)
+            this.release_at = -1
+        }
+        if (this.busy > 0) {
+            --this.busy;
+        }
+    }
+}
+
+global keytyper = Robotnik()
+
+def load_music() {
+    /* Вторым аргументом должен быть файл партитуры чегонибудь.rk */
+    rkfile = RKFile(scriptargs[1], 2)
+    rkfile.onfinished = 
+        fun(next) {
+            /* Конец последовательности, убираем колбек */
+            rkfile.onfinished = fun(x) {}
+
+            keytyper.types([25, "R", "Return", 
+                fun() {
+                    puts("Enjoy the music\n")
+                }])
+        }
+}
+
+def load_system() {
+    /* Первым аргументом должен быть файл музыкальной системы MSVec.rk */
+    rkfile = RKFile(scriptargs[0], 1)
+    rkfile.onfinished =
+        fun(next) {
+            /* Система загружена. Следующим делом загружаем файл музыки
+             * и просим робота набрать команды запуска музыкальной системы
+             * и команду загрузки партитуры */
+            load_music()
+            keytyper.types([50, "G", "1", "1", "F", "0", "Return",
+                50, "G", "Return"])
+        }
+}
+
+/* Эта функция выполняется каждый кадр, callback "frame" */
+def framefunc(frameno) {
+    keytyper.onframe()  // дать роботу-машинисту сделать свое дело
+}
+
+/* Зарегистрировать кадровый колбек */
+add_callback("frame", framefunc)
+
+if (scriptargs.size() < 2) {
+    puts("Specify --scriptargs MSVec.rk --scriptargs MUSIC.rk\n")
+}
+else {
+    /* Прицепляем перехватчик вызова загрузки байта */
+    attach_rk_hook()
+    /* Подгружаем первый файл */
+    load_system()
+    /* Ждем 60 кадров и начинаем последовательность загрузки */
+    keytyper.types([60, "Space", 50, "I", "Return"])
+}

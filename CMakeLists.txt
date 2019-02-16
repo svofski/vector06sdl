@@ -14,6 +14,7 @@ add_definitions(-O3)
 
 include_directories(fast-filters/sources)
 include_directories(coreutil/sources)
+include_directories(chaiscript/include)
 
 add_definitions(-ffunction-sections -fdata-sections 
     -Wl,--gc-sections)
@@ -43,6 +44,7 @@ set(SOURCE_FILES src/main.cpp src/memory.cpp src/tv.cpp src/board.cpp src/emulat
     src/cadence.cpp
     src/icon.cpp
     src/glextns.cpp src/shaders.cpp
+    src/scriptnik.cpp src/util.cpp
     src/server.cpp)
 add_executable(v06x ${SOURCE_FILES} boots.o singlepass_vsh.o singlepass_fsh.o icon64.o)
 

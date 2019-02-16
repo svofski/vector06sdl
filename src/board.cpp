@@ -95,6 +95,7 @@ bool Board::check_interrupt()
 #define DBG_FRM(a,b,bob) {};
 int Board::execute_frame(bool update_screen)
 {
+    if (this->hooks.frame) this->hooks.frame(this->frame_no);
     if (this->poll_debugger) this->poll_debugger();
     if (this->debugger_interrupt) return 0;
 
@@ -112,7 +113,9 @@ int Board::execute_frame(bool update_screen)
         if (this->debugging && this->check_breakpoint()) {
             this->debugger_interrupt = true;
             if (this->onbreakpoint) this->onbreakpoint();
-            break;
+            if (this->debugger_interrupt) {
+                break;
+            }
         }
 
         this->single_step(update_screen);

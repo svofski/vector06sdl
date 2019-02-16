@@ -43,6 +43,9 @@ struct _options
 
     bool vsync_enable;  /* true if window has mouse focus */
 
+    std::vector<std::string> scriptfiles;
+    std::vector<std::string> scriptargs;
+
     std::string path_for_frame(int n);
     std::vector<std::string> fddfile;
     std::vector<int> save_frames;

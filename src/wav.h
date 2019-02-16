@@ -172,12 +172,19 @@ private:
     int frac;
     bool loaded;
 
+
+public:
+    struct {
+        std::function<void(int)> finished;
+    } hooks;
+
 public:
     WavPlayer(Wav & _wav) : wav(_wav)
     {
         WavPlayer & that = *this;
         wav.onloaded = [&that]() {
             that.loaded = true;
+            that.rewind();
         };
     }
 
@@ -189,7 +196,9 @@ public:
 
     void rewind()
     {
-        playhead = 0;
+        this->playhead = 0;
+        this->ratio = 0;
+        this->frac = 0;
     }
 
     void advance(int instruction_time)
@@ -207,6 +216,12 @@ public:
             }
             else {
                 this->loaded = false;
+
+                printf("wavplayer finished\n");
+                if (hooks.finished != nullptr) {
+                    printf("wavplayer invoking finished hook\n");
+                    hooks.finished(0);
+                }
             }
         }
     }

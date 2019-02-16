@@ -75,6 +75,8 @@ void options(int argc, char ** argv)
         ("profile", "collect CPU profile data in v06x.prof\n"
             "examine data using pprof -http 0.0.0.0:5555 ./v06x v06x.prof")
 #endif
+        ("script", po::value<std::vector<std::string>>(), "chai script file (multiple)")
+        ("scriptargs", po::value<std::vector<std::string>>(), "chai script arguments (multiple)")
         ;
         
     po::variables_map vm;
@@ -227,6 +229,24 @@ void options(int argc, char ** argv)
             }
         }
 
+        if (vm.count("script")) {
+            Options.scriptfiles = vm["script"].as<std::vector<std::string>>();
+            printf("Script files: ");
+            for (auto & scriptfile : Options.scriptfiles) {
+                printf("%s ", scriptfile.c_str());
+            }
+            printf("\n");
+        }
+
+        if (vm.count("scriptargs")) {
+            Options.scriptargs = vm["scriptargs"].as<std::vector<std::string>>();
+            printf("Script args: ");
+            for (auto & scriptarg : Options.scriptargs) {
+                printf("%s ", scriptarg.c_str());
+            }
+            printf("\n");
+        }
+ 
         if (vm.count("saveconfig")) {
             std::string conf = Options.get_config_path();
             try {

@@ -1,0 +1,73 @@
+/*
+ * Пример использования API отладчика для реализации перехвата
+ * загрузки магнитофонного файла монитором РК86 (директива I)
+ */
+
+global rkfile
+
+class RKFile {
+    var mem
+    var index
+    var onfinished
+    var next
+
+    def RKFile(name, next_) {
+        this.next = next_
+        this.mem = read_file(name)
+        this.index = 0
+        this.onfinished = fun() {}
+
+        puts("RKFile: " + name + " size=" + to_string(this.mem.size()) + "\n")
+    }
+}
+
+def exit_intercept()
+{
+    // return from the intercepted hook:
+    // load return address from stack
+    var sp = read_register("sp")
+    var ret = read_memory(sp, 1) + read_memory(sp+1, 1) * 256
+    // advance SP
+    sp += 2
+    set_register("sp", sp)
+    // set PC to return address
+    set_register("pc", ret)
+    // continue execution
+    debugger_continue()
+}
+
+def breakfunc(dummy)
+{
+    var a = read_register("a")
+    // a=0xff: looking for sync (E6)
+    if (a == 255) {
+        // looking for the beginning of file, or... 
+        if (rkfile.index != 0) {
+            // ...for the checksum in the end
+            rkfile.index = rkfile.mem.size() - 2;
+        }
+    } 
+
+    // return next byte in A
+    if (rkfile.index < rkfile.mem.size()) {
+        set_register("a", rkfile.mem[rkfile.index])
+        ++rkfile.index
+    }
+
+    // if file is finished, invoke callback
+    if (rkfile.index == rkfile.mem.size()) {
+        rkfile.onfinished(rkfile.next)
+    }
+
+    // return to the caller
+    exit_intercept()
+}
+
+def attach_rk_hook() {
+    insert_breakpoint(0, 0xfc31, 1) // load byte (see also 0xfb74 for load file)
+    add_callback("breakpoint", breakfunc)
+    debugger_attached()
+    debugger_continue()
+}
+
+

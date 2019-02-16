@@ -15,18 +15,13 @@
 #include "wav.h"
 #include "server.h"
 #include "SDL.h"
+#include "util.h"
 
 #if HAVE_GPERFTOOLS
 #include <gperftools/profiler.h>
 #endif
 
-static size_t islength(std::ifstream & is)
-{
-    is.seekg(0, is.end);
-    size_t result = is.tellg();
-    is.seekg(0, is.beg);
-    return result;
-}
+#include "scriptnik.h"
 
 void load_rom(Memory & memory)
 {
@@ -56,7 +51,7 @@ void load_one_disk(FD1793 & fdc, int index, std::string & path)
     }
 }
 
-void load_wav(Wav & wav, std::string & path)
+void load_wav(Wav & wav, const std::string & path)
 {
     std::ifstream is(path, std::ifstream::binary);
     if (is) {
@@ -95,6 +90,101 @@ PixelFiller filler(memory, io, tv);
 Board board(memory, io, filler, soundnik, tv, tape_player);
 
 GdbServer gdbserver(board);
+
+Scriptnik scriptnik;
+
+void bootstrap_scriptnik()
+{
+    int script_size = 0;
+    for (auto & scriptfile : Options.scriptfiles) {
+        script_size += scriptnik.append_from_file(scriptfile);
+    }
+
+    for (auto & arg : Options.scriptargs) {
+        scriptnik.append_arg(arg);
+    }
+
+    if (script_size) {
+        printf("Bootstrapping scriptnik...\n");
+
+        scriptnik.loadwav = [](const std::string & filename) {
+            load_wav(wav, filename);
+            return 0;
+        };
+
+        // probably same as lambda..
+        board.hooks.frame = std::bind(&Scriptnik::onframe, &scriptnik,
+                std::placeholders::_1);
+
+        tape_player.hooks.finished = 
+            std::bind(&Scriptnik::onwavfinished, &scriptnik, std::placeholders::_1);
+
+        scriptnik.keydown = [](int scancode) {
+            SDL_KeyboardEvent e;
+            e.keysym.scancode = (SDL_Scancode)scancode;
+            io.the_keyboard().key_down(e);
+        };
+
+        scriptnik.keyup = [](int scancode) {
+            SDL_KeyboardEvent e;
+            e.keysym.scancode = (SDL_Scancode)scancode;
+            io.the_keyboard().key_up(e);
+        };
+
+        scriptnik.insert_breakpoint = [](int type, int addr, int kind) {
+            return board.insert_breakpoint(type, addr, kind);
+        };
+        scriptnik.debugger_attached = []() {
+            return board.debugger_attached();
+        };
+        scriptnik.debugger_detached = []() {
+            return board.debugger_detached();
+        };
+        scriptnik.debugger_break = []() {
+            return board.debugger_break();
+        };
+        scriptnik.debugger_continue = []() {
+            return board.debugger_continue();
+        };
+        board.onbreakpoint = []() {
+            scriptnik.onbreakpoint();
+        };
+        scriptnik.read_register = [](const std::string & reg) {
+            if (reg == "a") return i8080_regs_a();
+            if (reg == "f") return i8080_regs_f();
+            if (reg == "b") return i8080_regs_b();
+            if (reg == "c") return i8080_regs_c();
+            if (reg == "d") return i8080_regs_d();
+            if (reg == "e") return i8080_regs_e();
+            if (reg == "h") return i8080_regs_h();
+            if (reg == "l") return i8080_regs_l();
+            if (reg == "sp") return i8080_regs_sp();
+            if (reg == "pc") return i8080_pc();
+            return i8080_pc();
+        };
+        scriptnik.set_register = [](const std::string & reg, int val) {
+            if (reg == "a") i8080_setreg_a(val & 0xff);
+            if (reg == "f") i8080_setreg_f(val & 0xff);
+            if (reg == "b") i8080_setreg_b(val & 0xff);
+            if (reg == "c") i8080_setreg_c(val & 0xff);
+            if (reg == "d") i8080_setreg_d(val & 0xff);
+            if (reg == "e") i8080_setreg_e(val & 0xff);
+            if (reg == "h") i8080_setreg_h(val & 0xff);
+            if (reg == "l") i8080_setreg_l(val & 0xff);
+            if (reg == "sp") i8080_setreg_sp(val & 0xffff);
+            if (reg == "pc") i8080_jump(val & 0xffff);
+        };
+        scriptnik.read_memory = [](int addr, int stackrq) {
+            return (int)memory.read(addr, (bool)stackrq);
+        };
+        scriptnik.write_memory = [](int addr, int w8, int stackrq) {
+            memory.write(addr, w8, stackrq);
+        };
+
+        scriptnik.start();
+    }
+}
+
 
 int main(int argc, char ** argv)
 {
@@ -161,6 +251,8 @@ int main(int argc, char ** argv)
         ProfilerStart("v06x.prof");
     }
 #endif
+
+    bootstrap_scriptnik();
 
     Emulator lator(board);
     lator.start_emulator_thread();
