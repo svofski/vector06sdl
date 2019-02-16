@@ -87,3 +87,39 @@ Now to interactively examine profiler data:
 ```
 $GOPATH/bin/pprof -http=0.0.0.0:9999 ./v06x ./v06x.prof
 ```
+
+# Scripting
+v06x can execute chai scripts (see https://chaiscript.com). The scripts can attach hooks to frame interrupt and use debugger API and probably do other things.
+## Example scripts
+Example scripts that demonstrate scripting ability by implementing a 3-stage loading are provided in [scripts](../master/scripts). They facilitate loading of music files composed in rk86 music system. Normally to listen to a tune one should:
+1) load rk86 monitor-emulator (micro_rk.rom)
+2) in the emulator, load the rk music system (MSVec.rk)
+3) in the rk music system, load a music file 
+4) compile and run music file
+Doing all of this in v06x is challenging not only because of the number of steps involved, but also because v06x does not support loading rk files natively. The only option would be to convert everything to wav files and issue a lot of keyboard commands right on time.
+
+```rkload.chai``` uses debugger API to intercept rk86 monitor call that loads a byte
+```musload.chai``` implements a robot typer that loads the files and types all the keys automatically
+
+## Available API
+The API is ad-hoc and is being added as needed. Current list of available functions (probably outdated):
+  * ```scriptargs[]``` arguments passed in ---scriptargs options, array of strings
+  * ```add_callback(name, fun(x) {})``` available callbacks: "frame", "wavloaded", "breakpoint". The argument is integer.
+  * ```loadwav(filename)``` load a wav file and start playing, useful for multi-staged file loading 
+  * ```scancode_from_name(name)``` returns SDL_Scancode by name
+  * ```insert_breakpoint(type, addr, kind)``` inserts a breakpoint
+    * type 1: hw breakpoint: kind = 1
+    * type 2: write watchpoint, kind = number of bytes to watch
+    * type 3: read watchpoint, kind = number of bytes to watch
+    * type 4: access watchpoint, kind = number of bytes to watch
+  * ```debugger_attached()``` attached as debugger, this pauses the execution
+  * ```debugger_detached()``` debugger detach
+  * ```debugger_break()``` break execution
+  * ```debugger_continue()``` continue execution
+  * ```read_register(name)``` return integer register value, names are "a","f","b","c","d","e","h","l","sp","pc"
+  * ```set_register(name, value)``` set register value, register names as in read_register()
+  * ```read_memory(addr, stack)``` return memory byte at addr, stack = 1 if stack access
+  * ```write_memory(addr, w8, stack)``` write memory byte at addr, stack = 1 if stack access
+  * ```read_file(filename)``` read a binary file and return contents as VectorInt()
+
+
