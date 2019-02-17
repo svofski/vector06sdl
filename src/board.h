@@ -41,6 +41,8 @@ private:
     TV & tv;
     WavPlayer & tape_player;
 
+    std::vector<uint8_t> boot;
+
     int debugging;
     int debugger_interrupt;
     std::vector<Breakpoint> breakpoints;
@@ -60,6 +62,9 @@ public:
 
 private:
     void refresh_watchpoint_listeners(void);
+
+private:
+    void init_bootrom();
 
 public:
     Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd, 

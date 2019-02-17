@@ -3,6 +3,9 @@
 #include <string>
 #include <streambuf>
 #include <fstream>
+#include <vector>
+
+namespace util {
 
 std::string read_file(const std::string & filename)
 {
@@ -29,4 +32,16 @@ size_t islength(std::ifstream & is)
     return result;
 }
 
+std::vector<uint8_t> load_binfile(const std::string path)
+{
+    std::vector<uint8_t> bin;
+    std::ifstream is(path, std::ifstream::binary);
+    if (is) {
+        size_t length = islength(is);
+        bin.resize(length);
+        is.read((char *) bin.data(), length);
+    }
+    return bin;
+}
 
+}

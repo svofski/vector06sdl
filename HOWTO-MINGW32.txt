@@ -1,0 +1,48 @@
+HOW TO BUILD FOR 32-BIT MINGW32
+===============================
+
+0. Install mingw32 + msys to c:\MinGW
+
+1. Boost (tested with 1.67)
+
+Download and extract to e.g. %USERPROFILE%/projects/vector06sdl/boost_1_67_0
+
+  set BOOST_ROOT=%USERPROFILE%/projects/vector06sdl/boost_1_67_0
+  cd %BOOST_ROOT%
+  bootstrap gcc
+  b2 toolset=gcc link=static stage 
+
+This will compile 72 bloody libraries, which takes a long time (Boost is a header-only library!).
+It's possible to compile only parts of the libraries, but cmake seems to be acting up with partial
+builds so it may be time-saving to just buggerall compile everything.
+
+The libraries will end up in stage/ where they will have completely fucked up names that 
+FindBOOST.cmake will never be able to figure out, because it's a world-class build tool.
+I also linked %BOOST_ROOT%/stage/lib to %BOOST_ROOT%/lib
+
+Rename required libraries manually to sensible names, so that cmake is able to find them:
+
+  libboost_chrono.a
+  libboost_filesystem.a
+  libboost_program_options.a
+  libboost_system.a
+  libboost_thread.a
+
+2. SDL2
+
+Just bloody download a windows build and copy i686 subtree to c:\MinGW
+
+Make sure to delete or rename libSDL2.dll.a because it's impossible to tell cmake to ignore it.
+
+3. SDL2_Image
+
+Can live without it.
+
+4. in MSYS shell
+
+export BOOST_ROOT=%USERPROFILE%/projects/vector06sdl/boost_1_67_0
+cmake -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+make -j8
+
+Boost is a world-class library so it will throw a buttload of warnings which can only be ignored.
+

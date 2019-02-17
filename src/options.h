@@ -5,6 +5,7 @@
 
 struct _options
 {
+    std::string bootromfile;
     std::string romfile;
     int rom_org;
     std::string wavfile;

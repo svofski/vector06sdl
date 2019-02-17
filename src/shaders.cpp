@@ -23,6 +23,14 @@
 
 #else 
 
+#if MSYS_MINGW32
+#define IMPORT(ID) \
+    extern "C" uint8_t * binary_##ID##_start; \
+    extern "C" uint8_t * binary_##ID##_end; \
+    extern "C" size_t    binary_##ID##_size; \
+    static const uint8_t * ID = (uint8_t *) &binary_##ID##_start; \
+    static const size_t ID##_len = &binary_##ID##_size;
+#else
 #define IMPORT(ID) \
     extern "C" uint8_t * _binary_##ID##_start; \
     extern "C" uint8_t * _binary_##ID##_end; \
@@ -30,7 +38,7 @@
     static const uint8_t * ID = (uint8_t *) &_binary_##ID##_start; \
     static const size_t ID##_len = &_binary_##ID##_size;
 #endif
-
+#endif
 IMPORT(singlepass_vsh)
 IMPORT(singlepass_fsh)
 
@@ -40,7 +48,7 @@ std::string get_vertex_src()
         return std::string((char *)singlepass_vsh, (size_t)singlepass_vsh_len);
     }
     else {
-        return read_file(Options.gl.shader_basename + std::string(".vsh"));
+        return util::read_file(Options.gl.shader_basename + std::string(".vsh"));
     }
 }
 
@@ -50,7 +58,7 @@ std::string get_frag_src()
         return std::string((char *)singlepass_fsh, (size_t)singlepass_fsh_len);
     }
     else {
-        return read_file(Options.gl.shader_basename + std::string(".fsh"));
+        return util::read_file(Options.gl.shader_basename + std::string(".fsh"));
     }
 }
 

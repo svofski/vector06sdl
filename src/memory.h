@@ -31,7 +31,7 @@ public:
     uint32_t tobank(uint32_t a);
     uint8_t read(uint32_t addr, bool stackrq);
     void write(uint32_t addr, uint8_t w8, bool stackrq);
-    void init_from_vector(std::vector<uint8_t> & from, uint32_t start_addr);
+    void init_from_vector(const std::vector<uint8_t> & from, uint32_t start_addr);
     void attach_boot(std::vector<uint8_t> boot);
     void detach_boot();
     uint8_t * buffer();

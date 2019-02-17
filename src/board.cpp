@@ -9,6 +9,7 @@
 #include "cadence.h"
 #include "breakpoint.h"
 #include "board.h"
+#include "util.h"
 
 #if USED_XXD
 // boots.o made using xxd already has okay symbols
@@ -16,13 +17,21 @@ extern "C" unsigned char * boots_bin;
 extern "C" unsigned int boots_bin_len;
 #else
 
+#if MSYS_MINGW32
+extern "C" uint8_t * binary_boots_bin_start;
+extern "C" uint8_t * binary_boots_bin_end;
+extern "C" size_t    binary_boots_bin_size;
+
+#define boots_bin (binary_boots_bin_start)
+#define boots_bin_len (&binary_boots_bin_size)
+#else
 extern "C" uint8_t * _binary_boots_bin_start;
 extern "C" uint8_t * _binary_boots_bin_end;
 extern "C" size_t    _binary_boots_bin_size;
 
 #define boots_bin (_binary_boots_bin_start)
 #define boots_bin_len (&_binary_boots_bin_size)
-
+#endif
 #endif
 
 Board::Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd, 
@@ -43,23 +52,37 @@ void Board::init()
     create_timer();
 }
 
+void Board::init_bootrom()
+{
+    std::vector<uint8_t> userboot = util::load_binfile(Options.bootromfile);
+    if (userboot.size() > 0) {
+        printf("User bootrom: %s (%d bytes)\n", Options.bootromfile.c_str(),
+                (int)userboot.size());
+        this->boot = userboot;
+    }
+    else {
+        // inialize bootrom using default boot
+        this->boot.resize((size_t)boots_bin_len);
+        uint8_t * src = (uint8_t *) &boots_bin;
+        size_t size = (size_t) boots_bin_len;
+        for (unsigned i = 0; i < size; ++i) {
+            this->boot[i] = src[i];
+        }
+    }
+}
+
 void Board::reset(bool blkvvod)    // true: power-on reset, false: boot loaded prog
 {
     if (blkvvod) {
-        //uint8_t * src = (uint8_t *) &_binary_boots_bin_start;
-        //size_t size = (size_t)(&_binary_boots_bin_size);
-        uint8_t * src = (uint8_t *) &boots_bin;
-        size_t size = (size_t) boots_bin_len;
-        vector<uint8_t> boot(size);
-        for (unsigned i = 0; i < size; ++i) {
-            boot[i] = src[i];
+        if (this->boot.size() == 0) {
+            this->init_bootrom();
         }
         this->memory.attach_boot(boot);
-        printf("Board::reset() attached boot, size=%u\n", (unsigned int)size);
+        printf("Board::reset() attached boot, size=%u\n", 
+                (unsigned int)boot.size());
     } else {
         this->memory.detach_boot();
         printf("Board::reset() detached boot\n");
-        //this->dump_memory(0x100, 0x100);
     }
 
     last_opcode = 0;

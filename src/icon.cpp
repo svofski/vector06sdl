@@ -5,12 +5,24 @@ extern "C" unsigned char * icon64_rgba;
 extern "C" unsigned int icon64_rgba_len;
 #else
 
+#if MSYS_MINGW32
+
+extern "C" uint8_t * binary_icon64_rgba_start;
+extern "C" uint8_t * binary_icon64_rgba_end;
+extern "C" size_t    binary_icon64_rgba_size;
+
+#define icon64_rgba (binary_icon64_rgba_start)
+#define icon64_rgba_len (&binary_icon64_rgba_size)
+
+#else
 extern "C" uint8_t * _binary_icon64_rgba_start;
 extern "C" uint8_t * _binary_icon64_rgba_end;
 extern "C" size_t    _binary_icon64_rgba_size;
 
 #define icon64_rgba (_binary_icon64_rgba_start)
 #define icon64_rgba_len (&_binary_icon64_rgba_size)
+
+#endif
 
 #endif
 

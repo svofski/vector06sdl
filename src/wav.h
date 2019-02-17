@@ -24,7 +24,7 @@ public:
 private:
     template <typename valtype> 
     typename enable_if<!is_same<valtype,string>::value, valtype>::type
-        token(vector<uint8_t> & raw, size_t & offset)
+        token(const vector<uint8_t> & raw, size_t & offset)
     {
         valtype result = *(valtype *)&raw[offset];
         offset += sizeof(valtype);
@@ -33,7 +33,7 @@ private:
 
     template <typename valtype>
     typename enable_if<is_same<valtype,string>::value, valtype>::type
-        token(vector<uint8_t> & raw, size_t & offset)
+        token(const vector<uint8_t> & raw, size_t & offset)
     {
         string result((const char *) &raw[offset], 4); 
         offset += 4;
@@ -73,7 +73,7 @@ private:
     }
 
 public:
-    bool set_bytes(vector<uint8_t> & raw)
+    bool set_bytes(const vector<uint8_t> & raw)
     {
         size_t sptr = 0;
 

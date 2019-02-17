@@ -20,9 +20,18 @@ add_definitions(-ffunction-sections -fdata-sections
     -Wl,--gc-sections)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    message("This is Windows. Assuming MinGW from https://nuwen.net/mingw.html")
     set(EXTRA_LIBS -limm32 -lwinmm -lversion -lws2_32 -lmswsock)
-    set(BFDNAME -O pe-x86-64 -B i386:x86-64)
+    if (${MSYS})
+        message("Windows+MSYS, assuming mingw32 i686 (32-bit) build")
+        set(BFDNAME -O pe-i386 -B i386)
+        set(EXTRA_DEFS CHAISCRIPT_NO_THREADS=1 MSYS_MINGW32=1)
+        set(EXTRA_LIBS "${EXTRA_LIBS}" -lsetupapi -static-libgcc -static-libstdc++)
+        add_definitions(-msse)
+    else()
+        message("Windows but not MSYS. Assuming 64-bit MinGW from https://nuwen.net/mingw.html")
+        set(EXTRA_LIBS "${EXTRA_LIBS}" -lsetupapi)
+        set(BFDNAME -O pe-x86-64 -B i386:x86-64)
+    endif()
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     message("Must be a macOS, will use xxd")
     set(USE_XXD true)
@@ -40,13 +49,15 @@ endif()
 
 set(SOURCE_FILES src/main.cpp src/memory.cpp src/tv.cpp src/board.cpp src/emulator.cpp
     src/hal.cpp src/i8080.cpp src/options.cpp src/sound.cpp src/filler.cpp
-    src/resampler.cpp src/biquad.cpp
+    src/resampler.cpp # src/biquad.cpp
     src/cadence.cpp
     src/icon.cpp
     src/glextns.cpp src/shaders.cpp
     src/scriptnik.cpp src/util.cpp
     src/server.cpp)
 add_executable(v06x ${SOURCE_FILES} boots.o singlepass_vsh.o singlepass_fsh.o icon64.o)
+
+target_compile_definitions(v06x PRIVATE ${EXTRA_DEFS})
 
 
 set(Boost_USE_STATIC_LIBS ON)
@@ -55,14 +66,17 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-find_package(SDL2 REQUIRED)
-
 # prefer static linkage of SDL2_image, but on macos all hell breaks lose 
 # so screw it
 set(OLD_CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
 if(NOT (${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
     set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_STATIC_LIBRARY_SUFFIX})
 endif()
+
+message("Library suffixes are: ${CMAKE_FIND_LIBRARY_SUFFIXES}")
+find_package(SDL2 REQUIRED)
+message("SDL2 libs are: ${SDL2_LIBRARY}")
+
 find_package(SDL2_image)
 set(CMAKE_FIND_LIBRARY_SUFFIXES ${OLD_CMAKE_FIND_LIBRARY_SUFFIXES})
 

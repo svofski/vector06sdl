@@ -18,17 +18,9 @@
 std::vector<int> read_intvector(const std::string & path)
 {
     std::vector<int> dst;
-    std::ifstream is(path, std::ifstream::binary);
-    if (is) {
-        size_t length = islength(is);
-
-        std::vector<uint8_t> bytes;
-        bytes.resize(length);
-        is.read((char *) bytes.data(), length);
-        
-        dst.resize(length);
-        for (size_t i = 0; i < length; ++i) dst[i] = bytes[i];
-    }
+    auto bytes = util::load_binfile(path);
+    dst.resize(bytes.size());
+    for (size_t i = 0; i < bytes.size(); ++i) dst[i] = bytes[i];
     return dst;
 }
 
@@ -158,7 +150,7 @@ void Scriptnik::onbreakpoint()
 
 int Scriptnik::append_from_file(const std::string & filename)
 {
-    this->text = this->text + read_file(filename);
+    this->text = this->text + util::read_file(filename);
     return this->text.length();
 }
 

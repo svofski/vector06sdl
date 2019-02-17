@@ -22,7 +22,8 @@ public:
         return 0xff;
     }
 
-    virtual bool loadDsk(int drive, const char * name, std::vector<uint8_t> & fdd_data) 
+    virtual bool loadDsk(int drive, const char * name, 
+            const std::vector<uint8_t> & fdd_data) 
     {
         return false;
     }
@@ -87,7 +88,7 @@ public:
         return this->dsk.size() > 0;
     }
 
-    bool loadDsk(const char * name, std::vector<uint8_t> & fdd_raw)
+    bool loadDsk(const char * name, const std::vector<uint8_t> & fdd_raw)
     {
         this->name = std::string(name);
         this->dsk = fdd_raw;
@@ -247,7 +248,8 @@ public:
         }
     }
 
-    bool loadDsk(int drive, const char * name, std::vector<uint8_t> & fdd_data) 
+    bool loadDsk(int drive, const char * name, 
+            const std::vector<uint8_t> & fdd_data) 
     {
         if (drive < 0 || drive > 3) {
             printf("FD1793: illegal drive: %d\n", drive);

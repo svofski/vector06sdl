@@ -25,44 +25,17 @@
 
 void load_rom(Memory & memory)
 {
-    std::ifstream is(Options.romfile, std::ifstream::binary);
-    if (is) {
-        size_t length = islength(is);
-
-        std::vector<uint8_t> rom_data;
-        rom_data.resize(length);
-        is.read((char *) rom_data.data(), length);
-
-        memory.init_from_vector(rom_data, Options.rom_org);
-    }
+    memory.init_from_vector(util::load_binfile(Options.romfile), Options.rom_org);
 }
 
-void load_one_disk(FD1793 & fdc, int index, std::string & path)
+void load_one_disk(FD1793 & fdc, int index, const std::string & path)
 {
-    std::ifstream is(path, std::ifstream::binary);
-    if (is) {
-        size_t length = islength(is);
-
-        std::vector<uint8_t> fdd_data;
-        fdd_data.resize(length);
-        is.read((char *) fdd_data.data(), length);
-        
-        fdc.loadDsk(index, path.c_str(), fdd_data);
-    }
+    fdc.loadDsk(index, path.c_str(), util::load_binfile(path));
 }
 
 void load_wav(Wav & wav, const std::string & path)
 {
-    std::ifstream is(path, std::ifstream::binary);
-    if (is) {
-        size_t length = islength(is);
-
-        std::vector<uint8_t> wav_data;
-        wav_data.resize(length);
-        is.read((char *) wav_data.data(), length);
-        
-        wav.set_bytes(wav_data);
-    }
+    wav.set_bytes(util::load_binfile(path));
 }
 
 void load_disks(FD1793 & fdc)

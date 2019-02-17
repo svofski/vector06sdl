@@ -64,7 +64,7 @@ void Memory::write(uint32_t addr, uint8_t w8, bool stackrq)
     this->bytes[phys] = w8;
 }
 
-void Memory::init_from_vector(vector<uint8_t> & from, uint32_t start_addr)
+void Memory::init_from_vector(const vector<uint8_t> & from, uint32_t start_addr)
 {
     memset(this->bytes, 0, sizeof(bytes));
     for (unsigned i = 0; i < from.size(); ++i) {

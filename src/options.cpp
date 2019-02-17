@@ -42,6 +42,7 @@ void options(int argc, char ** argv)
     po::options_description descr("Parameters");
     descr.add_options()
         ("help,h", "call for help")
+        ("bootrom", po::value<std::string>(), "alternative bootrom")
         ("rom", po::value<std::string>(), "rom file to load")
         ("org", po::value <int>(), "rom origin address (default 0x100)")
         ("wav", po::value<std::string>(), "wav file to load (not implemented)")
@@ -86,6 +87,11 @@ void options(int argc, char ** argv)
         if (vm.count("help")) {
             std::cout << descr << std::endl;
             exit(0);
+        }
+
+        if (vm.count("bootrom")) {
+            Options.bootromfile = vm["bootrom"].as<std::string>();
+            printf("Specified bootrom file: %s\n", Options.bootromfile.c_str());
         }
 
         if (vm.count("rom")) {
@@ -320,6 +326,7 @@ void _options::load(const std::string & filename)
 
     read_json(filename, pt);
 
+    bootromfile = pt.get<std::string>("bootromfile", "");
     window = pt.get<bool>("video.window");
     vsync = pt.get<bool>("video.vsync");
     screen_height = pt.get<int>("video.yres");
@@ -342,6 +349,7 @@ void _options::save(const std::string & filename)
     using boost::property_tree::ptree;
     ptree pt;
 
+    pt.put("bootromfile", bootromfile);
     pt.put("video.window", window);
     pt.put("video.vsync", vsync);
     pt.put("video.yres", screen_height);
