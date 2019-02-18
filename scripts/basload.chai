@@ -1,0 +1,27 @@
+def load_bas() {
+    /* Первым аргументом должен быть файл музыкальной системы MSVec.rk */
+    basfile = BASFile(scriptargs[0], 1)
+    basfile.onfinished =
+        fun(next) {
+        }
+}
+
+/* Эта функция выполняется каждый кадр, callback "frame" */
+def framefunc(frameno) {
+    keytyper.onframe()  // дать роботу-машинисту сделать свое дело
+}
+
+/* Зарегистрировать кадровый колбек */
+add_callback("frame", framefunc)
+
+if (scriptargs.size() < 1) {
+    puts("Specify --scriptargs PROGRAM.BAS\n")
+}
+else {
+    /* Прицепляем перехватчик вызова загрузки байта */
+    attach_bas25_hook()
+    /* Подгружаем первый файл */
+    load_bas()
+    keytyper.types(["\001F3", 50, "\002F3", 50, "F12", 50,
+        "C","L","O","A","D","\001Left Shift","2","2","\002Left Shift","Return"])
+}
