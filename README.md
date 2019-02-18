@@ -103,9 +103,14 @@ Doing all of this in v06x is challenging not only because of the number of steps
 ```rkload.chai``` uses debugger API to intercept rk86 monitor call that loads a byte
 ```musload.chai``` implements a robot typer that loads the files and types all the keys automatically
 
+The example invokation can be found in [msvec.bat](../master/scripts/msvec.bat).
+
 ### BASIC files
 A lot of programs written in BASIC 2.5 for Vector-06C are stored in .BAS files. Loading these files is facilitated by loading 3 scripts:
-```bas25hook.chai```, ```robotnik.chai```, ```basload.chai```. To make boot times faster, a copy of BASIC 2.5 from TimSoft's 32kB bootrom is used.
+```bas25hook.chai```, ```robotnik.chai```, ```basload.chai```. To make boot times faster, a copy of BASIC 2.5 from TimSoft's 32kB bootrom is used. Here's an example (which can be found in [basic.bat](../master/scripts/basic.bat))
+```
+v06x --script bas25hook.chai --script robotnik.chai --script basload.chai --bootrom ..\boot\boot.bin --scriptargs DIAMOND.BAS
+```
 
 ## Available API
 The API is ad-hoc and is being added as needed. Current list of available functions (probably outdated):
