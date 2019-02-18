@@ -91,6 +91,8 @@ $GOPATH/bin/pprof -http=0.0.0.0:9999 ./v06x ./v06x.prof
 # Scripting
 v06x can execute chai scripts (see https://chaiscript.com). The scripts can attach hooks to frame interrupt and use debugger API and probably do other things.
 ## Example scripts
+
+### rk86
 Example scripts that demonstrate scripting ability by implementing a 3-stage loading are provided in [scripts](../master/scripts). They facilitate loading of music files composed in rk86 music system. Normally to listen to a tune one should:
 1) load rk86 monitor-emulator (micro_rk.rom)
 2) in the emulator, load the rk music system (MSVec.rk)
@@ -100,6 +102,10 @@ Doing all of this in v06x is challenging not only because of the number of steps
 
 ```rkload.chai``` uses debugger API to intercept rk86 monitor call that loads a byte
 ```musload.chai``` implements a robot typer that loads the files and types all the keys automatically
+
+### BASIC files
+A lot of programs written in BASIC 2.5 for Vector-06C are stored in .BAS files. Loading these files is facilitated by loading 3 scripts:
+```bas25hook.chai```, ```robotnik.chai```, ```basload.chai```. To make boot times faster, a copy of BASIC 2.5 from TimSoft's 32kB bootrom is used.
 
 ## Available API
 The API is ad-hoc and is being added as needed. Current list of available functions (probably outdated):
