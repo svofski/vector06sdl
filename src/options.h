@@ -38,6 +38,7 @@ struct _options
     struct _log {
         bool fdc;
         bool audio;
+        bool video;
     } log;
 
     bool profile;       /* enable gperftools CPU profiler */

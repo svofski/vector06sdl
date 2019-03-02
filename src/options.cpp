@@ -47,7 +47,7 @@ void options(int argc, char ** argv)
         ("org", po::value <int>(), "rom origin address (default 0x100)")
         ("wav", po::value<std::string>(), "wav file to load (not implemented)")
         ("fdd", po::value<std::vector<std::string>>(), "fdd floppy image (multiple up to 4)")
-        ("log", po::value<std::string>(), "fdd,audio print debug info from systems")
+        ("log", po::value<std::string>(), "fdd,audio,video print debug info from systems")
         ("autostart", "autostart based on RUS/LAT blinkage")
         ("max-frame", po::value<int>(), "run emulation for this many frames then exit")
         ("save-frame", po::value<std::vector<int>>(), "save frame with these numbers (multiple)")
@@ -287,6 +287,12 @@ void _options::parse_log(const std::string & opt)
         }
         else if (cats[i] == "~audio") {
             log.audio = false;
+        }
+        else if (cats[i] == "video") {
+            log.video = true;
+        }
+        else if (cats[i] == "~video") {
+            log.video = false;
         }
         else {
             printf("Ignored unknown log category: %s\n", cats[i].c_str());

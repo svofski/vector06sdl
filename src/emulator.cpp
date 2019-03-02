@@ -84,7 +84,8 @@ int Emulator::wait_event(SDL_Event * event, threadevent & ev, int timeout)
                     int purge = 0;
                     while(engine_to_ui_queue.nonblocking_pull(ev) == ok) 
                         ++purge;
-                    purge && fprintf(stderr,"purged render(%d)\n", purge);
+                    purge && Options.log.video && 
+                        fprintf(stderr, "purged render(%d)\n", purge);
                     return 2;
                 }
             }
