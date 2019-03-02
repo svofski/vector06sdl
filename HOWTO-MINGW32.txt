@@ -40,7 +40,7 @@ Can live without it.
 
 4. in MSYS shell
 
-export BOOST_ROOT=%USERPROFILE%/projects/vector06sdl/boost_1_67_0
+export BOOST_ROOT=$USERPROFILE/projects/vector06sdl/boost_1_67_0
 cmake -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release ..
 make -j8
 

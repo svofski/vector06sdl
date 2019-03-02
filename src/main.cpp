@@ -105,15 +105,19 @@ void bootstrap_scriptnik()
         };
 
         scriptnik.insert_breakpoint = [](int type, int addr, int kind) {
+            board.ioread = -1;
             return board.insert_breakpoint(type, addr, kind);
         };
         scriptnik.debugger_attached = []() {
+            board.ioread = -1;
             return board.debugger_attached();
         };
         scriptnik.debugger_detached = []() {
+            board.ioread = -1;
             return board.debugger_detached();
         };
         scriptnik.debugger_break = []() {
+            board.ioread = -1;
             return board.debugger_break();
         };
         scriptnik.debugger_continue = []() {
@@ -146,6 +150,7 @@ void bootstrap_scriptnik()
             if (reg == "l") i8080_setreg_l(val & 0xff);
             if (reg == "sp") i8080_setreg_sp(val & 0xffff);
             if (reg == "pc") i8080_jump(val & 0xffff);
+            if (reg == "ioread") board.ioread = val & 0xff;
         };
         scriptnik.read_memory = [](int addr, int stackrq) {
             return (int)memory.read(addr, (bool)stackrq);

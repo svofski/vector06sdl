@@ -1,0 +1,62 @@
+/*
+ * Пример использования API отладчика для реализации перехвата
+ * портов ввода-вывода
+ */
+
+global port33 = 0
+
+def breakfunc(dummy)
+{
+    var pc = read_register("pc")
+    var instr = read_memory(0xffff & (pc-2), 1)
+    var port = read_memory(0xffff & (pc-1), 1)
+
+    switch (instr) {
+        case (0xdb) {
+            puts("in " + to_string(port) + "\n")
+            set_register("ioread", ~port33)
+            break
+        }
+        case (0xd3) {
+            puts("out " + to_string(port) + "," + 
+                to_string(read_register("a")) + "\n")
+            port33 = read_register("a")
+            break
+        }
+    }
+
+    debugger_continue()
+}
+
+def attach_io_hook() {
+    /* write watchpoint, port 0x33 */
+    insert_breakpoint(2, 0x80000033, 1);
+
+    /* read watchpoint, port 0x33 */
+    insert_breakpoint(3, 0x80000033, 1);
+
+    add_callback("breakpoint", breakfunc)
+    debugger_attached()
+    debugger_continue()
+}
+
+attach_io_hook()
+add_callback("frame", fun(frameno) {
+    keytyper.onframe()
+})
+
+keytyper.types([100, "F12", 100,
+        "S","I","D","Return", 70, "A", "Return",10,
+        "M","V","I","Space","A",",","A","A","Return",10,
+        "O","U","T","Space","3","3","Return",10,
+        "I","N","Space","3","3","Return",10,
+        "Return",10,
+        "T","Return",10,
+        "T","Return",10,
+        "T","Return",10,
+        "X","A","Return",10,
+        fun() {
+            puts("You should be seeing A=55\n")
+        }
+        ])
+

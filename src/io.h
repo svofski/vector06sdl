@@ -32,6 +32,9 @@ public:
     std::function<void(bool)> onruslat;
     std::function<uint32_t(uint8_t,uint8_t,uint8_t)> rgb2pixelformat;
 
+    std::function<int(uint32_t,uint8_t)> onread;
+    std::function<void(uint32_t,uint8_t)> onwrite;
+
 public:
     IO(Memory & _memory, Keyboard & _keyboard, I8253 & _timer, FD1793 & _fdc, 
             AY & _ay, WavPlayer & _tape_player) 
@@ -137,16 +140,21 @@ public:
             default:
                 break;
         }
+
+        if (this->onread) {
+            int hookresult = this->onread((uint32_t)port, (uint8_t)result);
+            if (hookresult != -1) {
+                result = hookresult;
+            }
+        }
+
         return result;
     }
 
-//    void interrupt(bool enable)
-//    {
-//        //printf("io.interrupt(): enable=%s", enable ? "true" : "false");
-//        this->iff = enable;
-//    }
-
     void output(int port, int w8) {
+        if (this->onwrite) {
+            this->onwrite((uint32_t)port, (uint8_t)w8);
+        }
         this->outport = port;
         this->outbyte = w8;
         #if 0

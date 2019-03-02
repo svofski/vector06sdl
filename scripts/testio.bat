@@ -1,0 +1,1 @@
+v06x --script ../scripts/robotnik.chai --script ../scripts/iohook.chai --fdd ../testroms/test.fdd --window

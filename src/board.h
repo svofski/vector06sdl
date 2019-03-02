@@ -60,6 +60,9 @@ public:
         std::function<void(int)> jump;
     } hooks;
 
+    // a hack to pass return value from io.onread 
+    int ioread;
+
 private:
     void refresh_watchpoint_listeners(void);
 

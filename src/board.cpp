@@ -403,6 +403,11 @@ void Board::debugger_continue()
     this->debugger_interrupt = 0;
 }
 
+static bool iospace(uint32_t addr) 
+{
+    return (addr & 0x80000000) != 0;
+}
+
 void Board::check_watchpoint(uint32_t addr, uint8_t value, int how)
 {
     //if (addr == 0x100) {
@@ -432,21 +437,41 @@ void Board::refresh_watchpoint_listeners()
         [this](uint32_t addr, uint32_t phys, bool stack, uint8_t value) {
             this->check_watchpoint(addr, value, Watchpoint::WRITE);
         };
+    auto check_wp_ioread =
+        [this](uint32_t addr, uint8_t value) {
+            this->ioread = -1;
+            this->check_watchpoint(0x80000000|addr, value, Watchpoint::READ);
+            return this->ioread;
+        };
+    auto check_wp_iowrite =
+        [this](uint32_t addr, uint8_t value) {
+            this->check_watchpoint(0x80000000|addr, value, Watchpoint::WRITE);
+        };
 
     printf("--- watchpoint inventory ---\n");
     this->memory.onwrite = this->memory.onread = nullptr;
+    this->io.onwrite = this->io.onread = nullptr;
     for (auto &w : this->memory_watchpoints) {
         if (this->memory.onwrite == nullptr && 
             (w.type == Watchpoint::WRITE || w.type == Watchpoint::ACCESS)) {
-            this->memory.onwrite = check_wp_write;
+            if (iospace(w.addr)) {
+                this->io.onwrite = check_wp_iowrite;
+            } else {
+                this->memory.onwrite = check_wp_write;
+            }
             printf("write watchpoint: %08x,%x\n", w.addr, w.length);
         }
-        if (this->memory.onread == nullptr &&
+        if (this->memory.onread == nullptr && 
             (w.type == Watchpoint::READ || w.type == Watchpoint::ACCESS)) {
-            this->memory.onread = check_wp_read;
+            if (iospace(w.addr)) {
+                this->io.onread = check_wp_ioread;
+            } else {
+                this->memory.onwrite = check_wp_read;
+            }
             printf("read watchpoint: %08x,%x\n", w.addr, w.length);
         }
     }
+
     printf("--- ---\n");
 }
 
