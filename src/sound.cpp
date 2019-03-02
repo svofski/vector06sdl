@@ -117,7 +117,7 @@ void Soundnik::soundStep(int step, int tapeout, int covox, int tapein)
 
     /* timerwrapper does the stepping of 8253, it must always be called */
 #if BIQUAD_FLOAT
-    float soundf = this->timerwrapper.step(step/2) + tapeout + tapein;
+    float soundf = this->timerwrapper.step(step/2) + tapeout + tapein + covox/256.0;
     if (Options.nosound) return; /* but then we can return if nosound */
     soundf = this->resampler.sample((ay + soundf) * 0.2f);
 #else
