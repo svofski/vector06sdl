@@ -347,7 +347,7 @@ elif len(sys.argv) in [2,3]:
         with open(fon, 'w', encoding=ENCODING) as fo:
             for line in debas:
                 fo.write(line + '\n')
-    elif input_ext == ".asc":
+    elif input_ext in [".asc",".txt"]:
         print("Converting asc->bas: ", fin, fon)
         bas = enbas(fin)
         with open(fon, 'wb') as fob:
