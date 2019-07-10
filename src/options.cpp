@@ -21,6 +21,8 @@ _options Options =
     .screen_height = DEFAULT_SCREEN_HEIGHT,
     .border_width = DEFAULT_BORDER_WIDTH,
     .center_offset = DEFAULT_CENTER_OFFSET,
+
+    .volume = {1.0f, 1.0f, 1.0f, 1.0f, 0.2f},
 };
 
 void options(int argc, char ** argv)
@@ -47,6 +49,7 @@ void options(int argc, char ** argv)
         ("org", po::value <int>(), "rom origin address (default 0x100)")
         ("wav", po::value<std::string>(), "wav file to load (not implemented)")
         ("fdd", po::value<std::vector<std::string>>(), "fdd floppy image (multiple up to 4)")
+        ("edd", po::value<std::vector<std::string>>(), "edd ramdisk image (multiple up to 16)")
         ("log", po::value<std::string>(), "fdd,audio,video print debug info from systems")
         ("autostart", "autostart based on RUS/LAT blinkage")
         ("max-frame", po::value<int>(), "run emulation for this many frames then exit")
@@ -61,6 +64,16 @@ void options(int argc, char ** argv)
          "shader:none - disable shaders\n"
          "filtering:no - disable texture filtering (use nearest)\n")
         ("nosound", "stay silent")
+        ("volume-timer", po::value<float>()->
+            default_value(Options.volume.timer), "timer sound volume")
+        ("volume-beeper", po::value<float>()->
+            default_value(Options.volume.beeper), "beeper/tape sound volume")
+        ("volume-ay", po::value<float>()->
+            default_value(Options.volume.ay), "AY volume")
+        ("volume-covox", po::value<float>()->
+            default_value(Options.volume.covox), "Covox volume")
+        ("volume", po::value<float>()->
+            default_value(Options.volume.global), "Global volume")
         ("nofdc", "detach floppy disk controller")
         ("window", "run in a window, not fullscreen")
         ("bootpalette", "init palette to yellow/blue colours before running a rom")
@@ -134,6 +147,15 @@ void options(int argc, char ** argv)
                 printf("Warning: only 4 fdd images can be specified at once. "
                         "Truncated.\n");
                 Options.fddfile.resize(4);
+            }
+        }
+
+        if (vm.count("edd")) {
+            Options.eddfile = vm["edd"].as<std::vector<std::string>>();
+            if (Options.eddfile.size() > 1) {
+                printf("Warning: only 1 kvaz is currently supported."
+                        " Stay tuned for more.\n");
+                Options.eddfile.resize(1);
             }
         }
 
@@ -233,6 +255,24 @@ void options(int argc, char ** argv)
                     Options.opengl = false;
                 }
             }
+        }
+
+        if (vm.count("volume-timer") > 0) {
+            Options.volume.timer = vm["volume-timer"].as<float>();
+            printf("volume.timer: %f\n", Options.volume.timer);
+        }
+        if (vm.count("volume-beeper") > 0) {
+            Options.volume.beeper = vm["volume-beeper"].as<float>();
+        }
+        if (vm.count("volume-ay") > 0) {
+            Options.volume.ay = vm["volume-ay"].as<float>();
+        }
+        if (vm.count("volume-covox") > 0) {
+            Options.volume.covox = vm["volume-covox"].as<float>();
+        }
+        if (vm.count("volume") > 0) {
+            Options.volume.global = vm["volume"].as<float>();
+            printf("volume.global: %f\n", Options.volume.global);
         }
 
         if (vm.count("script")) {
@@ -348,6 +388,13 @@ void _options::load(const std::string & filename)
     gl.use_shader = pt.get<bool>("video.opengl_use_shader");
     gl.default_shader = pt.get<bool>("video.opengl_default_shader");
     gl.filtering = pt.get<bool>("video.opengl_filtering");
+
+
+    volume.timer = pt.get<float>("audio.volume.timer");
+    volume.beeper = pt.get<float>("audio.volume.beeper");
+    volume.ay = pt.get<float>("audio.volume.ay");
+    volume.covox = pt.get<float>("audio.volume.covox");
+    volume.global = pt.get<float>("audio.volume");
 }
 
 void _options::save(const std::string & filename)
@@ -373,6 +420,12 @@ void _options::save(const std::string & filename)
     pt.put("video.opengl_use_shader", gl.use_shader);
     pt.put("video.opengl_default_shader", gl.default_shader);
     pt.put("video.opengl_filtering", gl.filtering);
+
+    pt.put("audio.volume.timer", volume.timer);
+    pt.put("audio.volume.beeper", volume.beeper);
+    pt.put("audio.volume.ay", volume.ay);
+    pt.put("audio.volume.covox", volume.covox);
+    pt.put("audio.volume", volume.global);
 
     write_json(filename, pt);
 }

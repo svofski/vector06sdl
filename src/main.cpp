@@ -23,9 +23,19 @@
 
 #include "scriptnik.h"
 
+void load_edd(Memory & memory)
+{
+    for (unsigned i = 0; i < Options.eddfile.size(); ++i) {
+        //printf("Loading EDD: %s\n", Options.eddfile[i].c_str());
+        memory.init_from_vector(util::load_binfile(Options.eddfile[i]),
+                0x10000 + 0x40000 * i);
+    }
+}
+
 void load_rom(Memory & memory)
 {
-    memory.init_from_vector(util::load_binfile(Options.romfile), Options.rom_org);
+    memory.init_from_vector(util::load_binfile(Options.romfile), 
+            Options.rom_org);
 }
 
 void load_one_disk(FD1793 & fdc, int index, const std::string & path)
@@ -203,6 +213,10 @@ int main(int argc, char ** argv)
     }
 
     board.reset(true);
+
+    if (Options.eddfile.size() != 0) {
+        load_edd(memory);
+    }
 
     if (Options.romfile.length() != 0) {
         load_rom(memory);

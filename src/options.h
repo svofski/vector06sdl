@@ -9,6 +9,7 @@ struct _options
     std::string romfile;
     int rom_org;
     std::string wavfile;
+    std::vector<std::string> eddfile;
     int max_frame;
     bool vsync;
     int screen_width;
@@ -34,6 +35,14 @@ struct _options
         bool default_shader;
         bool filtering;
     } gl;
+
+    struct _volume {
+        float timer;
+        float beeper;
+        float ay;
+        float covox;
+        float global;
+    } volume;
 
     struct _log {
         bool fdc;

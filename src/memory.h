@@ -14,8 +14,8 @@ private:
     uint8_t bytes[TOTAL_MEMORY];
     bool mode_stack;
     bool mode_map;
-    uint8_t page_map;
-    uint8_t page_stack;
+    uint32_t page_map;
+    uint32_t page_stack;
 
     std::vector<uint8_t> bootbytes;
 

@@ -1,3 +1,4 @@
+#include <boost/algorithm/clamp.hpp>
 #include "8253.h"
 #include "ay.h"
 #include "biquad.h"
@@ -97,7 +98,6 @@ void Soundnik::init(WavRecorder * _rec)
     // for 48000: 3120
     // for 44100: 3396, which gives 44098.9... 
     this->sound_accu_top = (int)(0.5 + 100.0 * timer_cycles_per_second / this->sampleRate); 
-    this->sound_accu_int = 0;
 
     Options.log.audio && 
     printf("SDL audio dev: %d, sample rate=%d "
@@ -116,30 +116,19 @@ void Soundnik::soundStep(int step, int tapeout, int covox, int tapein)
     float ay = this->aywrapper.step2(step);
 
     /* timerwrapper does the stepping of 8253, it must always be called */
-#if BIQUAD_FLOAT
-    float soundf = this->timerwrapper.step(step/2) + tapeout + tapein + covox/256.0;
-    if (Options.nosound) return; /* but then we can return if nosound */
-    soundf = this->resampler.sample((ay + soundf) * 0.2f);
-#else
-    int soundi = (this->timerwrapper.step(step / 2) + tapeout + tapein) << 21;
-    if (Options.nosound) return;
+    float soundf = (this->timerwrapper.step(step/2) - 1.5f) * Options.volume.timer
+        + (tapeout + tapein - 1.0f) * Options.volume.beeper 
+        + Options.volume.covox * (covox/256.0f - 0.5f)
+        + Options.volume.ay * (ay - 0.5f);
+    soundf = soundf * Options.volume.global;
+    soundf = boost::algorithm::clamp(soundf, -1.0f, 1.0f);
+    //printf("%02.3f ", soundf);
+    if (Options.nosound) return;    /* but then we can return if nosound */
+    soundf = this->resampler.sample(soundf);
 
-#endif
-
-    this->sound_accu_int += 100;
     if (resampler.egg) {
         resampler.egg = false;
-#if BIQUAD_FLOAT
-        float sound = soundf;// + covox/256.0;
-#else
-        float sound = soundi / 16277216.0 + ay * 0.2;// + covox/256.0;
-#endif
-        if (sound > 1.0f) { 
-            sound = 1.0f; 
-        } else if (sound < -1.0f) { 
-            sound = -1.0f; 
-        }
-        this->sample(sound);
+        this->sample(soundf);
     }
 }
 
@@ -151,7 +140,6 @@ void Soundnik::pause(int pause)
     this->wrptr = 0;
     this->rdbuf = 0;
     this->wrbuf = 0;
-    this->sound_accu_int = 0;
 }
 
 void Soundnik::callback(void * userdata, uint8_t * stream, int len)

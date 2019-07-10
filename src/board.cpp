@@ -155,13 +155,17 @@ int Board::execute_frame_with_cadence(bool update_screen, bool use_cadence)
 
 void Board::single_step(bool update_screen)
 {
+    //printf("PC=%04x %02x %02x %02x A=%02x HL=%04x M=%02x\n", i8080_pc(),
+    //            this->memory.read(i8080_pc(), false),
+    //            this->memory.read(i8080_pc()+1, false),
+    //            this->memory.read(i8080_pc()+2, false),
+    //            i8080_regs_a(), i8080_regs_hl(),
+    //            this->memory.read(i8080_regs_hl(), false));
     this->instr_time += i8080_instruction(&this->last_opcode);
-    //DBG_FRM(F1,F2,printf("%02x irq=%d inte=%d\n", this->last_opcode, 
-    //            this->irq, this->inte));
     if (this->last_opcode == 0xd3) {
         this->commit_time = this->instr_time - 5;
-        this->commit_time = this->commit_time * 4 + 4;
-        this->commit_time_pal = this->commit_time - 20;
+        this->commit_time = this->commit_time * 4 + 4 - 16;
+        this->commit_time_pal = this->commit_time - 20 + 16;
     }
 
     int clk = this->filler.fill(this->instr_time << 2, this->commit_time,

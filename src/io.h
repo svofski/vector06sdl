@@ -157,6 +157,10 @@ public:
         }
         this->outport = port;
         this->outbyte = w8;
+
+        //if (port == 0x02) {
+        //    this->onmodechange((w8 & 0x10) != 0);
+        //}
         #if 0
         /* debug print from guest */
         switch (port) {
