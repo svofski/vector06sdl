@@ -8,6 +8,7 @@ struct _options
     std::string bootromfile;
     std::string romfile;
     int rom_org;
+    int pc;
     std::string wavfile;
     std::vector<std::string> eddfile;
     int max_frame;

@@ -46,7 +46,8 @@ void options(int argc, char ** argv)
         ("help,h", "call for help")
         ("bootrom", po::value<std::string>(), "alternative bootrom")
         ("rom", po::value<std::string>(), "rom file to load")
-        ("org", po::value <int>(), "rom origin address (default 0x100)")
+        ("org", po::value<int>(), "rom origin address (default 0x100)")
+        ("pc", po::value<std::string>(), "initial pc (default 0)")
         ("wav", po::value<std::string>(), "wav file to load (not implemented)")
         ("fdd", po::value<std::vector<std::string>>(), "fdd floppy image (multiple up to 4)")
         ("edd", po::value<std::vector<std::string>>(), "edd ramdisk image (multiple up to 16)")
@@ -115,6 +116,14 @@ void options(int argc, char ** argv)
         if (vm.count("org")) {
             Options.rom_org = vm["org"].as<int>();
             printf("ROM will be loaded at origin: 0x%04x\n", Options.rom_org);
+        }
+
+        if (vm.count("pc")) {
+            std::stringstream bs;
+            bs << std::hex << vm["pc"].as<std::string>();
+            bs >> Options.pc;
+            
+            printf("Will jump to PC=0x%04x\n", Options.pc);
         }
 
         if (vm.count("wav")) {

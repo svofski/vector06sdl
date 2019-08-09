@@ -71,23 +71,33 @@ void Board::init_bootrom()
     }
 }
 
-void Board::reset(bool blkvvod)    // true: power-on reset, false: boot loaded prog
+void Board::reset(Board::ResetMode mode)
 {
-    if (blkvvod) {
-        if (this->boot.size() == 0) {
-            this->init_bootrom();
-        }
-        this->memory.attach_boot(boot);
-        printf("Board::reset() attached boot, size=%u\n", 
-                (unsigned int)boot.size());
-    } else {
-        this->memory.detach_boot();
-        printf("Board::reset() detached boot\n");
-    }
-
     last_opcode = 0;
     irq = false;
     i8080_init();
+
+    switch (mode) {
+        case ResetMode::BLKVVOD:
+            if (this->boot.size() == 0) {
+                this->init_bootrom();
+            }
+            this->memory.attach_boot(boot);
+            printf("Board::reset() attached boot, size=%u\n", 
+                    (unsigned int)boot.size());
+            break;
+        case ResetMode::BLKSBR:
+            this->memory.detach_boot();
+            printf("Board::reset() detached boot\n");
+            break;
+        case ResetMode::LOADROM:
+            this->memory.detach_boot();
+            i8080_jump(Options.pc);
+            i8080_setreg_sp(0xc300);
+            printf("Board::reset() detached boot, pc=%04x sp=%04x\n",
+                    i8080_pc(), i8080_regs_sp());
+            break;
+    }
 }
 
 void Board::interrupt(bool on)
@@ -155,12 +165,20 @@ int Board::execute_frame_with_cadence(bool update_screen, bool use_cadence)
 
 void Board::single_step(bool update_screen)
 {
-    //printf("PC=%04x %02x %02x %02x A=%02x HL=%04x M=%02x\n", i8080_pc(),
-    //            this->memory.read(i8080_pc(), false),
-    //            this->memory.read(i8080_pc()+1, false),
-    //            this->memory.read(i8080_pc()+2, false),
-    //            i8080_regs_a(), i8080_regs_hl(),
-    //            this->memory.read(i8080_regs_hl(), false));
+#if MEGATRACE
+    printf("PC=%04x %02x %02x %02x A=%02x BC=%04x DE=%04x HL=%04x SP=%04x M=%02x\n", i8080_pc(),
+                this->memory.read(i8080_pc(), false),
+                this->memory.read(i8080_pc()+1, false),
+                this->memory.read(i8080_pc()+2, false),
+                i8080_regs_a(), 
+                i8080_regs_bc(), 
+                i8080_regs_de(), 
+                i8080_regs_hl(),
+                i8080_regs_sp(),
+                this->memory.read(i8080_regs_hl(), false),
+                );
+#endif
+
     this->instr_time += i8080_instruction(&this->last_opcode);
     if (this->last_opcode == 0xd3) {
         this->commit_time = this->instr_time - 5;

@@ -198,7 +198,8 @@ int main(int argc, char ** argv)
 
     //keyboard.onreset = [&board](bool blkvvod) {
     keyboard.onreset = [](bool blkvvod) {
-        board.reset(blkvvod);
+        board.reset(blkvvod ? 
+                Board::ResetMode::BLKVVOD : Board::ResetMode::BLKSBR);
     };
 
     if (Options.autostart) {
@@ -206,13 +207,13 @@ int main(int argc, char ** argv)
         io.onruslat = [&seq](bool ruslat) {
             seq = (seq << 1) | (ruslat ? 1 : 0);
             if ((seq & 15) == 6) {
-                board.reset(false);
+                board.reset(Board::ResetMode::BLKSBR);
                 io.onruslat = nullptr;
             }
         };
     }
 
-    board.reset(true);
+    board.reset(Board::ResetMode::BLKVVOD);
 
     if (Options.eddfile.size() != 0) {
         load_edd(memory);
@@ -220,7 +221,7 @@ int main(int argc, char ** argv)
 
     if (Options.romfile.length() != 0) {
         load_rom(memory);
-        board.reset(false);
+        board.reset(Board::ResetMode::LOADROM);
     }
 
     if (Options.wavfile.length() != 0) {

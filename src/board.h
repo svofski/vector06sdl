@@ -18,6 +18,13 @@ void create_timer();
 
 class Board
 {
+public:
+    enum ResetMode {
+        BLKSBR,
+        BLKVVOD,
+        LOADROM
+    };
+
 private:
     int between;
     int instr_time;
@@ -74,7 +81,7 @@ public:
             TV & _tv, WavPlayer & _tape_player);
 
     void init();
-    void reset(bool blkvvod);    // true: power-on reset, false: boot loaded prog
+    void reset(Board::ResetMode blkvvod);    // true: power-on reset, false: boot loaded prog
     int get_frame_no() const { return frame_no; }
     void handle_quit();
     bool terminating() const { return io.the_keyboard().terminate; };
