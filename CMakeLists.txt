@@ -19,12 +19,16 @@ include_directories(chaiscript/include)
 add_definitions(-ffunction-sections -fdata-sections 
     -Wl,--gc-sections)
 
+# about ChaiScript crash see 
+# http://discourse.chaiscript.com/t/crash-when-using-chaiscript-from-plugins/89/3
+set(EXTRA_DEFS CHAISCRIPT_NO_THREADS=1)
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(EXTRA_LIBS -limm32 -lwinmm -lversion -lws2_32 -lmswsock)
     if (${MSYS})
         message("Windows+MSYS, assuming mingw32 i686 (32-bit) build")
         set(BFDNAME -O pe-i386 -B i386)
-        set(EXTRA_DEFS CHAISCRIPT_NO_THREADS=1 MSYS_MINGW32=1)
+        set(EXTRA_DEFS "${EXTRA_DEFS}" MSYS_MINGW32=1)
         set(EXTRA_LIBS "${EXTRA_LIBS}" -lsetupapi -static-libgcc -static-libstdc++)
         add_definitions(-msse)
     else()
@@ -44,6 +48,9 @@ else()
     else()
         message("Looks like it's a desktop Linux on amd64, will use xxd")
         set(USE_XXD true) 
+
+        # default ubuntu SDL comes with a load of deps
+        set(EXTRA_LIBS ${EXTRA_LIBS} -Wl,--no-undefined -lm -ldl -lasound -lm -ldl -lpthread -lpulse-simple -lpulse -lsndio -lX11 -lXext -lXcursor -lXinerama -lXi -lXrandr -lXss -lXxf86vm -lwayland-egl -lwayland-client -lwayland-cursor -lxkbcommon -lpthread -lrt -lpng -ljpeg -ltiff -lwebp)
     endif()	
 endif() 
 

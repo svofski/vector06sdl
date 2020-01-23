@@ -56,7 +56,7 @@ struct scriptnik_engine {
                     }), 
                 "scancode_from_name");
 
-        chai.add(fun(&add_callback, this), "add_callback");
+        chai.add(fun(&scriptnik_engine::add_callback, this), "add_callback");
 
         chai.add(bootstrap::standard_library::vector_type<std::vector<std::string>>("VectorString"));
         chai.add(bootstrap::standard_library::vector_type<std::vector<int>>("VectorInt"));

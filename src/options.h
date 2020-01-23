@@ -18,6 +18,14 @@ struct _options
     int border_width;
     int center_offset;
 
+    struct _volume {
+        float timer;
+        float beeper;
+        float ay;
+        float covox;
+        float global;
+    } volume;
+
     bool novideo;
     bool nosound;
     bool nofdc;
@@ -36,14 +44,6 @@ struct _options
         bool default_shader;
         bool filtering;
     } gl;
-
-    struct _volume {
-        float timer;
-        float beeper;
-        float ay;
-        float covox;
-        float global;
-    } volume;
 
     struct _log {
         bool fdc;

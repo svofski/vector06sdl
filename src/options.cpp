@@ -12,9 +12,12 @@
 
 _options Options = 
 {
+    .bootromfile = "",
     .romfile = "",
     .rom_org = 256,
+    .pc = 0,
     .wavfile = "",
+    .eddfile = {},
     .max_frame = -1,
     .vsync = true,
     .screen_width = DEFAULT_SCREEN_WIDTH,
