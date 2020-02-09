@@ -182,8 +182,9 @@ void Board::single_step(bool update_screen)
     this->instr_time += i8080_instruction(&this->last_opcode);
     if (this->last_opcode == 0xd3) {
         this->commit_time = this->instr_time - 5;
-        this->commit_time = this->commit_time * 4 + 4 - 16;
-        this->commit_time_pal = this->commit_time - 20 + 16;
+        this->commit_time = this->commit_time * 4 + 4;
+        this->commit_time_pal = this->commit_time - 20;
+
     }
 
     int clk = this->filler.fill(this->instr_time << 2, this->commit_time,
