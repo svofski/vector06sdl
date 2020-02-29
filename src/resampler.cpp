@@ -1,5 +1,4 @@
 #include "resampler.h"
-#include "biquad.h"
 #include "coredsp/filter.h"
 
 #define SAVERAW 0

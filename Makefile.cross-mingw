@@ -1,0 +1,21 @@
+TARGET_EXEC ?= v06x.exe
+
+ARCH=i686-w64-mingw32
+
+# suffix for the multithreaded (normal) boost libraries 
+MT:=-mt
+
+SYSROOT=/usr/$(ARCH)
+LIBROOT=/usr/local/cross-tools/$(ARCH)
+
+# windows version of libGL.a is libopengl32.a
+OPENGL_LDFLAGS := -lopengl32
+
+EXTRA_DEFS += -msse
+EXTRA_LIBS += -limm32 -lwinmm -lversion -lws2_32 -lmswsock -static-libgcc -static-libstdc++
+EXTRA_LIBS += -lsetupapi
+
+# statically link SDL libraries to avoid dll messups
+SDL_STATIC := 1
+
+include common.mk

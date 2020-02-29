@@ -1,0 +1,10 @@
+TARGET_EXEC ?= v06x
+
+ARCH ?=
+MT :=
+
+SYSROOT :=
+LIBROOT :=
+OPENGL_LDFLAGS := -lGL
+
+include common.mk

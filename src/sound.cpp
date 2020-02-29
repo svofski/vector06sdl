@@ -1,7 +1,6 @@
 #include <boost/algorithm/clamp.hpp>
 #include "8253.h"
 #include "ay.h"
-#include "biquad.h"
 #include "SDL.h"
 #include "wav.h"
 #include "options.h"

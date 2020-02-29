@@ -16,6 +16,7 @@
 #include "server.h"
 #include "SDL.h"
 #include "util.h"
+#include "version.h"
 
 #if HAVE_GPERFTOOLS
 #include <gperftools/profiler.h>
@@ -176,6 +177,7 @@ void bootstrap_scriptnik()
 
 int main(int argc, char ** argv)
 {
+    printf("v06x version \"%s\"\n", VERSION);
     options(argc, argv);
     WavRecorder rec;
     WavRecorder * prec = 0;
