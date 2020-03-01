@@ -8,3 +8,9 @@ LIBROOT :=
 OPENGL_LDFLAGS := -lGL
 
 include common.mk
+
+prefix ?= /usr/local
+
+install:	$(BUILD_DIR)/$(TARGET_EXEC)
+	install -d $(DESTDIR)$(prefix)/bin
+	install $(BUILD_DIR)/$(TARGET_EXEC) $(DESTDIR)$(prefix)/bin

@@ -1,5 +1,7 @@
 SRC_DIRS ?= src fast-filters/sources
 RESOURCES += boots singlepass_vsh singlepass_fsh icon64
+TEST_SRCS ?= test/tests.cpp
+TARGET_TEST ?= tests
 
 ifneq ($(ARCH), )
     ARCHPREFIX=$(ARCH)-
@@ -22,15 +24,17 @@ ifneq ($(SYSROOT), )
     SYS_INC_DIRS := $(SYSROOT)/include $(LIBROOT)/include
 endif
 
+all:	$(BUILD_DIR)/$(TARGET_EXEC) $(BUILD_DIR)/$(TARGET_TEST)
+
 CFLAGS := -Wall -fpermissive -O3 -ffunction-sections -fdata-sections -Wl,--gc-sections
 CXXFLAGS := $(CFLAGS) -std=gnu++14
 
-BOOST_LDFLAGS := -lboost_program_options$(MT) -lboost_system$(MT) -lboost_thread$(MT) -lboost_chrono$(MT) -lboost_filesystem$(MT)
+BOOST_LDFLAGS := -Wl,-Bstatic -lboost_program_options$(MT) -lboost_system$(MT) -lboost_thread$(MT) -lboost_chrono$(MT) -lboost_filesystem$(MT) -Wl,-Bdynamic
 
 SDL_CFLAGS := $(shell $(SDL2_CONFIG) --cflags)
 
 ifneq ($(SDL_STATIC), )
-    SDL_LDFLAGS := -Wl,-Bstatic $(shell $(SDL2_CONFIG) --static-libs) -lSDL2_image -lpng16 -lz 
+    SDL_LDFLAGS := -Wl,-Bstatic $(shell $(SDL2_CONFIG) --static-libs | sed s/-mwindows//g) -lSDL2_image -lpng16 -lz -Wl,-Bdynamic
 else
     SDL_LDFLAGS := $(shell $(SDL2_CONFIG) --static-libs) -lSDL2_image 
 endif
@@ -42,7 +46,10 @@ $(info CFLAGS		$(CFLAGS))
 
 SRCS := $(shell find $(SRC_DIRS) -name *.cpp -or -name *.c -or -name *.s)
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
-DEPS := $(OBJS:.o=.d)
+
+TEST_OBJS := $(TEST_SRCS:%=$(BUILD_DIR)/%.o)
+ALL_OBJS := $(OBJS) $(TEST_OBJS)
+DEPS := $(ALL_OBJS:.o=.d)
 
 INC_DIRS := $(SYS_INC_DIRS) $(shell find $(SRC_DIRS) -type d)
 
@@ -59,13 +66,19 @@ RESOBJS := $(RESOURCES:%=$(BUILD_DIR)/%.o)
 
 $(info RESOBJS		$(RESOBJS))
 
-CPPFLAGS ?= $(INC_FLAGS) $(SDL_CFLAGS) -MMD -MP $(EXTRA_DEFS)
+CPPFLAGS += $(INC_FLAGS) $(SDL_CFLAGS) -MMD -MP $(EXTRA_DEFS)
 LDFLAGS += $(BOOST_LDFLAGS) $(SDL_LDFLAGS) $(OPENGL_LDFLAGS) $(EXTRA_LIBS)
 
 $(info LDFLAGS		$(LDFLAGS))
 
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS) $(RESOBJS)
 	$(CXX) $(OBJS) $(RESOBJS) -o $@ $(LDFLAGS)
+
+$(info OBJS 		$(OBJS))
+$(info TEST_OBJS 	$(TEST_OBJS))
+
+$(BUILD_DIR)/$(TARGET_TEST): $(RESOBJS) $(TEST_OBJS)
+	$(CXX) $(RESOBJS) $(TEST_OBJS) -o $@ $(LDFLAGS)
 
 # assembly
 $(BUILD_DIR)/%.s.o: %.s

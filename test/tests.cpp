@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "8253.h"
+#include "SDL.h"
 
 class Test {
 private:
