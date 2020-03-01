@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 set -e
 
 [ ! -z "$BUILDDIR" ] || BUILDDIR=../build
@@ -23,7 +22,7 @@ rm -rf out
 mkdir -p out
 
 function announce {
-    echo -e "\e[0;35m $1 \e[0m" |tee -a $LOG
+    echo -e "\e[0;35m $1 \e[0m" |& tee -a $LOG
 }
 
 function eggog {
@@ -34,42 +33,42 @@ function test_boot_cas {
     cmd="$emu --max-frame 42 --save-frame 42 --nofdc --novideo --nosound --bootpalette"
     announce "$cmd"
     $cmd >> $LOG
-    ./pngdiff.py expected/$2 out/$3 | tee -a $RES
+    ./pngdiff.py expected/$2 out/$3 |& tee -a $RES
 }
 
 function test_boot_fdc {
     cmd="$emu --max-frame 43 --save-frame 43 --novideo --nosound --bootpalette"
     announce "$cmd"
     $cmd >> $LOG
-    ./pngdiff.py expected/$2 out/$3 | tee -a $RES
+    ./pngdiff.py expected/$2 out/$3 |& tee -a $RES
 }
 
 function test60 {
     cmd="$emu --rom $rompath/$1 --max-frame 60 --save-frame 60 --nofdc --novideo --nosound --bootpalette"
     announce "$cmd"
     $cmd >> $LOG
-    ./pngdiff.py expected/$2 out/$3 | tee -a $RES
+    ./pngdiff.py expected/$2 out/$3 |& tee -a $RES
 }
 
 function testwav {
     cmd="$emu --wav $rompath/$1 --max-frame 240 --save-frame 240 --nofdc --novideo --nosound --autostart"
     announce "$cmd"
     $cmd >>$LOG
-    ./pngdiff.py expected/$2 out/$3 | tee -a $RES
+    ./pngdiff.py expected/$2 out/$3 |& tee -a $RES
 }
 
 function test1600 {
     cmd="$emu --rom $rompath/$1 --max-frame 1600 --save-frame 1600 --novideo --nosound --bootpalette"
     announce "$cmd"
     $cmd >> $LOG
-    ./pngdiff.py expected/$2 out/$3 | tee -a $RES
+    ./pngdiff.py expected/$2 out/$3 |& tee -a $RES
 }
 
 function test1800 {
     cmd="$emu --rom $rompath/$1 --max-frame 1800 --save-frame 1800 --novideo --nosound --bootpalette"
     announce "$cmd"
     $cmd >> $LOG
-    ./pngdiff.py expected/$2 out/$3 | tee -a $RES
+    ./pngdiff.py expected/$2 out/$3 |& tee -a $RES
 }
 
 
@@ -85,7 +84,7 @@ function scrltest {
     ./pngdiff.py expected/scrltest_101.png out/scrltest_101.png 
     ./pngdiff.py expected/scrltest_110.png out/scrltest_110.png 
     ./pngdiff.py expected/scrltest_113.png out/scrltest_113.png 
-    ) | tee -a $RES
+    ) |& tee -a $RES
 }
 
 function testfdd {
@@ -93,7 +92,7 @@ function testfdd {
         --novideo --nosound"
     announce "$cmd"
     $cmd >> $LOG
-    ./pngdiff.py expected/$3 out/$4 | tee -a $RES
+    ./pngdiff.py expected/$3 out/$4 |& tee -a $RES
 }
 
 echo>$LOG
@@ -122,5 +121,6 @@ test1800 vst.rom        vst_1800.png        vst_1800.png
 testwav clrs.wav        clrs_240.png        clrs_240.png
 
 if grep -qi error $RES ; then 
+    eggog "errors found"
     exit 1 
 fi
