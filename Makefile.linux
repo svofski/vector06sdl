@@ -6,6 +6,8 @@ MT :=
 SYSROOT :=
 LIBROOT :=
 OPENGL_LDFLAGS := -lGL
+#SDL_STATIC := 1
+BOOST_STATIC := 1
 
 include common.mk
 

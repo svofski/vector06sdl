@@ -15,7 +15,7 @@ BUILD_DIR ?= build$(ARCHSUFFIX)
 
 ifneq ($(LIBROOT), )
     SDL2_CONFIG ?= $(LIBROOT)/bin/sdl2-config
-    LDFLAGS := -L$(LIBROOT)
+    LDFLAGS += -L$(LIBROOT)
 else
     SDL2_CONFIG ?= sdl2-config
 endif
@@ -34,17 +34,19 @@ BOOST_LIBS := boost_program_options$(MT) boost_system$(MT) boost_thread$(MT) boo
 ifneq ($(BOOST_LIBRARY_PATH), )
     BOOST_LDFLAGS := $(addprefix $(BOOST_LIBRARY_PATH)/lib, $(BOOST_LIBS))
     BOOST_LDFLAGS := $(addsuffix .a, $(BOOST_LDFLAGS))
+else
+    BOOST_LDFLAGS := $(addprefix -l,$(BOOST_LIBS))
 endif
 
 ifneq ($(BOOST_STATIC), )
-    BOOST_LDFLAGS := -Wl,Bstatic $(BOOST_LDFLAGS) -Wl,Bdynamic
+    BOOST_LDFLAGS := -Wl,-Bstatic $(BOOST_LDFLAGS) -Wl,-Bdynamic
 endif
 
 
 SDL_CFLAGS := $(shell $(SDL2_CONFIG) --cflags)
 
 ifneq ($(SDL_STATIC), )
-    SDL_LDFLAGS := -Wl,-Bstatic $(shell $(SDL2_CONFIG) --static-libs | sed s/-mwindows//g) -lSDL2_image -lpng16 -lz -Wl,-Bdynamic
+    SDL_LDFLAGS := -Wl,-Bstatic $(shell $(SDL2_CONFIG) --static-libs | sed s/-mwindows//g) -lSDL2_image -lpng16 -lz -Wl,-Bdynamic 
 else
     ifneq ($(SDL_LIBRARY_PATH), )
     	SDL_LDFLAGS := libSDL2.a libSDL2_image.a libpng.a libtiff.a libjpeg.a libwebp.a
@@ -52,7 +54,8 @@ else
 	SDL_LDFLAGS := $(SDL_LDFLAGS) /usr/local/opt/zlib/lib/libz.a
 	SDL_LDFLAGS := $(SDL_LDFLAGS) $(shell $(SDL2_CONFIG) --static-libs) 
     else
-	SDL_LDFLAGS := $(shell $(SDL2_CONFIG) --libs) -lSDL2_image
+	#SDL_LDFLAGS := $(shell $(SDL2_CONFIG) --libs) -lSDL2_image -ldl -lpthread
+	SDL_LDFLAGS := $(shell $(SDL2_CONFIG) --static-libs) -lSDL2_image 
     endif
 endif
 
