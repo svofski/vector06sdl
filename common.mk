@@ -29,14 +29,31 @@ all:	$(BUILD_DIR)/$(TARGET_EXEC) $(BUILD_DIR)/$(TARGET_TEST)
 CFLAGS := -Wall -fpermissive -O3 -ffunction-sections -fdata-sections -Wl,--gc-sections
 CXXFLAGS := $(CFLAGS) -std=gnu++14
 
-BOOST_LDFLAGS := -Wl,-Bstatic -lboost_program_options$(MT) -lboost_system$(MT) -lboost_thread$(MT) -lboost_chrono$(MT) -lboost_filesystem$(MT) -Wl,-Bdynamic
+BOOST_LIBS := boost_program_options$(MT) boost_system$(MT) boost_thread$(MT) boost_chrono$(MT) boost_filesystem$(MT)
+
+ifneq ($(BOOST_LIBRARY_PATH), )
+    BOOST_LDFLAGS := $(addprefix $(BOOST_LIBRARY_PATH)/lib, $(BOOST_LIBS))
+    BOOST_LDFLAGS := $(addsuffix .a, $(BOOST_LDFLAGS))
+endif
+
+ifneq ($(BOOST_STATIC), )
+    BOOST_LDFLAGS := -Wl,Bstatic $(BOOST_LDFLAGS) -Wl,Bdynamic
+endif
+
 
 SDL_CFLAGS := $(shell $(SDL2_CONFIG) --cflags)
 
 ifneq ($(SDL_STATIC), )
     SDL_LDFLAGS := -Wl,-Bstatic $(shell $(SDL2_CONFIG) --static-libs | sed s/-mwindows//g) -lSDL2_image -lpng16 -lz -Wl,-Bdynamic
 else
-    SDL_LDFLAGS := $(shell $(SDL2_CONFIG) --static-libs) -lSDL2_image 
+    ifneq ($(SDL_LIBRARY_PATH), )
+    	SDL_LDFLAGS := libSDL2.a libSDL2_image.a libpng.a libtiff.a libjpeg.a libwebp.a
+    	SDL_LDFLAGS := $(addprefix $(SDL_LIBRARY_PATH)/,$(SDL_LDFLAGS))
+	SDL_LDFLAGS := $(SDL_LDFLAGS) /usr/local/opt/zlib/lib/libz.a
+	SDL_LDFLAGS := $(SDL_LDFLAGS) $(shell $(SDL2_CONFIG) --static-libs) 
+    else
+	SDL_LDFLAGS := $(shell $(SDL2_CONFIG) --libs) -lSDL2_image
+    endif
 endif
 
 $(info SDL_CFLAGS:	$(SDL_CFLAGS))

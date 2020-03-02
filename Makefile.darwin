@@ -1,0 +1,18 @@
+TARGET_EXEC ?= v06x
+
+ARCH ?=
+MT := -mt
+
+SYSROOT :=
+LIBROOT :=
+OPENGL_LDFLAGS := -framework OpenGL
+SDL_LIBRARY_PATH := /usr/local/lib
+BOOST_LIBRARY_PATH := /usr/local/lib
+
+include common.mk
+
+prefix ?= /usr/local
+
+install:	$(BUILD_DIR)/$(TARGET_EXEC)
+	install -d $(DESTDIR)$(prefix)/bin
+	install $(BUILD_DIR)/$(TARGET_EXEC) $(DESTDIR)$(prefix)/bin
