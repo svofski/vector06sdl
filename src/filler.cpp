@@ -8,6 +8,7 @@ PixelFiller::PixelFiller(Memory & _mem, IO & _io, TV & _tv):
     this->mem32 = (uint32_t *) this->memory.buffer();
     this->pixel32 = 0;  // 4 bytes of bit planes
     this->border_index = 0;
+    this->raster_pixel = 0;
 
     this->reset();
 
@@ -30,7 +31,10 @@ void PixelFiller::init()
 
 void PixelFiller::reset()
 {
-    this->raster_pixel = 0;   // horizontal pixel counter
+    // It is tempting to reset the pixel count but the beam is reset in 
+    // advanceLine(), don't do that here.
+    //this->raster_pixel = 0;   // horizontal pixel counter
+
     this->raster_line = 0;    // raster line counter
     this->fb_column = 0;      // frame buffer column
     this->fb_row = 0;         // frame buffer row
@@ -124,7 +128,7 @@ int PixelFiller::fill(int clocks, int commit_time,
         fill2_count += clocks;
         if (!this->visible) {
             this->raster_pixel += clocks;
-            return clocks;
+            return 0;
         }
         else if (this->vborder) {
             return fill4(clocks);
@@ -138,19 +142,19 @@ int PixelFiller::fill(int clocks, int commit_time,
     }
 }
 
-
-
 int PixelFiller::fill1(int clocks, int commit_time, int commit_time_pal, bool updateScreen) {
     uint32_t * bmp = this->pixels;
     int clk;
+    int afterbrk = 0;
+    int index = 0;
 
-    for (clk = 0; clk < clocks && !this->brk; clk += 2) {
+    for (clk = 0; clk < clocks; clk += 2, afterbrk += this->brk ? 2 : 0) {
         // offset for matching border/palette writes and the raster -- test:bord2
         const int rpixel = this->raster_pixel - 24;
         bool border = this->vborder || 
             /* hborder */ (rpixel < (768-512)/2) || (rpixel >= (768 - (768-512)/2));
 
-        int index = this->getColorIndex(rpixel, border);
+        index = this->getColorIndex(rpixel, border);
         if (clk == commit_time) {
             this->io.commit(); // regular i/o writes (border index); test: bord2
         }
@@ -185,7 +189,18 @@ int PixelFiller::fill1(int clocks, int commit_time, int commit_time_pal, bool up
             this->irq_clk = clk;
         }
     } 
-    return clk;
+
+    if (clk == commit_time) {
+        this->io.commit(); // regular i/o writes (border index); test: bord2
+    }
+    if (clk == commit_time_pal) {
+        this->io.commit_palette(index); // palette writes; test: bord2
+    }
+
+    if (afterbrk) {
+        afterbrk -= 2;
+    }
+    return afterbrk;
 }
 
 void PixelFiller::advanceLine(bool updateScreen) {
@@ -289,7 +304,7 @@ int PixelFiller::fill2(int clocks)
     } 
 
     this->bmpofs = ofs;
-    return clk;
+    return 0;
 }
 
 /* simple fill, no out instructions underway, mode 512 */
@@ -381,7 +396,7 @@ int PixelFiller::fill3(int clocks)
     } 
 
     this->bmpofs = ofs;
-    return clk;
+    return 0;
 }
 
 int PixelFiller::fill4(int clocks)
@@ -406,7 +421,7 @@ int PixelFiller::fill4(int clocks)
     } 
 
     this->bmpofs = ofs;
-    return clk;
+    return 0;
 }
 
 

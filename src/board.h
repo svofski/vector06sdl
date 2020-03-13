@@ -28,8 +28,6 @@ public:
 private:
     int between;
     int instr_time;
-    int commit_time;
-    int commit_time_pal;
     int last_opcode;
     int frame_no;
 

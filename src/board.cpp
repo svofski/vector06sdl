@@ -34,10 +34,10 @@ extern "C" size_t    _binary_boots_bin_size;
 #endif
 #endif
 
-Board::Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd, 
-        TV & _tv, WavPlayer & _tape_player) 
-    : memory(_memory), io(_io), filler(_filler), soundnik(_snd), tv(_tv), 
-    tape_player(_tape_player), 
+Board::Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd,
+        TV & _tv, WavPlayer & _tape_player)
+    : memory(_memory), io(_io), filler(_filler), soundnik(_snd), tv(_tv),
+    tape_player(_tape_player),
     debugging(0), debugger_interrupt(0)
 {
     this->inte = false;
@@ -46,7 +46,7 @@ Board::Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd,
 void Board::init()
 {
     i8080_hal_bind(memory, io, *this);
-    cadence::set_cadence(this->tv.get_refresh_rate(), cadence_frames, 
+    cadence::set_cadence(this->tv.get_refresh_rate(), cadence_frames,
             cadence_length);
     io.rgb2pixelformat = tv.get_rgb2pixelformat();
     create_timer();
@@ -83,7 +83,7 @@ void Board::reset(Board::ResetMode mode)
                 this->init_bootrom();
             }
             this->memory.attach_boot(boot);
-            printf("Board::reset() attached boot, size=%u\n", 
+            printf("Board::reset() attached boot, size=%u\n",
                     (unsigned int)boot.size());
             break;
         case ResetMode::BLKSBR:
@@ -136,7 +136,7 @@ int Board::execute_frame(bool update_screen)
     this->filler.reset();
     this->irq_carry = false; // imitates cpu waiting after T2 when INTE
 
-    // 59904 
+    // 59904
     this->between = 0;
     DBG_FRM(F1,F2, printf("--- %d ---\n", this->frame_no));
     for (; !this->filler.brk && !this->debugger_interrupt;) {
@@ -170,31 +170,36 @@ void Board::single_step(bool update_screen)
                 this->memory.read(i8080_pc(), false),
                 this->memory.read(i8080_pc()+1, false),
                 this->memory.read(i8080_pc()+2, false),
-                i8080_regs_a(), 
-                i8080_regs_bc(), 
-                i8080_regs_de(), 
+                i8080_regs_a(),
+                i8080_regs_bc(),
+                i8080_regs_de(),
                 i8080_regs_hl(),
                 i8080_regs_sp(),
                 this->memory.read(i8080_regs_hl(), false),
                 );
 #endif
-
-    this->instr_time += i8080_instruction(&this->last_opcode);
-    if (this->last_opcode == 0xd3) {
-        this->commit_time = this->instr_time - 5;
-        this->commit_time = this->commit_time * 4 + 4;
-        this->commit_time_pal = this->commit_time - 20;
-
+    if (this->instr_time && this->between == 0) {
+        this->between += this->instr_time;
+        this->instr_time = 0;
     }
 
-    int clk = this->filler.fill(this->instr_time << 2, this->commit_time,
-            this->commit_time_pal, update_screen);
+    this->instr_time += i8080_instruction(&this->last_opcode);
+
+    int commit_time = -1, commit_time_pal = -1;
+    if (this->last_opcode == 0xd3) {
+        commit_time = (this->instr_time - 4) << 2;
+        commit_time_pal = commit_time - 20;
+    }
+
+    /* afterbrk counts extra 12MHz cycles spent after the screen end */
+    int afterbrk12 = this->filler.fill(this->instr_time << 2, commit_time,
+            commit_time_pal, update_screen);
 
     DBG_FRM(F1,F2, if(this->filler.irq) {
             printf("irq_clk=%d\n", this->filler.irq_clk);
             });
 
-    /* Interrupt logic 
+    /* Interrupt logic
      *  interrupt request is "pushed through" by VSYNC on /C if INTE (D65.2)
      *  int request is cleared by INTE low, which is DI or INTA
      *
@@ -203,7 +208,7 @@ void Board::single_step(bool update_screen)
      *  indefinitely (test: vst: Ei=7fab)
      *
      *  an instruction that has 5 T-states would leave the CPU waiting
-     *  for 3 clock cycles. Interrupt happening during that period 
+     *  for 3 clock cycles. Interrupt happening during that period
      *  will not be served until after this command is executed.
      *  test: vst MovR=1d37, MovM=1d36, C*-N=0e9b)
      */
@@ -213,7 +218,7 @@ void Board::single_step(bool update_screen)
         /* test: vst */
         switch(thresh) {
             case 11:    thresh = 15; break; // T533
-            case 13:    thresh = 15; break; // T4333 
+            case 13:    thresh = 15; break; // T4333
             case 17:    thresh = 23; break; // T53333
             case 18:    thresh = 21; break; // T43335
         }
@@ -222,35 +227,25 @@ void Board::single_step(bool update_screen)
         } else {
             this->irq |= this->inte && this->filler.irq;
         }
-    } 
+    }
     else if (this->irq_carry) {
         this->irq_carry = false;
         this->irq |= this->inte;
     }
 
-    int wrap = this->instr_time - (clk >> 2);
-    int step = this->instr_time - wrap;
     if (this->frame_no > 60) {
-        this->tape_player.advance(step);
+        this->tape_player.advance(this->instr_time);
     }
-    for (int g = step/2; --g >= 0;) {
-        this->soundnik.soundStep(2, this->io.TapeOut(), this->io.Covox(),
-                this->tape_player.sample());
-    }
-    this->between += step;
-    this->instr_time = wrap;
+    this->soundnik.soundSteps(this->instr_time/2, this->io.TapeOut(),
+            this->io.Covox(), this->tape_player.sample());
 
-    /* commit time is always 32, commit_time_pal is always 12 */
-    /* not sure if it's even possible for a commit not to finish in one
-     * fill operation, but keeping this for the time being */
-    this->commit_time -= clk;
-    if (this->commit_time < 0) {
-        this->commit_time = 0;
-    }
-    this->commit_time_pal -= clk;
-    if (this->commit_time_pal < 0) {
-        this->commit_time_pal = 0;
-    }
+    /* Edge conditions at the end of screen:
+     * if instruction time does not fit within screen time, filler returns
+     * the extra cycles in afterbrk12. We remember them in this->instr_time
+     * to add them to this->between in the beginning of the next frame. */
+    this->between += this->instr_time;
+    this->instr_time = afterbrk12 >> 2;
+    this->between -= this->instr_time;
 }
 
 #if 0
@@ -338,7 +333,7 @@ void Board::render_frame(int frame, bool executed)
     tv.render(executed);
     if (Options.save_frames.size() && frame == Options.save_frames[0])
     {
-        fprintf(stderr, "Saving frame %d to %s\n", 
+        fprintf(stderr, "Saving frame %d to %s\n",
                 frame, Options.path_for_frame(frame).c_str());
         tv.save_frame(Options.path_for_frame(frame));
         Options.save_frames.erase(Options.save_frames.begin());
@@ -369,7 +364,7 @@ void Board::write_memory_byte(int addr, int value)
     this->memory.write(addr, value, false);
 }
 
-/* AA FF BB CC DD EE HH LL 00 00 00 00 SS PP 
+/* AA FF BB CC DD EE HH LL 00 00 00 00 SS PP
  * 00 00 00 00 00 00 00 00 00 00 PP CC */
 std::string Board::read_registers()
 {
@@ -384,7 +379,7 @@ std::string Board::read_registers()
     sprintf(&buf[o], "%02x%02x", i8080_regs_sp() & 0377,
             (i8080_regs_sp() >> 8) & 0377);                         o += 4;
     sprintf(&buf[o], "00000000000000000000");                       o += 20;
-    sprintf(&buf[o], "%02x%02x", i8080_pc() & 0377, 
+    sprintf(&buf[o], "%02x%02x", i8080_pc() & 0377,
             (i8080_pc() >> 8) & 0377);
 
     return std::string(buf);
@@ -426,7 +421,7 @@ void Board::debugger_continue()
     this->debugger_interrupt = 0;
 }
 
-static bool iospace(uint32_t addr) 
+static bool iospace(uint32_t addr)
 {
     return (addr & 0x80000000) != 0;
 }
@@ -437,7 +432,7 @@ void Board::check_watchpoint(uint32_t addr, uint8_t value, int how)
     //    printf("check_watchpoint how=%d\n", how);
     //}
     auto found = std::find_if(this->memory_watchpoints.begin(),
-            this->memory_watchpoints.end(), 
+            this->memory_watchpoints.end(),
             [addr, how](Watchpoint const & item) {
                 if (item.type == Watchpoint::ACCESS || item.type == how) {
                     return addr >= item.addr && addr < (item.addr + item.length);
@@ -452,11 +447,11 @@ void Board::check_watchpoint(uint32_t addr, uint8_t value, int how)
 
 void Board::refresh_watchpoint_listeners()
 {
-    auto check_wp_read = 
+    auto check_wp_read =
         [this](uint32_t addr, uint32_t phys, bool stack, uint8_t value) {
             this->check_watchpoint(addr, value, Watchpoint::READ);
         };
-    auto check_wp_write = 
+    auto check_wp_write =
         [this](uint32_t addr, uint32_t phys, bool stack, uint8_t value) {
             this->check_watchpoint(addr, value, Watchpoint::WRITE);
         };
@@ -475,7 +470,7 @@ void Board::refresh_watchpoint_listeners()
     this->memory.onwrite = this->memory.onread = nullptr;
     this->io.onwrite = this->io.onread = nullptr;
     for (auto &w : this->memory_watchpoints) {
-        if (this->memory.onwrite == nullptr && 
+        if (this->memory.onwrite == nullptr &&
             (w.type == Watchpoint::WRITE || w.type == Watchpoint::ACCESS)) {
             if (iospace(w.addr)) {
                 this->io.onwrite = check_wp_iowrite;
@@ -484,7 +479,7 @@ void Board::refresh_watchpoint_listeners()
             }
             printf("write watchpoint: %08x,%x\n", w.addr, w.length);
         }
-        if (this->memory.onread == nullptr && 
+        if (this->memory.onread == nullptr &&
             (w.type == Watchpoint::READ || w.type == Watchpoint::ACCESS)) {
             if (iospace(w.addr)) {
                 this->io.onread = check_wp_ioread;

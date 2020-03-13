@@ -26,8 +26,10 @@ endif
 
 all:	$(BUILD_DIR)/$(TARGET_EXEC) $(BUILD_DIR)/$(TARGET_TEST)
 
-CFLAGS := -Wall -fpermissive -O3 -ffunction-sections -fdata-sections -Wl,--gc-sections
-CXXFLAGS := $(CFLAGS) -std=gnu++14
+#DEBUG := -O0 -g
+DEBUG := -O3
+CFLAGS := -Wall -fpermissive $(DEBUG) -ffunction-sections -fdata-sections -Wl,--gc-sections
+CXXFLAGS := $(CFLAGS) -std=gnu++17
 
 BOOST_LIBS := boost_program_options$(MT) boost_system$(MT) boost_thread$(MT) boost_chrono$(MT) boost_filesystem$(MT)
 

@@ -35,7 +35,7 @@ private:
     WavRecorder * rec;
 
 public:
-    Soundnik(TimerWrapper & tw, AYWrapper & aw) : timerwrapper(tw), 
+    Soundnik(TimerWrapper & tw, AYWrapper & aw) : timerwrapper(tw),
         aywrapper(aw)
     {}
 
@@ -43,6 +43,6 @@ public:
     void pause(int pause);
     static void callback(void * userdata, uint8_t * stream, int len);
     void sample(float samp);
-    void soundStep(int step, int tapeout, int covox, int tapein);
+    void soundSteps(int nclk1m5, int tapeout, int covox, int tapein);
 };
 

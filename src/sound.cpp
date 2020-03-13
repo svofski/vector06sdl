@@ -1,4 +1,4 @@
-#include <boost/algorithm/clamp.hpp>
+#include <algorithm>
 #include "8253.h"
 #include "ay.h"
 #include "SDL.h"
@@ -10,7 +10,7 @@
 
 #define BIQUAD_FLOAT 1
 
-static int print_driver_info() 
+static int print_driver_info()
 {
     /* Print available audio drivers */
     int n = SDL_GetNumAudioDrivers();
@@ -29,7 +29,7 @@ static int print_driver_info()
     return 1;
 }
 
-void Soundnik::init(WavRecorder * _rec) 
+void Soundnik::init(WavRecorder * _rec)
 {
     this->rec = _rec;
 
@@ -38,7 +38,7 @@ void Soundnik::init(WavRecorder * _rec)
     }
 
     SDL_AudioSpec want, have;
-    SDL_memset(&want, 0, sizeof(want)); 
+    SDL_memset(&want, 0, sizeof(want));
     want.freq = 48000;
     want.format = AUDIO_F32;
     want.channels = 2;
@@ -48,7 +48,7 @@ void Soundnik::init(WavRecorder * _rec)
     //}
 
     want.samples = this->sound_frame_size;
-    want.callback = Soundnik::callback; 
+    want.callback = Soundnik::callback;
     want.userdata = (void *)this;
 
     SDL_Init(SDL_INIT_AUDIO);
@@ -60,7 +60,7 @@ void Soundnik::init(WavRecorder * _rec)
         return;
     }
 
-    if ((this->audiodev = SDL_OpenAudioDevice(NULL, 0, &want, &have, 
+    if ((this->audiodev = SDL_OpenAudioDevice(NULL, 0, &want, &have,
             SDL_AUDIO_ALLOW_FORMAT_CHANGE)) == 0) {
         fprintf(stderr, "SDL audio error: %s", SDL_GetError());
         Options.nosound = true;
@@ -75,7 +75,7 @@ void Soundnik::init(WavRecorder * _rec)
         fprintf(stderr, "SDL audio: retrying to open device with 2x buffer size\n");
         want.samples = this->sound_frame_size * 2;
 
-        if ((this->audiodev = SDL_OpenAudioDevice(NULL, 0, &want, &have, 
+        if ((this->audiodev = SDL_OpenAudioDevice(NULL, 0, &want, &have,
                         SDL_AUDIO_ALLOW_FORMAT_CHANGE)) == 0) {
             fprintf(stderr, "SDL audio error: %s", SDL_GetError());
             Options.nosound = true;
@@ -95,13 +95,13 @@ void Soundnik::init(WavRecorder * _rec)
     // timer clocks = pixel clock / 8
     int timer_cycles_per_second = 50*768*312/8; // 1497600
     // for 48000: 3120
-    // for 44100: 3396, which gives 44098.9... 
-    this->sound_accu_top = (int)(0.5 + 100.0 * timer_cycles_per_second / this->sampleRate); 
+    // for 44100: 3396, which gives 44098.9...
+    this->sound_accu_top = (int)(0.5 + 100.0 * timer_cycles_per_second / this->sampleRate);
 
-    Options.log.audio && 
+    Options.log.audio &&
     printf("SDL audio dev: %d, sample rate=%d "
-            "have.samples=%d have.channels=%d have.format=%d have.size=%d\n", 
-            this->audiodev, this->sampleRate, 
+            "have.samples=%d have.channels=%d have.format=%d have.size=%d\n",
+            this->audiodev, this->sampleRate,
             have.samples, have.channels, have.format, have.size);
 
     // filters
@@ -110,24 +110,26 @@ void Soundnik::init(WavRecorder * _rec)
     }
 }
 
-void Soundnik::soundStep(int step, int tapeout, int covox, int tapein)
+void Soundnik::soundSteps(int nclk1m5, int tapeout, int covox, int tapein)
 {
-    float ay = this->aywrapper.step2(step);
+    for (int clk = 0; clk < nclk1m5; ++clk) {
+        float ay = this->aywrapper.step2(2);
 
-    /* timerwrapper does the stepping of 8253, it must always be called */
-    float soundf = (this->timerwrapper.step(step/2) - 1.5f) * Options.volume.timer
-        + (tapeout + tapein - 1.0f) * Options.volume.beeper 
-        + Options.volume.covox * (covox/256.0f - 0.5f)
-        + Options.volume.ay * (ay - 0.5f);
-    soundf = soundf * Options.volume.global;
-    soundf = boost::algorithm::clamp(soundf, -1.0f, 1.0f);
-    //printf("%02.3f ", soundf);
-    if (Options.nosound) return;    /* but then we can return if nosound */
-    soundf = this->resampler.sample(soundf);
+        /* timerwrapper does the stepping of 8253, it must always be called */
+        float soundf = (this->timerwrapper.step(1) - 1.5f) * Options.volume.timer
+            + (tapeout + tapein - 1.0f) * Options.volume.beeper
+            + Options.volume.covox * (covox/256.0f - 0.5f)
+            + Options.volume.ay * (ay - 0.5f);
+        soundf = soundf * Options.volume.global;
+        soundf = std::clamp(soundf, -1.0f, 1.0f);
+        if (!Options.nosound) {
+            soundf = this->resampler.sample(soundf);
 
-    if (resampler.egg) {
-        resampler.egg = false;
-        this->sample(soundf);
+            if (resampler.egg) {
+                resampler.egg = false;
+                this->sample(soundf);
+            }
+        }
     }
 }
 
@@ -152,7 +154,7 @@ void Soundnik::callback(void * userdata, uint8_t * stream, int len)
             fstream[i] = that->last_value;
         }
         Options.log.audio &&
-            fprintf(stderr, "starve rdbuf=%d wrbuf=%d en manque=%d\n", 
+            fprintf(stderr, "starve rdbuf=%d wrbuf=%d en manque=%d\n",
                     that->rdbuf, that->wrbuf, that->sound_frame_size - that->wrptr/2);
         that->wrptr = 0;
     } else
@@ -174,7 +176,7 @@ void Soundnik::callback(void * userdata, uint8_t * stream, int len)
     }
 }
 
-void Soundnik::sample(float samp) 
+void Soundnik::sample(float samp)
 {
     if (!Options.nosound) {
         SDL_LockAudioDevice(this->audiodev);

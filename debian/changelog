@@ -1,3 +1,9 @@
+vector06sdl (0.2-crickets) UNRELEASED; urgency=medium
+
+  * Fixes missing IO commits, audio clicking (#5)
+
+ -- svo <svofski@gmail.com>  Sat, 14 Mar 2020 00:27:09 +0300
+
 vector06sdl (0.1-basic) UNRELEASED; urgency=medium
 
   * Initial release

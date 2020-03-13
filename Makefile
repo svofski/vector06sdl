@@ -1,6 +1,6 @@
-all:	native-tests
+all:	build/v06x
 
-.PHONY:	native-tests wine-tests clean
+.PHONY:	native-tests wine-tests clean build/v06x
 
 native-tests:	build/v06x 
 	cd test && chmod +x runtests-native.sh && ./runtests-native.sh
@@ -21,6 +21,6 @@ clean:
 install:	build/v06x
 	make -f Makefile.linux install
 
-deb:
+deb:	native-tests
 	dpkg-buildpackage -rfakeroot -b
 
