@@ -10,4 +10,8 @@
 //#define DBG_QUEUE(x) {x;}
 #define DBG_QUEUE(x) {}
 
-#define BIQUAD_FLOAT 1
+#ifdef __ANDROID_NDK__
+#define TV_PIXELFORMAT SDL_PIXELFORMAT_ABGR8888
+#else
+#define TV_PIXELFORMAT SDL_PIXELFORMAT_ARGB8888
+#endif

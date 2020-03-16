@@ -1,3 +1,9 @@
 # vim turds
 *.swp
 tags
+debian/.debhelper
+debian/files
+debian/source
+debian/vector06sdl*
+.gradle
+android/build

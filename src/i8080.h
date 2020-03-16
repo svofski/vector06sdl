@@ -67,4 +67,11 @@ extern void i8080_setreg_l(int l);
 extern void i8080_setreg_f(int f);
 extern void i8080_setreg_sp(int sp);
 
+#include <vector>
+#include <cstdint>
+
+namespace i8080cpu {
+    void serialize(std::vector<uint8_t> &to);
+    void deserialize(std::vector<uint8_t>::iterator it, uint32_t);
+}
 #endif

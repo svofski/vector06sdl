@@ -73,9 +73,7 @@ void Board::init_bootrom()
 
 void Board::reset(Board::ResetMode mode)
 {
-    last_opcode = 0;
-    irq = false;
-    i8080_init();
+    this->soundnik.reset();
 
     switch (mode) {
         case ResetMode::BLKVVOD:
@@ -98,6 +96,10 @@ void Board::reset(Board::ResetMode mode)
                     i8080_pc(), i8080_regs_sp());
             break;
     }
+
+    last_opcode = 0;
+    irq = false;
+    i8080_init();
 }
 
 void Board::interrupt(bool on)
@@ -563,6 +565,64 @@ bool Board::check_breakpoint()
 {
     return std::find(this->breakpoints.begin(), this->breakpoints.end(),
             Breakpoint(i8080_pc(), 1)) != this->breakpoints.end();
+}
+
+#include "serialize.h"
+
+void Board::serialize(std::vector<uint8_t> &to) {
+    this->memory.serialize(to);
+    this->io.serialize(to);
+    i8080cpu::serialize(to);
+
+    this->serialize_self(to);
+}
+
+void Board::serialize_self(SerializeChunk::stype_t & to) const
+{
+    SerializeChunk::stype_t chunk;
+    chunk.push_back(static_cast<uint8_t>(this->inte));
+    chunk.push_back(static_cast<uint8_t>(this->irq));
+    chunk.push_back(static_cast<uint8_t>(this->irq_carry));
+    SerializeChunk::insert_chunk(to, SerializeChunk::BOARD, chunk);
+}
+
+void Board::deserialize_self(SerializeChunk::stype_t::iterator from, uint32_t size)
+{
+    this->inte = static_cast<bool>(*from++);
+    this->irq = static_cast<bool>(*from++);
+    this->irq_carry = static_cast<bool>(*from++);
+}
+
+bool Board::deserialize(std::vector<uint8_t> &from) {
+    auto it = from.begin();
+    uint32_t size;
+    bool result = true;
+    for(;it != from.end();) {
+        SerializeChunk::id signature;
+        auto begin = SerializeChunk::take_chunk(it, signature, size);
+        it = begin + size;
+        if (size > 0) {
+            switch (signature) {
+                case SerializeChunk::MEMORY:
+                    this->memory.deserialize(begin, size);
+                    break;
+                case SerializeChunk::IO:
+                    this->io.deserialize(begin, size);
+                    break;
+                case SerializeChunk::CPU:
+                    i8080cpu::deserialize(begin, size);
+                    break;
+                case SerializeChunk::BOARD:
+                    this->deserialize_self(begin, size);
+                    break;
+                default:
+                    it = from.end();
+                    result = false;
+                    break;
+            }
+        }
+    }
+    return result;
 }
 
 

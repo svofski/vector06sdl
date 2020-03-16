@@ -71,6 +71,8 @@ void Memory::write(uint32_t addr, uint8_t w8, bool stackrq)
 
 void Memory::init_from_vector(const vector<uint8_t> & from, uint32_t start_addr)
 {
+    // clear the main ram because otherwise switching roms is a pain
+    // but leave the kvaz alone
     if (start_addr < 65536) {
         memset(this->bytes, 0, 65536);
     }
@@ -79,6 +81,7 @@ void Memory::init_from_vector(const vector<uint8_t> & from, uint32_t start_addr)
     }
     for (unsigned i = 0; i < from.size(); ++i) {
         int addr = start_addr + i;
+        //this->write(addr, from[i], false);
         uint32_t phys = this->tobank(addr);
         if (phys < sizeof(this->bytes)) {
             this->bytes[phys] = from[i];
@@ -100,3 +103,36 @@ uint8_t * Memory::buffer()
 {
     return bytes;
 }
+
+#include "serialize.h"
+
+void Memory::serialize(std::vector<uint8_t> &to) {
+    std::vector<uint8_t> tmp;
+    tmp.push_back((uint8_t)mode_stack);
+    tmp.push_back((uint8_t)mode_map);
+    tmp.push_back((uint8_t)(page_map>>16));
+    tmp.push_back((uint8_t)(page_stack>>16));
+    tmp.push_back(sizeof(this->bytes)/65536); // normally 1+4, but we could get many ramdisks later
+    tmp.insert(std::end(tmp), this->bytes, this->bytes + sizeof(this->bytes));
+    tmp.insert(std::end(tmp), std::begin(this->bootbytes), std::end(this->bootbytes));
+
+    SerializeChunk::insert_chunk(to, SerializeChunk::MEMORY, tmp);
+}
+
+void Memory::deserialize(std::vector<uint8_t>::iterator it, uint32_t size)
+{
+    auto begin = it;
+    this->mode_stack = (bool) *it++;
+    this->mode_map = (bool) *it++;
+    this->page_map = ((uint32_t) *it++) << 16;
+    this->page_stack = ((uint32_t) *it++) << 16;
+    uint32_t stored_ramsize = 65536 * *it++;
+    size_t nbytes = std::min(stored_ramsize, (uint32_t)sizeof(this->bytes));
+    std::copy(it, it + nbytes, this->bytes);
+    it += stored_ramsize;
+
+    this->bootbytes.clear();
+    this->bootbytes.assign(it, begin + size);
+}
+
+

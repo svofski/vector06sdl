@@ -9,6 +9,8 @@
 #include "fd1793.h"
 #include "wav.h"
 
+#include "serialize.h"
+
 class IO {
 private:
     uint32_t palette[16];
@@ -345,5 +347,38 @@ public:
     Keyboard & the_keyboard() const
     {
         return this->keyboard;
+    }
+
+    void serialize(std::vector<uint8_t> & to)
+    {
+        std::vector<uint8_t> tmp;
+        uint8_t * palette_bytes = reinterpret_cast<uint8_t *>(palette);
+        tmp.insert(tmp.end(), palette_bytes, palette_bytes + sizeof(palette));
+        tmp.push_back(CW);
+        tmp.push_back(PA);
+        tmp.push_back(PB);
+        tmp.push_back(PC);
+        tmp.push_back(PIA1_last);
+        tmp.push_back(CW2);
+        tmp.push_back(PA2);
+        tmp.push_back(PB2);
+        tmp.push_back(PC2);
+
+        SerializeChunk::insert_chunk(to, SerializeChunk::IO, tmp);
+    }
+
+    void deserialize(std::vector<uint8_t>::iterator it, uint32_t size)
+    {
+        std::copy(it, it + sizeof(this->palette), reinterpret_cast<uint8_t *>(this->palette));
+        it += sizeof(palette);
+        CW = *it++;
+        PA = *it++;
+        PB = *it++;
+        PC = *it++;
+        PIA1_last = *it++;
+        CW2 = *it++;
+        PA2 = *it++;
+        PB2 = *it++;
+        PC2 = *it++;
     }
 };

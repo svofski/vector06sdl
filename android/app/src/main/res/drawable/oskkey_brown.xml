@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:insetLeft="@dimen/osk_key_inset"
+    android:insetTop="@dimen/osk_key_inset"
+    android:insetRight="@dimen/osk_key_inset"
+    android:insetBottom="@dimen/osk_key_inset">
+
+    <shape xmlns:android="http://schemas.android.com/apk/res/android"
+        android:shape="rectangle" >
+        <corners android:radius="@dimen/osk_key_roundcorner" />
+        <solid android:color="@color/keycap_brownpoop_selector"/>
+    </shape>
+</inset>

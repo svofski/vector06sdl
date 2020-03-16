@@ -3,13 +3,18 @@
 #include <stdio.h>
 #include <vector>
 #include <functional>
+#ifndef __ANDROID_NDK__
 #include "SDL.h"
+#else
+#include "event.h"
+#endif
 #include "i8080.h"
 #include "filler.h"
 #include "sound.h"
 #include "tv.h"
 #include "cadence.h"
 #include "breakpoint.h"
+#include "serialize.h"
 
 class Board;
 
@@ -95,6 +100,9 @@ public:
     int execute_frame_with_cadence(bool update_screen, bool use_cadence);
     void single_step(bool update_screen);
 
+    TV & get_tv() const { return tv; }
+    Soundnik & get_soundnik() const { return soundnik; }
+
 public:
     std::string read_memory(int start, int count);
     void write_memory_byte(int addr, int value);
@@ -110,6 +118,11 @@ public:
     std::string remove_breakpoint(int type, int addr, int kind);
     bool check_breakpoint();
     void check_watchpoint(uint32_t addr, uint8_t value, int how);
+
+    void serialize(std::vector<uint8_t> & to);
+    bool deserialize(std::vector<uint8_t> & from);
+    void serialize_self(SerializeChunk::stype_t & to) const;
+    void deserialize_self(SerializeChunk::stype_t::iterator from, uint32_t size);
 
 private:
     /* Fuses together inner CPU logic and Vector-06c interrupt logic */

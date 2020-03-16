@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#ifndef __ANDROID_NDK__
 #include "boost/program_options.hpp"
 #include "boost/filesystem.hpp"
 #include "boost/property_tree/ptree.hpp"
@@ -7,6 +8,7 @@
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
 #include "boost/algorithm/string/predicate.hpp"
+#endif
 #include "globaldefs.h"
 #include "options.h"
 
@@ -19,14 +21,20 @@ _options Options =
     .wavfile = "",
     .eddfile = {},
     .max_frame = -1,
-    .vsync = true,
+    .vsync = false,
+#ifdef __ANDROID__
+    .novideo = true,
+#endif
     .screen_width = DEFAULT_SCREEN_WIDTH,
     .screen_height = DEFAULT_SCREEN_HEIGHT,
     .border_width = DEFAULT_BORDER_WIDTH,
     .center_offset = DEFAULT_CENTER_OFFSET,
 
     .volume = {1.0f, 1.0f, 1.0f, 1.0f, 0.2f},
+    .nofilter = false,
 };
+
+#ifndef __ANDROID_NDK__
 
 void options(int argc, char ** argv)
 {
@@ -458,3 +466,11 @@ std::string _options::get_config_path(void)
     }
     return config;
 }
+
+#else
+std::string _options::path_for_frame(int n)
+{
+    return "frame" + std::to_string(n);
+}
+#endif
+

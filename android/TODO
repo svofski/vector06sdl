@@ -1,0 +1,27 @@
+# Rom loader
+wtf with the edd except for RDS?
+x select A/B/C
+additional filtering by size, some other traits
+favourites
+x support changing of floppy image without reset
+x Loading.. 
+x sorting by name
+x rescan
+
+# Keyboard
+physical keyboard support
+
+x show + load buttons have funny location
+x some of the special keys should have greenish diarrhea tint
+x key configuration is okay on n6p but a mess on nexus7
+x keycap font size on nexus7 is disproportionally small
+
+# Joystick
+a large friendly control in place of keyboard
+
+# Saving/Loading
+x state should save FDC (fdd saved as a part of preferences, automounted on restore instance)
+
+record wav?
+loading .bas?
+external save/load emulator state

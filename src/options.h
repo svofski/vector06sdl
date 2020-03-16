@@ -25,6 +25,7 @@ struct _options
         float covox;
         float global;
     } volume;
+    bool nofilter;      /* bypass audio filter */
 
     bool novideo;
     bool nosound;
@@ -33,7 +34,6 @@ struct _options
 
     bool autostart;
     bool window;        /* run in a window */
-    bool nofilter;      /* bypass audio filter */
     int blendmode;      /* 0: no blend, 1: mix in doubled frames */
 
     bool opengl;

@@ -35,4 +35,7 @@ public:
     void attach_boot(std::vector<uint8_t> boot);
     void detach_boot();
     uint8_t * buffer();
+
+    void serialize(std::vector<uint8_t> & to);
+    void deserialize(std::vector<uint8_t>::iterator from, uint32_t size);
 };

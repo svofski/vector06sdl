@@ -166,6 +166,11 @@ public:
         ay.init();
     }
 
+    void reset()
+    {
+        ay.init();
+    }
+
     void init()
     {
         this->ayAccu = 0;

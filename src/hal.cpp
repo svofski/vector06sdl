@@ -5,7 +5,9 @@
 #include "memory.h"
 #include "io.h"
 #include "board.h"
+#ifndef __ANDROID_NDK__
 #include "SDL.h"
+#endif
 
 static Memory * memory;
 static IO * io;
@@ -70,7 +72,7 @@ void create_timer()
         /* Used in tests, event loop kick-spins itself without timers. */
         return;
     }
-
+#ifndef __ANDROID_NDK__
     if (Options.nosound) {
         printf("create_timer(): nosound is set, will use SDL timer for frames\n");
         SDL_Init(SDL_INIT_TIMER);
@@ -80,4 +82,5 @@ void create_timer()
             fprintf(stderr, "SDL_AddTimer %s\n", SDL_GetError());
         }
     }
+#endif
 }

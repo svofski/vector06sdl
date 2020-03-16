@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/background_light"
+    android:elevation="8dp"
+    android:orientation="vertical"
+    android:visibility="visible"
+    tools:context=".uiextras.LoaderTabsFragment">
+
+    <android.support.v4.view.ViewPager
+        android:id="@+id/loader_viewpager"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+
+        <android.support.design.widget.TabLayout
+            android:id="@+id/loader_tablayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"></android.support.design.widget.TabLayout>
+
+        <LinearLayout
+            android:id="@+id/loader_page_one"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <fragment
+                android:id="@+id/bundled_roms_fragment"
+                android:name="com.svofski.v06x.uiextras.RomListerFragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="16dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/loader_page_two"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <fragment
+                android:id="@+id/sdcard_roms_fragment"
+                android:name="com.svofski.v06x.uiextras.RomListerFragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="16dp" />
+        </LinearLayout>
+
+    </android.support.v4.view.ViewPager>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="24dp"
+        android:padding="@dimen/slot_padding">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+
+            <TextView
+                android:id="@+id/slot_disk_a"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/slot_name_a" />
+            <TextView
+                android:id="@+id/slot_disk_b"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/slot_name_b" />
+            <TextView
+                android:id="@+id/slot_kvaz"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/slot_name_e" />
+
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/button_clearall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"
+            android:text="@string/button_clearall" />
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -4,18 +4,21 @@
 #include "globaldefs.h"
 #include "8253.h"
 #include "ay.h"
+#ifndef __ANDROID_NDK__
 #include "SDL.h"
+#endif
+#include "resampler.h"
 #include "wav.h"
 
-#include "resampler.h"
 
 class Soundnik
 {
 private:
     TimerWrapper & timerwrapper;
     AYWrapper & aywrapper;
+#ifndef __ANDROID_NDK__
     SDL_AudioDeviceID audiodev;
-
+#endif
     static const int buffer_size = 2048 * 2; // 96000/50=1920, enough
     int sound_frame_size = 2048;
 
@@ -44,5 +47,7 @@ public:
     static void callback(void * userdata, uint8_t * stream, int len);
     void sample(float samp);
     void soundSteps(int nclk1m5, int tapeout, int covox, int tapein);
+
+    void reset();
 };
 

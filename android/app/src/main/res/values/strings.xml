@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">v06x</string>
+    <string name="blkvvod">БЛК+ВВОД</string>
+    <string name="blksbr">БЛК+СБР</string>
+    <string name="btn_space">ПРОБЕЛ</string>
+    <string name="benchmark">Benchmark!</string>
+    <string name="btn_show_keyboard">⌨</string>
+    <string name="btn_show_files">💾</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="loader_page_one">Bundled</string>
+    <string name="loader_page_two">Storage</string>
+    <string name="channel_name">Vector-06c Emulator</string>
+    <string name="channel_description">Vector-06c notification channel</string>
+    <string name="is_running_in_background"> \u0020is running in the background</string>
+    <string name="button_disk_a">A</string>
+    <string name="button_disk_b">B</string>
+    <string name="button_disk_e">КВАЗ</string>
+    <string name="detail_rom">ROM</string>
+    <string name="detail_com">COM</string>
+    <string name="detail_fdd">DISK</string>
+    <string name="detail_kvaz">EDD</string>
+
+    <string name="slot_name_a">A:\u0020</string>
+    <string name="slot_name_b">B:\u0020</string>
+    <string name="slot_name_e">C:\u0020</string>
+    <string name="button_clearall">Всё вынуть</string>
+
+    <string-array name="slot_names">
+        <item>@string/slot_name_a</item>
+        <item>@string/slot_name_b</item>
+        <item>@string/slot_name_e</item>
+    </string-array>
+</resources>

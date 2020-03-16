@@ -2105,3 +2105,19 @@ void i8080_setreg_sp(int sp) {
 int i8080_cycles(void) {
     return CPU_CYCLES;
 }
+
+#include <vector>
+#include "serialize.h"
+
+namespace i8080cpu {
+    void serialize(std::vector<uint8_t> &to) {
+        SerializeChunk::stype_t chunk;
+        uint8_t * cpu_bytes = reinterpret_cast<uint8_t *>(&cpu);
+        chunk.assign(cpu_bytes, cpu_bytes + sizeof(cpu));
+        SerializeChunk::insert_chunk(to, SerializeChunk::CPU, chunk);
+    }
+
+    void deserialize(std::vector<uint8_t>::iterator it, uint32_t size) {
+        std::copy(it, it + sizeof(cpu), reinterpret_cast<uint8_t *>(&cpu));
+    }
+}

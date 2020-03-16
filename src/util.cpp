@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <time.h>
 #include <iostream>
 #include <string>
 #include <streambuf>
@@ -42,6 +43,14 @@ std::vector<uint8_t> load_binfile(const std::string path)
         is.read((char *) bin.data(), length);
     }
     return bin;
+}
+
+double get_milliseconds(void) {
+
+    struct timespec res;
+    clock_gettime(CLOCK_REALTIME, &res);
+    return 1000.0 * res.tv_sec + (double) res.tv_nsec / 1e6;
+
 }
 
 }

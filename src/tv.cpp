@@ -1,10 +1,15 @@
 #include <string>
+#include <inttypes.h>
 #include "globaldefs.h"
+#ifndef __ANDROID_NDK__
 #include "SDL.h"
 #include "SDL_opengl.h"
+#include "icon.h"
+#else
+#include "event.h"
+#endif
 #include "options.h"
 #include "tv.h"
-#include "icon.h"
 
 
 #if HAVE_OPENGL
@@ -26,7 +31,7 @@
 extern "C" DECLSPEC int SDLCALL IMG_SavePNG(SDL_Surface *surface, const char *file);
 #endif
 
-TV::TV() : pixelformat(SDL_PIXELFORMAT_ARGB8888)
+TV::TV() : pixelformat(TV_PIXELFORMAT)
 {
 }
 
@@ -39,6 +44,7 @@ TV::~TV()
 
 int TV::probe()
 {
+#ifndef __ANDROID_NDK__
     static int display_in_use = 0; /* Only using first display */
 
     int i, display_mode_count;
@@ -65,7 +71,7 @@ int TV::probe()
                 SDL_BITSPERPIXEL(f), SDL_GetPixelFormatName(f), mode.w, mode.h,
                 mode.refresh_rate);
     }
-
+#endif
     return 0;
 }
 
@@ -79,6 +85,7 @@ void TV::init()
     if (Options.novideo) {
         return;
     }
+#ifndef __ANDROID_NDK__
 
     SDL_Init(SDL_INIT_VIDEO);
 #if 0
@@ -97,10 +104,12 @@ void TV::init()
     else {
         this->init_regular();
     }
+#endif
 }
 
 void TV::init_regular()
 {
+#ifndef __ANDROID_NDK__
     int window_options = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
     int renderer_options = SDL_RENDERER_ACCELERATED;
     if (Options.vsync) {
@@ -174,6 +183,7 @@ void TV::init_regular()
     SDL_RenderSetLogicalSize(this->renderer, window_width, window_height);
 
     icon_set(this->window);
+#endif
 }
 
 void TV::init_opengl()
@@ -222,8 +232,8 @@ void TV::init_opengl()
     else {
         SDL_SetWindowPosition(this->window, 100, 100);
     }
-#endif
     icon_set(this->window);
+#endif
 }
 
 
@@ -292,6 +302,7 @@ void TV::handle_window_event(SDL_Event & event)
 
 void TV::toggle_fullscreen()
 {
+#ifndef __ANDROID_NDK__
     int windowflags = SDL_GetWindowFlags(this->window);
 #if __MACOSX__
     /* on mac only this works */
@@ -304,6 +315,7 @@ void TV::toggle_fullscreen()
     int set = (windowflags ^ fs) & fs;
     SDL_SetWindowFullscreen(this->window, set);
     SDL_RenderSetLogicalSize(this->renderer, 4, 3);
+#endif
 }
 
 void TV::save_frame(std::string path)
@@ -323,17 +335,19 @@ void TV::save_frame(std::string path)
 }
 
 uint32_t* TV::pixels() const {
+#ifndef __ANDROID_NDK__
     if (!this->bmp) {
         int pitch;
         SDL_LockTexture(this->texture[this->texture_n], NULL, 
                 (void**)&this->bmp, &pitch);
     }
-
+#endif
     return this->bmp;
 }
 
 void TV::render_with_blend(int src_alpha)
 {
+#ifndef __ANDROID_NDK__
     if (Options.opengl) {
         printf("render_with_blend not supported on opengl");
         return;
@@ -354,6 +368,7 @@ void TV::render_with_blend(int src_alpha)
     SDL_RenderCopy(this->renderer, this->texture[B], NULL, NULL);
 
     this->texture_n = (this->texture_n + 1) & 1;
+#endif
 }
 
 void TV::render_single()
@@ -368,6 +383,7 @@ void TV::render_single()
 
 void TV::render_single_regular()
 {
+#ifndef __ANDROID_NDK__
     /* render single frame */
     int t = this->texture_n;
     SDL_UnlockTexture(this->texture[t]);
@@ -378,6 +394,7 @@ void TV::render_single_regular()
     SDL_RenderCopy(this->renderer, this->texture[t], NULL, NULL);
     this->texture_n = this->texture_n + 1;
     if (this->texture_n >= TV::NTEXTURES) this->texture_n = 0;
+#endif
 }
 
 void TV::render_single_opengl()
@@ -459,6 +476,7 @@ void TV::render(int executed)
                 if (executed) render_single();
             }
         }
+#ifndef __ANDROID_NDK__
         /* it is actually better to call SDL_RenderPresent
          * because it maintains the pace. Otherwise we use 100% CPU
          * when stopped in debugger. */
@@ -468,6 +486,7 @@ void TV::render(int executed)
         else {
             SDL_RenderPresent(this->renderer);
         } 
+#endif
         prev_executed = executed;
     }
 }

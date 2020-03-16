@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="osk_key_inset">2dp</dimen>
+    <dimen name="osk_key_roundcorner">2dp</dimen>
+    <dimen name="text_margin">16dp</dimen>
+    <dimen name="slot_padding">16dp</dimen>
+</resources>

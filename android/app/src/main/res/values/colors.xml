@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#008577</color>
+    <color name="colorPrimaryDark">#00574B</color>
+    <color name="colorAccent">#D81B60</color>
+    <color name="black">#000</color>
+    <color name="color_poop_light">#a5a191</color>
+    <color name="color_poop_light_pressed">#aaaaaa</color>
+    <color name="color_poop_brown">#322</color>
+    <color name="color_poop_brown_pressed">#666</color>
+    <color name="oskkey_brown_textcolor">#888</color>
+    <color name="poop_plastic">#887</color>
+    <color name="color_poop_greenish">#62634B</color>
+    <color name="color_poop_greenish_pressed">#aaaaaa</color>
+    <color name="color_poop_mustard">#807853</color>
+    <color name="color_poop_mustard_pressed">#aaaaaa</color>
+</resources>
