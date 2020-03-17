@@ -23,7 +23,7 @@ public abstract class RomListItem {
         if (lower.endsWith(".fdd")) {
             return LoadKind.FDD;
         }
-        else if (lower.endsWith(".rom") || lower.matches("\\.r[0-9]m$")) {
+        else if (lower.endsWith(".rom") || lower.matches(".*\\.r[0-9]m$")) {
             return LoadKind.ROM;
         }
         else if (lower.endsWith(".com")) {
