@@ -155,7 +155,15 @@ public class MainActivity extends AppCompatActivity
         }
         attachButtonListeners();
         NotificationManagerCompat.from(this).cancelAll();
-        PermissionRequester.requestPermissions(this, PERMISSIONS_TOKEN);
+
+        /* I'm just not sure at what point it's safe to request permissions. If requested directly,
+           the app crashes without any usable diagnostics messages. */
+        mHandler.postDelayed(new Runnable() {
+                                 @Override
+                                 public void run() {
+                                     PermissionRequester.requestPermissions(MainActivity.this, PERMISSIONS_TOKEN);
+                                 }
+                             }, 350);
     }
 
     @Override
