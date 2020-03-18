@@ -13,6 +13,25 @@ include common.mk
 
 prefix ?= /usr/local
 
-install:	$(BUILD_DIR)/$(TARGET_EXEC)
+.PHONY:	$(BUILD_DIR)/$(TARGET_EXEC)-basic
+
+scripts=$(prefix)/share/v06x/scripts
+bootroms=$(prefix)/share/v06x/boot
+allscripts=$(addprefix --script $(scripts)/,bas25hook.chai robotnik.chai basload.chai)
+
+$(BUILD_DIR)/$(TARGET_EXEC)-basic:
+	echo '#!/bin/bash' >$@
+	echo 'if [ -z "$$1" ]; then echo "Usage: $$0 file.bas [v06x options]"; exit 1; fi' >>$@
+	echo "$(prefix)/bin/v06x $(allscripts) --bootrom $(bootroms)/boot.bin --scriptargs "'$$''*' >>$@
+	chmod +x $@
+
+install:	$(BUILD_DIR)/$(TARGET_EXEC) $(BUILD_DIR)/$(TARGET_EXEC)-basic
 	install -d $(DESTDIR)$(prefix)/bin
+	install -d $(DESTDIR)$(prefix)/share/v06x/scripts
+	install -d $(DESTDIR)$(prefix)/share/v06x/shaders
+	install -d $(DESTDIR)$(prefix)/share/v06x/boot
 	install $(BUILD_DIR)/$(TARGET_EXEC) $(DESTDIR)$(prefix)/bin
+	install $(BUILD_DIR)/$(TARGET_EXEC)-basic $(DESTDIR)$(prefix)/bin
+	install shaders/* $(DESTDIR)$(prefix)/share/v06x/shaders
+	install shaders/* $(DESTDIR)$(prefix)/share/v06x/shaders
+	install boot/* $(DESTDIR)$(prefix)/share/v06x/boot
