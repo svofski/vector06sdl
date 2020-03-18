@@ -6,6 +6,7 @@ Verified platforms:
  * Linux amd64
  * Windows 10
  * macOS 10.13.1 High Sierra
+ * Android
   
 
 ## Build instructions
