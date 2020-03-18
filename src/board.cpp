@@ -34,6 +34,8 @@ extern "C" size_t    _binary_boots_bin_size;
 #endif
 #endif
 
+using namespace i8080cpu;
+
 Board::Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd,
         TV & _tv, WavPlayer & _tape_player)
     : memory(_memory), io(_io), filler(_filler), soundnik(_snd), tv(_tv),

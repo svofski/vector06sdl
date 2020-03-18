@@ -32,7 +32,7 @@ private:
 
     int sampleRate;
 
-    int sound_accu_int, sound_accu_top;
+    int sound_accu_top;
 
     Resampler resampler;
     WavRecorder * rec;

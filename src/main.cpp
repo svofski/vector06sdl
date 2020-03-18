@@ -79,6 +79,8 @@ Scriptnik scriptnik;
 
 void bootstrap_scriptnik()
 {
+    using namespace i8080cpu;
+
     int script_size = 0;
     for (auto & scriptfile : Options.scriptfiles) {
         script_size += scriptnik.append_from_file(scriptfile);

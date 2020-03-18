@@ -8,6 +8,7 @@ LIBROOT :=
 OPENGL_LDFLAGS := -framework OpenGL
 SDL_LIBRARY_PATH := /usr/local/lib
 BOOST_LIBRARY_PATH := /usr/local/lib
+SDL_ALIBS := $(SDL_LIBRARY_PATH)/libSDL2.a $(SDL_LIBRARY_PATH)/libSDL2_image.a
 
 include common.mk
 

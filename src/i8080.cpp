@@ -43,6 +43,8 @@
 #define WR_WORD(addr,value) i8080_hal_memory_write_word(addr,value,false)
 #define WR_STACK(addr,value) i8080_hal_memory_write_word(addr,value,true)
 
+namespace i8080cpu {
+
 typedef unsigned char           uns8;
 typedef unsigned short          uns16;
 typedef unsigned long int       uns32;
@@ -2104,6 +2106,8 @@ void i8080_setreg_sp(int sp) {
 
 int i8080_cycles(void) {
     return CPU_CYCLES;
+}
+
 }
 
 #include <vector>

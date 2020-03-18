@@ -34,6 +34,7 @@
 #ifndef I8080_H
 #define I8080_H
 
+namespace i8080cpu {
 extern void i8080_init(void);
 int i8080_instruction(int * report_opcode);
 int i8080_execute(int opcode);
@@ -66,6 +67,7 @@ extern void i8080_setreg_h(int h);
 extern void i8080_setreg_l(int l);
 extern void i8080_setreg_f(int f);
 extern void i8080_setreg_sp(int sp);
+}
 
 #include <vector>
 #include <cstdint>
