@@ -122,6 +122,15 @@ void Soundnik::init(WavRecorder * _rec)
 #endif
 }
 
+// a hack for GCC6
+#if defined(__GNUC__) && (__GNUC__ < 7)
+namespace std {
+    float clamp(float v, float lo, float hi) {
+        return v < lo ? lo : v > hi ? hi : v;
+    }
+}
+#endif
+
 void Soundnik::soundSteps(int nclk1m5, int tapeout, int covox, int tapein)
 {
     for (int clk = 0; clk < nclk1m5; ++clk) {

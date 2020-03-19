@@ -34,7 +34,7 @@ install:	$(BUILD_DIR)/$(TARGET_EXEC) $(BUILD_DIR)/$(TARGET_EXEC)-basic
 	install $(BUILD_DIR)/$(TARGET_EXEC) $(DESTDIR)$(prefix)/bin
 	install $(BUILD_DIR)/$(TARGET_EXEC)-basic $(DESTDIR)$(prefix)/bin
 	install scripts/*.chai $(DESTDIR)$(prefix)/share/v06x/scripts
-	install scripts/README $(DESTDIR)$(prefix)/share/v06x/scripts
+	install scripts/README.md $(DESTDIR)$(prefix)/share/v06x/scripts
 	install shaders/* $(DESTDIR)$(prefix)/share/v06x/shaders
 	install boot/* $(DESTDIR)$(prefix)/share/v06x/boot
 	install bas2txt/bas2asc.py $(DESTDIR)$(prefix)/share/v06x/util
