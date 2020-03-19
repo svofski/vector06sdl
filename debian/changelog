@@ -1,16 +1,16 @@
-vector06sdl (0.3-theydo) UNRELEASED; urgency=medium
+v06x (0.3-theydo) UNRELEASED; urgency=medium
 
   * Merged source with the Android version
 
  -- svo <svofski@gmail.com>  Wed, 18 Mar 2020 13:21:42 +0300
 
-vector06sdl (0.2-crickets) UNRELEASED; urgency=medium
+v06x (0.2-crickets) UNRELEASED; urgency=medium
 
   * Fixes missing IO commits, audio clicking (#5)
 
  -- svo <svofski@gmail.com>  Sat, 14 Mar 2020 00:27:09 +0300
 
-vector06sdl (0.1-basic) UNRELEASED; urgency=medium
+v06x (0.1-basic) UNRELEASED; urgency=medium
 
   * Initial release
 

@@ -30,8 +30,11 @@ install:	$(BUILD_DIR)/$(TARGET_EXEC) $(BUILD_DIR)/$(TARGET_EXEC)-basic
 	install -d $(DESTDIR)$(prefix)/share/v06x/scripts
 	install -d $(DESTDIR)$(prefix)/share/v06x/shaders
 	install -d $(DESTDIR)$(prefix)/share/v06x/boot
+	install -d $(DESTDIR)$(prefix)/share/v06x/util
 	install $(BUILD_DIR)/$(TARGET_EXEC) $(DESTDIR)$(prefix)/bin
 	install $(BUILD_DIR)/$(TARGET_EXEC)-basic $(DESTDIR)$(prefix)/bin
 	install shaders/* $(DESTDIR)$(prefix)/share/v06x/shaders
 	install shaders/* $(DESTDIR)$(prefix)/share/v06x/shaders
 	install boot/* $(DESTDIR)$(prefix)/share/v06x/boot
+	install bas2txt/bas2asc.py $(DESTDIR)$(prefix)/share/v06x/util
+	ln -s $(DESTDIR)$(prefix)/share/v06x/util/bas2asc.py $(DESTDIR)$(prefix)/bin/v06x-bas2asc

@@ -20,10 +20,10 @@ clean:
 	make -f Makefile.$(UNAME) clean
 	rm -f test/testresult-*.txt test/testlog-*.txt
 
-install:	build/v06x
+install:	native-tests
 	make -f Makefile.$(UNAME) install
 
-deb:	native-tests
+deb:
 	dpkg-buildpackage -rfakeroot -b
 
 stripped:
