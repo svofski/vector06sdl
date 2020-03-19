@@ -1,5 +1,8 @@
 UNAME := $(shell uname -s | tr [:upper:] [:lower:])
 
+WINBUILD := build-i686-w64-mingw32
+WINDIST := $(WINBUILD)/v06x
+
 all:	build/v06x
 
 .PHONY:	native-tests wine-tests clean build/v06x stripped macos
@@ -7,13 +10,13 @@ all:	build/v06x
 native-tests:	build/v06x 
 	cd test && chmod +x runtests-native.sh && ./runtests-native.sh
 
-wine-tests:	build-i686-w64-mingw32/v06x.exe
+wine-tests:	$(WINBUILD)/v06x.exe
 	cd test && chmod +x runtests-wine.sh && ./runtests-wine.sh
 
 build/v06x:
 	make -f Makefile.$(UNAME)
 
-build-i686-w64-mingw32/v06x:
+$(WINBUILD)/v06x:
 	make -f Makefile.cross-mingw
 
 clean:
@@ -35,8 +38,15 @@ macos:	build/v06x stripped native-tests
 	# todo decide what goes into the package: scripts, shaders, README etc
 	cd build && zip ../../v06x-macos-$(version).zip v06x
 
-stripped-win:	build-i686-w64-mingw32/v06x.exe
+stripped-win:	$(WINBUILD)/v06x.exe
 	strip $<
 
 windows:  stripped-win wine-tests
-	cd build-i686-w64-mingw32 && zip ../../v06x-win64-$(version).zip v06x.exe
+	mkdir -p $(WINDIST)/bin $(WINDIST)/scripts $(WINDIST)/shaders $(WINDIST)/boot
+	cp $(WINBUILD)/v06x.exe $(WINDIST)/bin
+	cp boot/* $(WINDIST)/boot
+	cp shaders/* $(WINDIST)/shaders
+	cp winbat/* $(WINDIST)/bin
+	cp scripts/*.chai $(WINDIST)/scripts
+	cp scripts/README.md $(WINDIST)/scripts
+	cd $(WINDIST)/.. && zip -r ../../v06x-$(version)-win64.zip v06x
