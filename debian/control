@@ -1,13 +1,13 @@
 Source: v06x
 Section: unknown
 Maintainer: Viacheslav Slavinsky <svofski@gmail.com>
-Build-Depends: libsdl2-dev, libsdl2-image-dev
+Build-Depends: 
 Homepage: https://github.com/svofski/vector06sdl
 
 Package: v06x
 Architecture: any
 Priority: optional
-Depends: libsdl2-2.0, libsdl2-image-2.0, python3
+Depends: ${shlibs:Depends}, python3
 Description: emulator of Vector-06c home computer
     vector06sdl is an emulator of a 8080 CPU based home computer called Vector-06c.
     It emulates most aspects of the original machine in great detail.

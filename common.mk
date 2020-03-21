@@ -51,11 +51,7 @@ ifneq ($(SDL_STATIC), )
     SDL_LDFLAGS := -Wl,-Bstatic $(shell $(SDL2_CONFIG) --static-libs | sed s/-mwindows//g) -lSDL2_image -lpng16 -lz -Wl,-Bdynamic 
 else
     ifneq ($(SDL_LIBRARY_PATH), )
-    	# explicitly list SDL2 libraries .a which seems to be the only way of linking it statically on Dawin
-	# remove -lSDL2 from the output of sdl2-config --static-libs
-    	SDL_LDFLAGS := libSDL2.a libSDL2_image.a libpng.a libtiff.a libjpeg.a libwebp.a
     	SDL_LDFLAGS := $(addprefix $(SDL_LIBRARY_PATH)/,$(SDL_LDFLAGS))
-	SDL_LDFLAGS := $(SDL_LDFLAGS) /usr/local/opt/zlib/lib/libz.a
 	SDL_LDFLAGS := $(SDL_LDFLAGS) $(shell $(SDL2_CONFIG) --static-libs | sed s/-lSDL2//g) 
     else
 	#SDL_LDFLAGS := $(shell $(SDL2_CONFIG) --libs) -lSDL2_image -ldl -lpthread
@@ -83,8 +79,11 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 EXTRA_DEFS += -DCHAISCRIPT_NO_THREADS=1
 EXTRA_DEFS += -DHAS_IMAGE=1
-EXTRA_DEFS += -DHAVE_OPENGL=1
 EXTRA_DEFS += -DUSED_XXD=1
+
+ifneq ($(OPENGL_LDFLAGS), )
+    EXTRA_DEFS += -DHAVE_OPENGL=1
+endif
 
 RESOBJS := $(RESOURCES:%=$(BUILD_DIR)/%.o)
 

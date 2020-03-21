@@ -1,5 +1,9 @@
 UNAME := $(shell uname -s | tr [:upper:] [:lower:])
 
+ifeq ($(UNAME),linux)
+    UNAME := $(UNAME)-$(shell arch)
+endif
+
 WINBUILD := build-i686-w64-mingw32
 WINDIST := $(WINBUILD)/v06x
 

@@ -7,6 +7,8 @@ SYSROOT :=
 LIBROOT :=
 OPENGL_LDFLAGS := -framework OpenGL
 SDL_LIBRARY_PATH := /usr/local/lib
+SDL_LDFLAGS := libSDL2.a libSDL2_image.a libpng.a libtiff.a libjpeg.a libwebp.a libz.a
+
 BOOST_LIBRARY_PATH := /usr/local/lib
 SDL_ALIBS := $(SDL_LIBRARY_PATH)/libSDL2.a $(SDL_LIBRARY_PATH)/libSDL2_image.a
 
