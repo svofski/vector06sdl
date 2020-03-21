@@ -53,4 +53,4 @@ windows:  stripped-win wine-tests
 	cp winbat/* $(WINDIST)/bin
 	cp scripts/*.chai $(WINDIST)/scripts
 	cp scripts/README.md $(WINDIST)/scripts
-	cd $(WINDIST)/.. && zip -r ../../v06x-$(version)-win64.zip v06x
+	cd $(WINDIST)/.. && zip -r ../../v06x_$(version)-win64.zip v06x
