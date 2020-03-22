@@ -12,6 +12,7 @@ FIR<N, V>::FIR() {
 
   c_.reset(new (coreutil::aligned(coreutil::simd_alignment)) real_type[nn]());
   x_.reset(new real_type[2 * nn]());
+  x_aligned.reset(new (coreutil::aligned(coreutil::simd_alignment)) real_type[nn]());
 }
 
 template <unsigned N, class V>
@@ -33,14 +34,20 @@ inline void FIR<N, V>::in(real_type x) {
   constexpr unsigned v = coreutil::simd_size<V>;
   constexpr unsigned nn = (N + v - 1) & ~(v - 1);
 
-  unsigned i = i_ = (i_ + nn - 1) % nn;
+//  unsigned i = i_ = (i_ + nn - 1) % nn;
+  unsigned i = i_ - 1;
+  if (i >= nn) {
+      i = nn - 1;
+  }
+  i_ = i;
   x_[i] = x_[i + nn] = x;
 }
 
 template <unsigned N, class V>
 inline auto FIR<N, V>::out() const -> real_type {
-  // return impl_scalar();
-  return impl_simd();
+  //return impl_scalar();
+  //return impl_simd();
+  return impl_simd_realign();
 }
 
 template <unsigned N, class V>
@@ -74,6 +81,23 @@ inline auto FIR<N, V>::impl_simd() const -> real_type {
     rs = coreutil::simd_mul_add(xs, cs, rs);
   }
   return coreutil::simd_sum(rs);
+}
+
+template <unsigned N, class V>
+inline auto FIR<N, V>::impl_simd_realign() const -> real_type {
+    const unsigned i = i_;
+    constexpr unsigned v = coreutil::simd_size<V>;
+    constexpr unsigned nn = (N + v - 1) & ~(v - 1);
+    coreutil::restrict_ptr<const real_type> x = x_.get(), c = c_.get();
+
+    std::copy_n(&x[i], nn, x_aligned.get());
+    vector_type rs {};
+    for (unsigned j = 0; j < nn; j += v) {
+        vector_type cs = *(const vector_type *)&c[j];
+        vector_type xs = coreutil::simd_loadu((const vector_type *)&x_aligned[j]);
+        rs = coreutil::simd_mul_add(xs, cs, rs);
+    }
+    return coreutil::simd_sum(rs);
 }
 
 }  // namespace coredsp
