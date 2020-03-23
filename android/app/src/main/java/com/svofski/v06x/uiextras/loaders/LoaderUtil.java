@@ -26,7 +26,9 @@ public abstract class LoaderUtil {
         else if (ilo.endsWith(".edd")) {
             detail = c.getString(R.string.detail_kvaz);
         }
-        detail += " " + ksize + "K";
+        if (detail != null) {
+            detail += " " + ksize + "K";
+        }
         return detail;
     }
 }

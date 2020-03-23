@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -16,6 +15,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -79,6 +79,9 @@ public class LoaderTabsFragment extends Fragment {
         adapter.insertViewId(R.id.loader_page_two,
                 view.getResources().getString(R.string.loader_page_two),
                 LocalStorageLoaderModel.class);
+        adapter.insertViewId(R.id.loader_page_about,
+                view.getResources().getString(R.string.loader_page_about),
+                AboutModel.class);
         viewPager.setAdapter(adapter);
 
         TabLayout tabLayout = view.findViewById(R.id.loader_tablayout);
@@ -94,6 +97,9 @@ public class LoaderTabsFragment extends Fragment {
             restoreTextView(view, savedInstanceState, KEY_SLOT_B, R.id.slot_disk_b);
             restoreTextView(view, savedInstanceState, KEY_SLOT_E, R.id.slot_kvaz);
         }
+
+        WebView wv = view.findViewById(R.id.webview_about);
+        wv.loadUrl("file:///android_asset/about_en.html");
 
         return view;
     }

@@ -6,11 +6,11 @@
     <string name="benchmark">Benchmark!</string>
     <string name="btn_show_keyboard">⌨</string>
     <string name="btn_show_files">💾</string>
+    <string name="btn_info_button">ℹ </string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="loader_page_one">Bundled</string>
     <string name="loader_page_two">Storage</string>
+    <string name="loader_page_about">About</string>
     <string name="channel_name">Vector-06c Emulator</string>
     <string name="channel_description">Vector-06c notification channel</string>
     <string name="is_running_in_background"> \u0020is running in the background</string>
