@@ -9,7 +9,7 @@
         android:id="@+id/button_a"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
+        android:layout_weight="0"
         android:minWidth="48dip"
         android:text="@string/button_disk_a" />
 
@@ -17,7 +17,7 @@
         android:id="@+id/button_b"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
+        android:layout_weight="0"
         android:minWidth="48dip"
         android:text="@string/button_disk_b" />
 
@@ -25,7 +25,7 @@
         android:id="@+id/button_e"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
+        android:layout_weight="0"
         android:minWidth="96dip"
         android:text="@string/button_disk_e" />
 
@@ -33,14 +33,17 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginLeft="8dp"
+        android:layout_weight="2"
         android:orientation="vertical">
 
         <TextView
             android:id="@+id/content"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="lorem.rom"
-            android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
+            android:ellipsize="middle"
+            android:text="si vis pacem, schtangenzirkel.rom"
+            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+            android:singleLine="true" />
 
         <TextView
             android:id="@+id/details"
