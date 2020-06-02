@@ -8,6 +8,9 @@ Verified platforms:
  * macOS 10.13.1 High Sierra
  * Android
   
+## Installation
+
+Consider using one of the release builds.
 
 ## Build instructions
 
@@ -111,6 +114,13 @@ A lot of programs written in BASIC 2.5 for Vector-06C are stored in .BAS files. 
 ```bas25hook.chai```, ```robotnik.chai```, ```basload.chai```. To make boot times faster, a copy of BASIC 2.5 from TimSoft's 32kB bootrom is used. Here's an example (which can be found in [basic.bat](../master/scripts/basic.bat))
 ```
 v06x --script bas25hook.chai --script robotnik.chai --script basload.chai --bootrom ..\boot\boot.bin --scriptargs DIAMOND.BAS
+```
+
+### I/O intercept
+
+An example that intercepts I/O is given in [iohook.chai](../master/iohook.chai). To launch the demo use this command:
+```
+v06x --bootrom boot/boot.bin --fdd testroms/test.fdd --script scripts/iohook.chai --script scripts/robotnik.chai
 ```
 
 ## Available API

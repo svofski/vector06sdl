@@ -1,6 +1,9 @@
 /*
  * Пример использования API отладчика для реализации перехвата
  * портов ввода-вывода
+ * Для запуска:
+ *  v06x --bootrom boot/boot.bin --fdd testroms/test.fdd \
+ *     --script scripts/robotnik.chai --script scripts/iohook.chai
  */
 
 global port33 = 0
