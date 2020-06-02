@@ -68,9 +68,9 @@ v06x-bas2asc epic.asc epic.bas
 
 ----
 
-## Advanced usage / Для продвинутых пользователей
+# Advanced usage / Для продвинутых пользователей
 
-# Scripting
+## Scripting
 v06x can execute chai scripts (see https://chaiscript.com). The scripts can attach hooks to frame interrupt and use debugger API and probably do other things.
 
 ## Example scripts
