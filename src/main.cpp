@@ -3,7 +3,7 @@
 #include <iterator>
 
 #include "memory.h"
-#include "io.h"
+#include "vio.h"
 #include "tv.h"
 #include "board.h"
 #include "emulator.h"
@@ -46,7 +46,9 @@ void load_one_disk(FD1793 & fdc, int index, const std::string & path)
 
 void load_wav(Wav & wav, const std::string & path)
 {
-    wav.set_bytes(util::load_binfile(path));
+    if (!wav.set_bytes(util::load_binfile(path))) {
+        printf("Warning: error loading wav file %s\n", path.c_str());
+    }
 }
 
 void load_disks(FD1793 & fdc)

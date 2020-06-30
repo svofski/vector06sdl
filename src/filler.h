@@ -3,7 +3,7 @@
 #include "globaldefs.h"
 
 #include "memory.h"
-#include "io.h"
+#include "vio.h"
 #include "tv.h"
 
 

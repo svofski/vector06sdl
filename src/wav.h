@@ -26,6 +26,10 @@ private:
     typename enable_if<!is_same<valtype,string>::value, valtype>::type
         token(const vector<uint8_t> & raw, size_t & offset)
     {
+        if (offset + sizeof(valtype) >= raw.size()) {
+            throw std::invalid_argument("stream too short");
+        }
+
         valtype result = *(valtype *)&raw[offset];
         offset += sizeof(valtype);
         return result;
@@ -35,6 +39,10 @@ private:
     typename enable_if<is_same<valtype,string>::value, valtype>::type
         token(const vector<uint8_t> & raw, size_t & offset)
     {
+        if (offset + 4 >= raw.size()) {
+            throw std::invalid_argument("stream too short");
+        }
+
         string result((const char *) &raw[offset], 4); 
         offset += 4;
         return result;
@@ -72,11 +80,9 @@ private:
         }
     }
 
-public:
-    bool set_bytes(const vector<uint8_t> & raw)
+    // sptr is modified!
+    bool parse_header(const vector<uint8_t> & raw, size_t & sptr)
     {
-        size_t sptr = 0;
-
         string chunkid = token<string>(raw, sptr);
 
         if (chunkid != "RIFF") {
@@ -118,11 +124,46 @@ public:
                 this->NumChannels, this->SampleRate, this->ByteRate, 
                 this->BlockAlign, this->BitsPerSample);
 
+        sptr = nextchunk;
+        return true;
+    }
+
+public:
+    bool set_bytes(const vector<uint8_t> & raw)
+    {
+        size_t sptr = 0;
+
+        try {
+            bool header_ok = parse_header(raw, sptr);
+            if (!header_ok) return false;
+        }
+        catch (...) {
+            return false;
+        }
+
+        size_t nextchunk = sptr;
+        string chunk2id;
+        uint32_t chunk2sz;
         for (;;) {
             sptr = nextchunk;
-            string chunk2id = token<string>(raw, sptr);
-            uint32_t chunk2sz = token<uint32_t>(raw, sptr);
+            try {
+                chunk2id = token<string>(raw, sptr);
+                chunk2sz = token<uint32_t>(raw, sptr);
+            }
+            catch (...) {
+                return false;
+            }
+
             nextchunk = sptr + chunk2sz;
+            // check that sptr + chunk2sz is within raw vector bounds
+            if (sptr + chunk2sz > raw.size()) {
+                uint32_t orig = chunk2sz;
+                chunk2sz = raw.size() - sptr;
+                nextchunk = raw.size();
+                printf("Warning: reported chunk size: %u, "
+                        "available: %u bytes\n", orig, chunk2sz);
+            }
+
             if (chunk2id == "data") {
                 switch (this->BitsPerSample) {
                     case 8:

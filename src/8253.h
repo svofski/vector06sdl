@@ -108,10 +108,11 @@ public:
                     result = 0;
                 }
                 if (this->enabled) {
+                    int previous = this->value;
                     this->value -= cycles;
                     if (this->value <= 0) {
                         if (this->armed) {
-                            this->out = 1;
+                            if (previous != 0) this->out = 1;
                             result = -this->value + 1;
                             this->armed = false;
                         }

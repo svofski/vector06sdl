@@ -3,7 +3,7 @@
 #include "i8080.h"
 #include "i8080_hal.h"
 #include "memory.h"
-#include "io.h"
+#include "vio.h"
 #include "board.h"
 #ifndef __ANDROID_NDK__
 #include "SDL.h"
