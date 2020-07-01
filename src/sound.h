@@ -4,7 +4,7 @@
 #include "globaldefs.h"
 #include "8253.h"
 #include "ay.h"
-#ifndef __ANDROID_NDK__
+#if !defined(__ANDROID_NDK__) && !defined(__GODOT__)
 #include "SDL.h"
 #endif
 #include "resampler.h"
@@ -16,7 +16,7 @@ class Soundnik
 private:
     TimerWrapper & timerwrapper;
     AYWrapper & aywrapper;
-#ifndef __ANDROID_NDK__
+#if !defined(__ANDROID_NDK__) && !defined(__GODOT__)
     SDL_AudioDeviceID audiodev;
 #endif
     static const int buffer_size = 2048 * 2; // 96000/50=1920, enough

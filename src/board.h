@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <vector>
 #include <functional>
-#ifndef __ANDROID_NDK__
+#if !defined(__ANDROID_NDK__) && !defined(__GODOT__)
 #include "SDL.h"
 #else
 #include "event.h"

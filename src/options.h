@@ -13,6 +13,7 @@ struct _options
     std::vector<std::string> eddfile;
     int max_frame;
     bool vsync;
+    bool novideo;
     int screen_width;
     int screen_height;
     int border_width;
@@ -27,7 +28,6 @@ struct _options
     } volume;
     bool nofilter;      /* bypass audio filter */
 
-    bool novideo;
     bool nosound;
     bool nofdc;
     bool bootpalette;

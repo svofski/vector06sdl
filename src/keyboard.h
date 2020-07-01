@@ -7,7 +7,9 @@
 
 // TODO: the two parts are nearly identical, see if they can be merged
 
-#ifndef __ANDROID_NDK__
+#if !defined(__ANDROID_NDK__) && !defined(__GODOT__)
+
+/* SDL keyboard */
 
 #include "SDL.h"
 
@@ -227,7 +229,8 @@ private:
         }
     }
 };
-#else
+
+#elif defined(__ANDROID_NDK__) || defined(__GODOT__)
 
 #include "event.h"
 
@@ -450,4 +453,6 @@ private:
         }
     }
 };
+#else
+#error Unknown platform
 #endif

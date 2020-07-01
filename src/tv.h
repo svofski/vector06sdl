@@ -4,12 +4,14 @@
 #include <functional>
 #include <inttypes.h>
 #include "globaldefs.h"
-#ifndef __ANDROID_NDK__
+
+#if defined(__ANDROID_NDK__) || defined(__GODOT__)
+#include "event.h"
+#else
 #include "SDL.h"
 #include "SDL_opengl.h"
-#else
-#include "event.h"
 #endif
+
 #include "options.h"
 
 #if HAS_IMAGE
@@ -20,7 +22,7 @@ class TV
 {
 private:
     static constexpr int NTEXTURES = 2;
-#ifndef __ANDROID_NDK__
+#if !defined(__ANDROID_NDK__) && !defined(__GODOT__)
     SDL_Window * window;
     SDL_Renderer * renderer;
     SDL_Texture * texture[NTEXTURES];
@@ -33,7 +35,7 @@ private:
 
     uint32_t pixelformat;
 
-#ifndef __ANDROID_NDK__
+#if !defined(__ANDROID_NDK__) && !defined(__GODOT__)
     SDL_GLContext gl_context;
     GLuint gl_textures[NTEXTURES];
     GLuint gl_program_id;

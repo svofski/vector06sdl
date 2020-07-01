@@ -1,0 +1,20 @@
+[general]
+
+singleton=false
+load_once=true
+symbol_prefix="godot_"
+reloadable=true
+
+[entry]
+
+OSX.64="res://bin/osx/libv06x.dylib"
+Windows.64="res://bin/win64/libv06x.dll"
+X11.64="res://bin/x11/libv06x.so"
+Windows.32="res://bin/win32/libv06x.dll"
+
+[dependencies]
+
+OSX.64=[  ]
+Windows.64=[  ]
+X11.64=[  ]
+Windows.32=[  ]

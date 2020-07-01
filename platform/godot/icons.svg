@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg8"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   sodipodi:docname="icons.svg">
+  <defs
+     id="defs2">
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter989"
+       x="-0.144"
+       width="1.288"
+       y="-0.144"
+       height="1.288">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="1.0159999"
+         id="feGaussianBlur991" />
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="3.959798"
+     inkscape:cx="71.594539"
+     inkscape:cy="130.78883"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="1050"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     style="display:none">
+    <rect
+       style="opacity:1;fill:#00c032;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.28602943;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:31.99999809;stroke-opacity:0.37652815;paint-order:markers fill stroke"
+       id="rect884"
+       width="43.899021"
+       height="21.695833"
+       x="0.066811889"
+       y="251.08971"
+       inkscape:export-filename="/home/svo/projects/vector06sdl/platform/godot/v06x/assets/ruslat.png"
+       inkscape:export-xdpi="192"
+       inkscape:export-ydpi="192" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Layer 2">
+    <g
+       style=""
+       id="g849"
+       transform="translate(-10.037987,-0.2004459)"
+       inkscape:export-xdpi="192"
+       inkscape:export-ydpi="192">
+      <g
+         id="g853"
+         transform="translate(17.238885)">
+        <circle
+           r="8.4666662"
+           style="opacity:1;fill:#c00000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.47894698;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:31.99999809;stroke-opacity:1;paint-order:markers fill stroke;filter:url(#filter989)"
+           id="circle875"
+           cx="25.664583"
+           cy="262.07501" />
+        <circle
+           cy="262.07501"
+           cx="25.664583"
+           id="circle819"
+           style="opacity:1;fill:#f20000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.47894698;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:31.99999809;stroke-opacity:1;paint-order:markers fill stroke"
+           r="8.4666662" />
+        <path
+           sodipodi:nodetypes="ccc"
+           inkscape:connector-curvature="0"
+           id="path825-3"
+           d="m 25.427982,256.49302 c -2.188954,1.36478 -4.577787,3.59769 -5.1252,6.25013 -1.23866,-2.94133 1.315245,-6.63081 5.1252,-6.25013 z"
+           style="opacity:1;fill:#ffffff;fill-opacity:0.37647059;fill-rule:nonzero;stroke:none;stroke-width:1.01624882;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:31.99999809;stroke-opacity:0.37652815;paint-order:markers fill stroke" />
+      </g>
+    </g>
+    <g
+       style=""
+       id="g830"
+       transform="matrix(1.8101934,0,0,1.8101934,-24.931309,-216.97)"
+       inkscape:export-xdpi="192"
+       inkscape:export-ydpi="192">
+      <circle
+         r="4.6772165"
+         cy="264.52673"
+         cx="19.911579"
+         id="path817"
+         style="opacity:1;fill:#4f0000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.26458332;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:31.99999809;stroke-opacity:1;paint-order:markers fill stroke" />
+      <path
+         sodipodi:nodetypes="ccc"
+         inkscape:connector-curvature="0"
+         id="path825"
+         d="m 19.832066,261.4431 c -1.209238,0.75394 -2.528894,1.98746 -2.8313,3.45274 -0.684269,-1.62487 0.726577,-3.66304 2.8313,-3.45274 z"
+         style="opacity:1;fill:#ffffff;fill-opacity:0.37647059;fill-rule:nonzero;stroke:none;stroke-width:0.56140345;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:31.99999809;stroke-opacity:0.37652815;paint-order:markers fill stroke" />
+    </g>
+  </g>
+</svg>

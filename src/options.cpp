@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#ifndef __ANDROID_NDK__
+#if !defined(__ANDROID_NDK__) && !defined(__GODOT__)
 #include "boost/program_options.hpp"
 #include "boost/filesystem.hpp"
 #include "boost/property_tree/ptree.hpp"
@@ -22,8 +22,10 @@ _options Options =
     .eddfile = {},
     .max_frame = -1,
     .vsync = false,
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(__GODOT__)
     .novideo = true,
+#else
+    .novideo = false,
 #endif
     .screen_width = DEFAULT_SCREEN_WIDTH,
     .screen_height = DEFAULT_SCREEN_HEIGHT,
@@ -35,7 +37,7 @@ _options Options =
     .nofilter = false,
 };
 
-#ifndef __ANDROID_NDK__
+#if !defined(__ANDROID_NDK__) && !defined(__GODOT__)
 
 void options(int argc, char ** argv)
 {

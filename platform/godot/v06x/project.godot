@@ -1,0 +1,50 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=4
+
+_global_script_classes=[  ]
+_global_script_class_icons={
+
+}
+
+[application]
+
+config/name="v06x"
+run/main_scene="res://main.tscn"
+config/icon="res://icon.png"
+name="v06x"
+main_scene="res://main.tscn"
+icon="res://icon.png"
+
+[audio]
+
+enable_audio_input=true
+mix_rate=48000
+
+[debug]
+
+settings/fps/force_fps=50
+
+[display]
+
+window/size/width=800
+window/size/height=640
+window/stretch/aspect="keep"
+
+[gdnative]
+
+singletons=[  ]
+
+[memory]
+
+multithread/thread_rid_pool_prealloc=60
+
+[rendering]
+
+viewport/default_environment="res://default_env.tres"
