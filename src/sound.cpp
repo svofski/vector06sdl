@@ -1,7 +1,7 @@
 #include <algorithm>
 #include "8253.h"
 #include "ay.h"
-#ifndef __ANDROID_NDK__
+#if !defined(__ANDROID_NDK__) && !defined(__GODOT__)
 #include "SDL.h"
 #endif
 #include "wav.h"
@@ -12,7 +12,7 @@
 
 static int print_driver_info()
 {
-#ifndef __ANDROID_NDK__
+#if !defined(__ANDROID_NDK__) && !defined(__GODOT__)
     /* Print available audio drivers */
     int n = SDL_GetNumAudioDrivers();
     if (n == 0) {
@@ -38,7 +38,7 @@ void Soundnik::init(WavRecorder * _rec)
     if (Options.nosound) {
         return;
     }
-#ifndef __ANDROID_NDK__
+#if !defined(__ANDROID_NDK__) && !defined(__GODOT__)
     SDL_AudioSpec want, have;
     SDL_memset(&want, 0, sizeof(want));
     want.freq = 48000;
@@ -133,22 +133,22 @@ namespace std {
 
 void Soundnik::soundSteps(int nclk1m5, int tapeout, int covox, int tapein)
 {
+    covox = covox - 255;
     for (int clk = 0; clk < nclk1m5; ++clk) {
         float ay = this->aywrapper.step2(2);
 
         /* timerwrapper does the stepping of 8253, it must always be called */
-        float soundf = (this->timerwrapper.step(1) - 1.5f) * Options.volume.timer
-            + (tapeout + tapein - 1.0f) * Options.volume.beeper
-            + Options.volume.covox * (covox/256.0f - 0.5f)
-            + Options.volume.ay * (ay - 0.5f);
-        soundf = soundf * Options.volume.global;
-        soundf = std::clamp(soundf, -1.0f, 1.0f);
+        float soundf = (this->timerwrapper.step(1)) * Options.volume.timer
+            + (tapeout + tapein) * Options.volume.beeper
+            + Options.volume.covox * (covox/256.0f)
+            + Options.volume.ay * ay;
+
         if (!Options.nosound) {
             soundf = this->resampler.sample(soundf);
 
             if (resampler.egg) {
                 resampler.egg = false;
-                this->sample(soundf);
+                this->sample(std::clamp(soundf * Options.volume.global, -1.f,1.f));
             }
         }
     }
@@ -157,7 +157,7 @@ void Soundnik::soundSteps(int nclk1m5, int tapeout, int covox, int tapein)
 void Soundnik::pause(int pause)
 {
     if (!Options.nosound) {
-#ifndef __ANDROID_NDK__
+#if !defined(__ANDROID_NDK__) && !defined(__GODOT__)
         SDL_PauseAudioDevice(this->audiodev, pause);
 #endif
     }
@@ -191,7 +191,7 @@ void Soundnik::callback(void * userdata, uint8_t * stream, int len)
     that->rec &&
         that->rec->record_buffer(fstream, that->sound_frame_size * 2);
 
-#ifndef __ANDROID__
+#if !defined(__ANDROID_NDK__) && !defined(__GODOT__)
     /* sound callback is also our frame interrupt source */
     if (!(Options.vsync && Options.vsync_enable)) {
         extern uint32_t timer_callback(uint32_t interval, void * param);
@@ -204,7 +204,7 @@ void Soundnik::callback(void * userdata, uint8_t * stream, int len)
 void Soundnik::sample(float samp)
 {
     if (!Options.nosound) {
-#ifndef __ANDROID_NDK__
+#if !defined(__ANDROID_NDK__) && !defined(__GODOT__)
         SDL_LockAudioDevice(this->audiodev);
 #endif
         this->last_value = samp;
@@ -216,7 +216,7 @@ void Soundnik::sample(float samp)
                 this->wrbuf = 0;
             }
         }
-#ifndef __ANDROID_NDK__
+#if !defined(__ANDROID_NDK__) && !defined(__GODOT__)
         SDL_UnlockAudioDevice(this->audiodev);
 #endif
     }

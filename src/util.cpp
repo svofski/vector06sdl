@@ -74,12 +74,6 @@ std::vector<uint8_t> load_binfile(const std::string path_)
         }
         bin.resize(bytesread);
 
-        printf("File: %s\n", path.c_str());
-        for (int i = 0; i < bytesread; ++i) {
-            printf("%02x ", bin.at(i));
-        }
-        printf("\n");
-
         close(fd);
     }
     catch (...) {

@@ -30,7 +30,8 @@ _options Options =
     .border_width = DEFAULT_BORDER_WIDTH,
     .center_offset = DEFAULT_CENTER_OFFSET,
 
-    .volume = {1.0f, 1.0f, 1.0f, 1.0f, 0.2f},
+    // timer, beeper, ay, covox, global
+    .volume = {0.1f, 0.1f, 0.1f, 0.1f, 1.5f},
     .nofilter = false,
 };
 
