@@ -11,6 +11,7 @@ namespace util {
 
 std::string read_file(const std::string & filename);
 size_t islength(std::ifstream & is);
+size_t filesize(const std::string & filename);
 std::vector<uint8_t> load_binfile(const std::string path);
 
 // trim from start (in place)
@@ -56,4 +57,12 @@ static inline std::string trim_copy(std::string s)
     trim(s);
     return s;
 }
+
+std::tuple<std::string,std::string,std::string>
+split_path(const std::string & path);
+
+char printable_char(int c);
+
+std::string tmpname(const std::string & basename);
+
 }

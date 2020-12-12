@@ -41,7 +41,7 @@ void load_rom(Memory & memory)
 
 void load_one_disk(FD1793 & fdc, int index, const std::string & path)
 {
-    fdc.loadDsk(index, path.c_str(), util::load_binfile(path));
+    fdc.disk(index).attach(path);
 }
 
 void load_wav(Wav & wav, const std::string & path)
@@ -60,8 +60,7 @@ void load_disks(FD1793 & fdc)
 
 /* This block must be de-staticized, but currently trying to do so breaks tests */
 Memory memory;
-FD1793_Real fdc;
-FD1793 fdc_dummy;
+FD1793 fdc;
 Wav wav;
 WavPlayer tape_player(wav);
 Keyboard keyboard;
@@ -70,7 +69,7 @@ TimerWrapper tw(timer);
 AY ay;
 AYWrapper aw(ay);
 Soundnik soundnik(tw, aw);
-IO io(memory, keyboard, timer, fdc, ay, tape_player);//Options.nofdc ? fdc_dummy : fdc);
+IO io(memory, keyboard, timer, fdc, ay, tape_player);
 TV tv;
 PixelFiller filler(memory, io, tv);
 Board board(memory, io, filler, soundnik, tv, tape_player);

@@ -1,6 +1,6 @@
 SRC_DIRS ?= src fast-filters/sources
 RESOURCES += boots singlepass_vsh singlepass_fsh icon64
-TEST_SRCS ?= test/tests.cpp
+TEST_SRCS ?= test/tests.cpp src/util.cpp src/fsimage.cpp
 TARGET_TEST ?= tests
 
 ifneq ($(ARCH), )
@@ -29,7 +29,7 @@ all:	$(BUILD_DIR)/$(TARGET_EXEC) $(BUILD_DIR)/$(TARGET_TEST)
 #DEBUG := -O0 -g
 DEBUG := -O3
 CFLAGS := -Wall -fpermissive $(DEBUG) -ffunction-sections -fdata-sections -Wl,--gc-sections
-CXXFLAGS := $(CFLAGS) -std=gnu++17
+CXXFLAGS := $(CFLAGS) -std=c++17
 
 BOOST_LIBS := boost_program_options$(MT) boost_system$(MT) boost_thread$(MT) boost_chrono$(MT) boost_filesystem$(MT)
 
@@ -55,7 +55,7 @@ else
 	SDL_LDFLAGS := $(SDL_LDFLAGS) $(shell $(SDL2_CONFIG) --static-libs | sed s/-lSDL2//g) 
     else
 	#SDL_LDFLAGS := $(shell $(SDL2_CONFIG) --libs) -lSDL2_image -ldl -lpthread
-	SDL_LDFLAGS := $(shell $(SDL2_CONFIG) --static-libs) -lSDL2_image 
+	SDL_LDFLAGS := $(shell $(SDL2_CONFIG) --libs) -lSDL2_image 
     endif
 endif
 
