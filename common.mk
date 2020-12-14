@@ -27,7 +27,7 @@ endif
 all:	$(BUILD_DIR)/$(TARGET_EXEC) $(BUILD_DIR)/$(TARGET_TEST)
 
 #DEBUG := -O0 -g
-DEBUG := -O3
+DEBUG := -O3 -g
 CFLAGS := -Wall -fpermissive $(DEBUG) -ffunction-sections -fdata-sections -Wl,--gc-sections
 CXXFLAGS := $(CFLAGS) -std=c++17
 
@@ -55,7 +55,7 @@ else
 	SDL_LDFLAGS := $(SDL_LDFLAGS) $(shell $(SDL2_CONFIG) --static-libs | sed s/-lSDL2//g) 
     else
 	#SDL_LDFLAGS := $(shell $(SDL2_CONFIG) --libs) -lSDL2_image -ldl -lpthread
-	SDL_LDFLAGS := $(shell $(SDL2_CONFIG) --libs) -lSDL2_image 
+	SDL_LDFLAGS := $(shell $(SDL2_CONFIG) --libs) -lSDL2_image -ldl -lpthread
     endif
 endif
 

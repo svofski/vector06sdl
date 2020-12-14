@@ -47,13 +47,15 @@ public:
 
     uint8_t get(int index) override
     {
-        if (index >= size()) throw std::out_of_range("boundary error");
+        if (index < 0 || index >= (int)size()) 
+            throw std::out_of_range("boundary error");
         return _data[index]; 
     }
 
     void set(int index, uint8_t value) override
     {
-        if (index >= size()) throw std::out_of_range("boundary error");
+        if (index < 0 || index >= (int)size()) 
+            throw std::out_of_range("boundary error");
         _data[index] = value;
     }
 
@@ -81,13 +83,15 @@ public:
 
     uint8_t get(int index) override
     {
-        if (index >= size()) throw std::out_of_range("boundary error");
+        if (index < 0 || index >= (int)size()) 
+            throw std::out_of_range("boundary error");
         return _data[index]; 
     }
 
     void set(int index, uint8_t value) override
     {
-        if (index >= size()) throw std::out_of_range("boundary error");
+        if (index < 0 || index >= (int)size()) 
+            throw std::out_of_range("boundary error");
         bool changed = _data[index] != value;
         if (changed) {
             _data[index] = value;
@@ -151,13 +155,15 @@ public:
 
     uint8_t get(int index) override
     {
-        if (index >= size()) throw std::out_of_range("boundary error");
+        if (index < 0 || index >= (int)size()) 
+            throw std::out_of_range("boundary error");
         return dir.data()[index]; 
     }
 
     void set(int index, uint8_t value) override
     {
-        if (index >= size()) throw std::out_of_range("boundary error");
+        if (index < 0 || index >= (int)size()) 
+            throw std::out_of_range("boundary error");
         bool changed = dir.data()[index] != value;
         if (changed) {
             dir.data()[index] = value;
@@ -243,9 +249,6 @@ public:
         }
         this->init();
     }
-
-
-    //FDisk(const FDisk & other) = delete;
 
     void init()
     {
@@ -477,9 +480,6 @@ public:
 
     void init()
     {
-//        for (unsigned i = 0; i < sizeof(_disks)/sizeof(_disks[0]); ++i) {
-//            _disks[i].init();
-//        }
     }
 
     FDisk & disk(int drive) {
@@ -488,24 +488,6 @@ public:
         }
         return this->_disks[drive];
     }
-
-//    bool loadDsk(int drive, const char * name, 
-//            const std::vector<uint8_t> & fdd_data) 
-//    {
-//        if (drive < 0 || drive > 3) {
-//            printf("FD1793: illegal drive: %d\n", drive);
-//            return false;
-//        }
-//        if (Options.log.fdc) {
-//            printf("FD1793: loadDsk: %s\n", name);
-//        }
-//
-//        //printf("CREAT NEW FDISK: old dsk=%lx\n", _disks[drive].dsk);
-//        this->_disks[drive].loadDsk(fdd_data);
-//        //printf("CREAT NEW FDISK: new dsk=%lx\n", _disks[drive].dsk);
-//
-//        return true;
-//    }
 
     void exec() 
     {

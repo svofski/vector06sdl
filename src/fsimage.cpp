@@ -84,7 +84,7 @@ void FilesystemImage::set_data(const bytes_t & data)
 FilesystemImage::bytes_t::iterator
 FilesystemImage::map_sector(int track, int head, int sector)
 {
-    int offset = track * SECTOR_SIZE * SECTORS_CYL + 
+    unsigned offset = track * SECTOR_SIZE * SECTORS_CYL + 
         head * SECTOR_SIZE * (SECTORS_CYL/2) +
         (sector - 1) * SECTOR_SIZE;
 
@@ -183,7 +183,6 @@ FilesystemImage::bytes_t FilesystemImage::read_bytes(const Dirent & de)
             }
 
             int tocopy = std::min(SECTOR_SIZE, remainder);
-            assert(resultptr + tocopy <= result.size());
 
             std::copy(data, data + tocopy, &result[resultptr]);
             resultptr += tocopy;
@@ -210,7 +209,7 @@ std::vector<uint16_t> FilesystemImage::build_available_chain(int length)
     if (maxclust == 0) return {};
 
     bytes_t used(maxclust, 0);
-    int usedcount = 0;
+    unsigned usedcount = 0;
 
     for (auto h = begin(); h != end(); ++h) {
         if ((*h).user() < 0x10) {
@@ -221,15 +220,15 @@ std::vector<uint16_t> FilesystemImage::build_available_chain(int length)
         }
     }
 
-    if (used.size() - usedcount < length) {
+    if (used.size() - usedcount < (unsigned)length) {
         return {};
     }
 
     std::vector<uint16_t> chain;
-    for (int i = 2; i < used.size(); ++i) {
+    for (unsigned i = 2; i < used.size(); ++i) {
         if (!used[i]) {
             chain.push_back(i);
-            if (chain.size() == length) {
+            if (chain.size() == (unsigned)length) {
                 break;
             }
         }

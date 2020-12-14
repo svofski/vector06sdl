@@ -332,7 +332,7 @@ struct FilesystemTest
     bool test4()
     {
         std::vector<uint8_t> glob(100*1024);
-        for (int i = 0; i < glob.size(); ++i) {
+        for (size_t i = 0; i < glob.size(); ++i) {
             glob[i] = 255 & rand();
         }
 
@@ -346,7 +346,7 @@ struct FilesystemTest
                 });
 
         auto readbakc = fs.read_file("glob.dat");
-        for (int i = 0; i < readbakc.size(); ++i) {
+        for (size_t i = 0; i < readbakc.size(); ++i) {
             if (glob[i] != readbakc[i]) {
                 compare_bool(true, false, "content mismatch");
                 return false;
@@ -364,11 +364,12 @@ struct FilesystemTest
             printf("%2d: %s.%s\t%d\n", d.user(), d.name().c_str(), 
                     d.ext().c_str(), d.size);
                 });
+        return true;
     }
 
     bool test()
     {
-        return
+        return 
             test1() &
             test2() &
             test3() & 
@@ -395,4 +396,6 @@ int main(int argc, char ** argv)
     test_CounterUnit();
     UtilTest().test();
     FilesystemTest().test();
+
+    return 0;
 }

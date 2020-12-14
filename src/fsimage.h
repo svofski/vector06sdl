@@ -70,7 +70,6 @@ struct Dirent
 
 class FilesystemImage {
     typedef std::vector<uint8_t> bytes_t;
-    typedef std::function<int(MDHeader&)> dir_callback_t;
     bytes_t bytes;
 
 public:
@@ -136,3 +135,4 @@ public:
     std::tuple<bool,std::string> 
         save_file(const std::string & filename, bytes_t content);
 };
+

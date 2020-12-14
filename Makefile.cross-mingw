@@ -4,10 +4,11 @@ TARGET_TEST ?= tests.exe
 ARCH=i686-w64-mingw32
 
 # suffix for the multithreaded (normal) boost libraries 
-MT:=-mt
+#MT:=-mt
 
 SYSROOT=/usr/$(ARCH)
-LIBROOT=/usr/local/cross-tools/$(ARCH)
+#LIBROOT=/usr/local/cross-tools/$(ARCH)
+LIBROOT=/opt/cross/$(ARCH)
 
 # windows version of libGL.a is libopengl32.a
 OPENGL_LDFLAGS := -lopengl32
@@ -18,5 +19,6 @@ EXTRA_LIBS += -lsetupapi
 
 # statically link SDL libraries to avoid dll messups
 SDL_STATIC := 1
+BOOST_STATIC := 1
 
 include common.mk
