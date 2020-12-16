@@ -1,3 +1,9 @@
+v06x (0.4-write) UNRELEASED; urgency=medium
+
+  * Mount local directories as floppy images, creates dirimage.fdd in the
+    mountede directory
+  * .fdd images are now writable
+
 v06x (0.3-theydo) UNRELEASED; urgency=medium
 
   * Merged source with the Android version
