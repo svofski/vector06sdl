@@ -25,7 +25,9 @@ $(WINBUILD)/v06x.exe:
 	make -f Makefile.cross-mingw
 
 clean:
-	make -f Makefile.$(UNAME) clean
+	make -f Makefile.cross-mingw clean
+	make -f Makefile.darwin clean
+	make -f Makefile.linux-x86_64 clean
 	rm -f test/testresult-*.txt test/testlog-*.txt
 
 install:	native-tests
