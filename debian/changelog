@@ -4,6 +4,8 @@ v06x (0.4-write) UNRELEASED; urgency=medium
     mountede directory
   * .fdd images are now writable
 
+ -- svo <svofski@gmail.com>  Thu, 17 Dec 2020 01:26:13 +0300
+
 v06x (0.3-theydo) UNRELEASED; urgency=medium
 
   * Merged source with the Android version
