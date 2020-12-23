@@ -8,6 +8,7 @@
 #include "ay.h"
 #include "fd1793.h"
 #include "wav.h"
+#include "eth.h"
 
 #include "serialize.h"
 
@@ -21,6 +22,7 @@ private:
     FD1793 & fdc;
     AY & ay;
     WavPlayer & tape_player;
+    Ethernet & eth;
 
     uint8_t CW, PA, PB, PC, PIA1_last;
     uint8_t CW2, PA2, PB2, PC2;
@@ -39,9 +41,9 @@ public:
 
 public:
     IO(Memory & _memory, Keyboard & _keyboard, I8253 & _timer, FD1793 & _fdc, 
-            AY & _ay, WavPlayer & _tape_player) 
+            AY & _ay, WavPlayer & _tape_player, Ethernet & _eth) 
         : kvaz(_memory), keyboard(_keyboard), timer(_timer), fdc(_fdc), ay(_ay),
-        tape_player(_tape_player),
+        tape_player(_tape_player), eth(_eth),
         CW(0x08), PA(0xff), PB(0xff), PC(0xff), CW2(0), PA2(0xff), PB2(0xff), PC2(0xff)
     {
         for (unsigned i = 0; i < sizeof(palette)/sizeof(palette[0]); ++i) {
@@ -139,6 +141,17 @@ public:
             case 0x1c: // fdc control - readonly
                 //result = this->fdc.read(4);
                 break;
+
+            case 0x90:  // eth csr
+                result = this->eth.read_csr();
+                break;
+            case 0x91:  // eth rxlen lsb
+                result = this->eth.read_rxlen() & 0xff;
+                break;
+            case 0x92:  // eth rxlen msb
+                result = (this->eth.read_rxlen() & 0xff00) >> 8;
+                break;
+
             default:
                 break;
         }
@@ -281,6 +294,16 @@ public:
                 break;
             case 0x1c: // fdc control
                 this->fdc.write(4, w8);
+                break;
+
+            case 0x90:  // eth csr
+                this->eth.write_csr(w8);
+                break;
+            case 0x91:  // eth txlen lsb
+                this->eth.write_txlen_lsb(w8);
+                break;
+            case 0x92:  // eth txlen msb
+                this->eth.write_txlen_msb(w8);
                 break;
             default:
                 break;

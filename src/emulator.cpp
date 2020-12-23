@@ -1,5 +1,8 @@
 #include "emulator.h"
 
+#include <unistd.h>
+#include <sys/time.h>
+
 static void kick_timer()
 {
     extern uint32_t timer_callback(uint32_t interval, void * param);
@@ -117,6 +120,25 @@ void Emulator::handle_render(threadevent & event, bool & stopping)
     }
 }
 
+static void check_stdin()
+{
+    fd_set fdset;
+    struct timeval tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+
+    FD_ZERO(&fdset);
+    FD_SET(0, &fdset);
+    std::vector<char> buf(256);
+
+    int sel = select(1, &fdset, NULL, NULL, &tv);
+    if (sel != 0) {
+        int red = ::read(0, &buf[0], buf.size());
+        printf("STDIN:"); fflush(stdout);
+        ::write(1, &buf[0], red);
+    }
+}
+
 /* handle sdl events in the main thread */
 void Emulator::run_event_loop()
 {
@@ -129,6 +151,7 @@ void Emulator::run_event_loop()
         kick_timer();
     }
     while(!end) {
+        check_stdin();
         if (this->wait_event(&event, threadev, -1)) {
             switch(event.type) {
                 case SDL_USEREVENT:
