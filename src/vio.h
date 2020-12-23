@@ -105,13 +105,15 @@ public:
                 result = this->CW2;
                 break;
             case 0x05:
-                result = this->PC2;
+                //result = this->PC2;
+                result = this->eth.read_csr();
                 break;
             case 0x06:
                 result = this->PB2;
                 break;
             case 0x07:
-                result = this->PA2;
+                //result = this->PA2;
+                result = this->eth.read_data();
                 break;
 
                 // Timer
@@ -142,15 +144,15 @@ public:
                 //result = this->fdc.read(4);
                 break;
 
-            case 0x90:  // eth csr
-                result = this->eth.read_csr();
-                break;
-            case 0x91:  // eth rxlen lsb
-                result = this->eth.read_rxlen() & 0xff;
-                break;
-            case 0x92:  // eth rxlen msb
-                result = (this->eth.read_rxlen() & 0xff00) >> 8;
-                break;
+//            case 0x90:  // eth csr
+//                result = this->eth.read_csr();
+//                break;
+//            case 0x91:  // eth rxlen lsb
+//                result = this->eth.read_rxlen() & 0xff;
+//                break;
+//            case 0x92:  // eth rxlen msb
+//                result = (this->eth.read_rxlen() & 0xff00) >> 8;
+//                break;
 
             default:
                 break;
@@ -243,15 +245,18 @@ public:
                 this->PIA1_last = w8;
                 this->PA = w8;
                 break;
+
                 // PPI2
             case 0x04:
                 this->CW2 = w8;
                 break;
             case 0x05:
-                this->PC2 = w8;
+                //this->PC2 = w8;
+                this->eth.write_csr(w8);
                 break;
             case 0x06:
-                this->PB2 = w8;
+                //this->PB2 = w8;
+                this->eth.write_data(w8);
                 break;
             case 0x07:
                 this->PA2 = w8;
@@ -296,17 +301,17 @@ public:
                 this->fdc.write(4, w8);
                 break;
 
-            case 0x90:  // eth csr
-                this->eth.write_csr(w8);
-                break;
-            case 0x91:  // eth txlen lsb
-                this->eth.write_txlen_lsb(w8);
-                break;
-            case 0x92:  // eth txlen msb
-                this->eth.write_txlen_msb(w8);
-                break;
-            default:
-                break;
+//            case 0x90:  // eth csr
+//                this->eth.write_csr(w8);
+//                break;
+//            case 0x91:  // eth txlen lsb
+//                this->eth.write_txlen_lsb(w8);
+//                break;
+//            case 0x92:  // eth txlen msb
+//                this->eth.write_txlen_msb(w8);
+//                break;
+//            default:
+//                break;
         }
     }
 

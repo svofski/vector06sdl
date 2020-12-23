@@ -60,7 +60,7 @@ void load_disks(FD1793 & fdc)
 
 /* This block must be de-staticized, but currently trying to do so breaks tests */
 Memory memory;
-Ethernet eth(memory);
+Ethernet eth;
 FD1793 fdc;
 Wav wav;
 WavPlayer tape_player(wav);
