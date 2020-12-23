@@ -50,6 +50,7 @@ private:
     Soundnik & soundnik;
     TV & tv;
     WavPlayer & tape_player;
+    Ethernet & eth;
 
     std::vector<uint8_t> boot;
 
@@ -81,7 +82,7 @@ private:
 
 public:
     Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd, 
-            TV & _tv, WavPlayer & _tape_player);
+            TV & _tv, WavPlayer & _tape_player, Ethernet & _eth);
 
     void init();
     void reset(Board::ResetMode blkvvod);    // true: power-on reset, false: boot loaded prog

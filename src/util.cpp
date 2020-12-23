@@ -142,9 +142,9 @@ std::string tmpname(const std::string & basename)
         std::string name(basename + "$" + rndchars(6));
         FILE * f = std::fopen(name.c_str(), "r");
         if (f == nullptr) {
-            std::fclose(f);
             return name;
         }
+        std::fclose(f);
     }
     return basename + "$$$";
 }

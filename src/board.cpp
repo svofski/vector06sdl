@@ -37,9 +37,9 @@ extern "C" size_t    _binary_boots_bin_size;
 using namespace i8080cpu;
 
 Board::Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd,
-        TV & _tv, WavPlayer & _tape_player)
+        TV & _tv, WavPlayer & _tape_player, Ethernet & _eth)
     : memory(_memory), io(_io), filler(_filler), soundnik(_snd), tv(_tv),
-    tape_player(_tape_player),
+    tape_player(_tape_player), eth(_eth),
     debugging(0), debugger_interrupt(0)
 {
     this->inte = false;
@@ -136,6 +136,8 @@ int Board::execute_frame(bool update_screen)
     if (this->poll_debugger) this->poll_debugger();
     if (this->debugger_interrupt) return 0;
 
+    this->eth.poll();
+
     ++this->frame_no;
     this->filler.reset();
     this->irq_carry = false; // imitates cpu waiting after T2 when INTE
@@ -153,6 +155,10 @@ int Board::execute_frame(bool update_screen)
             if (this->debugger_interrupt) {
                 break;
             }
+        }
+
+        if (this->between % 64 == 0) {
+            this->eth.loop();
         }
 
         this->single_step(update_screen);

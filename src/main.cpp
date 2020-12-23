@@ -60,6 +60,7 @@ void load_disks(FD1793 & fdc)
 
 /* This block must be de-staticized, but currently trying to do so breaks tests */
 Memory memory;
+Ethernet eth(memory);
 FD1793 fdc;
 Wav wav;
 WavPlayer tape_player(wav);
@@ -69,10 +70,10 @@ TimerWrapper tw(timer);
 AY ay;
 AYWrapper aw(ay);
 Soundnik soundnik(tw, aw);
-IO io(memory, keyboard, timer, fdc, ay, tape_player);
+IO io(memory, keyboard, timer, fdc, ay, tape_player, eth);
 TV tv;
 PixelFiller filler(memory, io, tv);
-Board board(memory, io, filler, soundnik, tv, tape_player);
+Board board(memory, io, filler, soundnik, tv, tape_player, eth);
 
 GdbServer gdbserver(board);
 
