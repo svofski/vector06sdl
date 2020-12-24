@@ -28,7 +28,7 @@ all:	$(BUILD_DIR)/$(TARGET_EXEC) $(BUILD_DIR)/$(TARGET_TEST)
 
 #DEBUG := -O0 -g
 DEBUG := -O3 -g
-CFLAGS ?= -Wall -fpermissive $(DEBUG) -ffunction-sections -fdata-sections -Wl,--gc-sections
+CFLAGS := $(CFLAGS) -Wall -fpermissive $(DEBUG) -ffunction-sections -fdata-sections -Wl,--gc-sections
 CXXFLAGS := $(CFLAGS) -std=c++17
 
 BOOST_LIBS := boost_program_options$(MT) boost_system$(MT) boost_thread$(MT) boost_chrono$(MT) boost_filesystem$(MT)

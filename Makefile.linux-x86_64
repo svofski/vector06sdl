@@ -9,6 +9,8 @@ OPENGL_LDFLAGS := -lGL
 #SDL_STATIC := 1
 BOOST_STATIC := 1
 
+CFLAGS := -Dlinux
+
 include common.mk
 
 prefix ?= /usr/local
