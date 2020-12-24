@@ -41,6 +41,7 @@ private:
     GLuint gl_program_id;
 #endif
     int gl_window_width, gl_window_height;
+    bool ruslat;
 
 private:
     void render_with_blend(int src_alpha);
@@ -65,4 +66,5 @@ public:
     void render(int executed);
     int get_refresh_rate() const;
     void handle_window_event(SDL_Event & event);
+    void update_ruslat(bool ruslat);
 };

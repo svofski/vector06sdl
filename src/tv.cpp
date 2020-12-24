@@ -32,7 +32,7 @@
 extern "C" DECLSPEC int SDLCALL IMG_SavePNG(SDL_Surface *surface, const char *file);
 #endif
 
-TV::TV() : pixelformat(TV_PIXELFORMAT)
+TV::TV() : pixelformat(TV_PIXELFORMAT), ruslat(false)
 {
 }
 
@@ -108,6 +108,8 @@ void TV::init()
 #endif
 }
 
+#define TITLE_BASE "Вектор-06ц"
+
 void TV::init_regular()
 {
 #if !defined(__ANDROID_NDK__) && !defined(__GODOT__)
@@ -122,7 +124,7 @@ void TV::init_regular()
 
     window_width += 2 * (Options.border_width - 32);
 
-    this->window = SDL_CreateWindow("Вектор-06ц", 0, 0, 
+    this->window = SDL_CreateWindow(TITLE_BASE, 0, 0, 
             window_width, window_height, window_options);
     this->renderer = SDL_CreateRenderer(this->window, -1, 
             renderer_options);
@@ -527,4 +529,13 @@ std::function<uint32_t(uint8_t,uint8_t,uint8_t)> TV::get_rgb2pixelformat() const
     return nullptr;
 }
 
-
+void TV::update_ruslat(bool ruslat_)
+{
+    if (ruslat != ruslat_) {
+        ruslat = ruslat_;
+        std::string title(TITLE_BASE);
+        title += " ";
+        title += (ruslat ? "РУС" : "LAT");
+        SDL_SetWindowTitle(window, title.c_str());
+    }
+}

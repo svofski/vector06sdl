@@ -21,6 +21,7 @@
 #include <linux/if_tun.h>
 #define DEVTAP "/dev/net/tun"
 #else  /* linux */
+#include <net/if.h>
 #define DEVTAP "/dev/tap0"
 #endif /* linux */
 
@@ -74,6 +75,7 @@ void TapDriver::init()
         fd = -1;
     }
 
+#ifdef linux
     fd = open(DEVTAP, O_RDWR);
     printf("DEVTAP is: %s, fd=%d\n", DEVTAP, fd);
     if(fd == -1) {
@@ -92,6 +94,7 @@ void TapDriver::init()
         close(fd);
         fd = -1;
     }
+#endif
 
     fifo = {};
 }

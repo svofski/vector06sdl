@@ -367,6 +367,11 @@ public:
         return this->PA2;
     }
 
+    bool RusLat() const
+    {
+        return (this->PC & 8) != 0;
+    }
+
     uint32_t Palette(int index) const
     {
         return this->palette[index];

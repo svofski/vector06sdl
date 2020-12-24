@@ -340,6 +340,7 @@ void Board::handle_window_event(SDL_Event & event)
 /* ui thread: can't use this->frame_no */
 void Board::render_frame(int frame, bool executed)
 {
+    tv.update_ruslat(io.RusLat());
     tv.render(executed);
     if (Options.save_frames.size() && frame == Options.save_frames[0])
     {
