@@ -7,13 +7,11 @@
 #include "util.h"
 #include "tinydir.h"
 
-void MDHeader::init_with_filename(std::string filename) 
+void MDHeader::init_with_filename(std::string stem, std::string ext) 
 {
     std::fill(bytes, bytes + 32, 0);
     std::fill(std::begin(fields->Name), std::end(fields->Name), ' ');
     std::fill(std::begin(fields->Ext), std::end(fields->Ext), ' ');
-
-    auto [path, stem, ext] = util::split_path(filename);
 
     for (int i = 0, end = (int)std::min(sizeof(datatype::Name), stem.size());
             i < end; ++i) {
@@ -22,7 +20,7 @@ void MDHeader::init_with_filename(std::string filename)
 
     for (int i = 0, end = (int)std::min(sizeof(datatype::Ext), ext.size());
             i < end; ++i) {
-        fields->Ext[i] = std::toupper(ext[i+1]);
+        fields->Ext[i] = std::toupper(ext[i]);
     }
 }
 
@@ -82,7 +80,7 @@ void FilesystemImage::set_data(const bytes_t & data)
 }
 
 FilesystemImage::bytes_t::iterator
-FilesystemImage::map_sector(int track, int head, int sector)
+    FilesystemImage::map_sector(int track, int head, int sector)
 {
     unsigned offset = track * SECTOR_SIZE * SECTORS_CYL + 
         head * SECTOR_SIZE * (SECTORS_CYL/2) +
@@ -106,7 +104,11 @@ Dirent FilesystemImage::find_file(const std::string & filename)
 {
     std::vector<uint8_t> protobuf(MDHeader::SIZE);
     MDHeader proto(&protobuf[0]);
-    proto.init_with_filename(filename);
+    auto [path, stem, ext] = util::split_path(filename);
+    if (ext.size() > 0) {
+        ext = ext.substr(1);
+    }
+    proto.init_with_filename(stem, ext);
     for (auto dit = begin(); dit != end(); ++dit) {
         if ((*dit).user() == proto.user() &&
             (*dit).name() == proto.name() &&
@@ -150,7 +152,7 @@ Dirent FilesystemImage::load_dirent(MDHeader header)
     return dirent;
 }
 
-std::tuple<int,int,int> FilesystemImage::cluster_to_ths(int cluster)
+std::tuple<int,int,int> FilesystemImage::cluster_to_ths(int cluster) const
 {
     int track = 8 + cluster / 5;
     int head = track % 2;
@@ -202,7 +204,7 @@ FilesystemImage::bytes_t FilesystemImage::read_file(const std::string & filename
     return {};
 }
 
-std::vector<uint16_t> FilesystemImage::build_available_chain(int length)
+FilesystemImage::chain_t FilesystemImage::build_available_chain(int length)
 {
     int maxclust = 
         (bytes.size() - SECTORS_CYL*SECTOR_SIZE*SYSTEM_TRACKS) / CLUSTER_BYTES;
@@ -237,19 +239,16 @@ std::vector<uint16_t> FilesystemImage::build_available_chain(int length)
     return chain;
 }
 
-// return ok, internal file name
-std::tuple<bool,std::string> 
-    FilesystemImage::save_file(const std::string & filename, bytes_t content)
+std::string FilesystemImage::allocate_file(const std::string & filename,
+        const bytes_t & content, const chain_t & chain)
 {
-    int size_in_clusters = (content.size() + 2047) / 2048;
-    auto chain = build_available_chain(size_in_clusters);
-    if (chain.size() == 0) return {false, ""};
+    auto [stem, ext] = unique_cpm_filename(filename);
+    std::string internal_filename = stem + "." + ext;
+    taken_names.insert(internal_filename);
 
     bytes_t protobuf(MDHeader::SIZE);
     MDHeader proto(&protobuf[0]);
-    proto.init_with_filename(filename);
-
-    std::string internal_filename = proto.name() + "." + proto.ext();
+    proto.init_with_filename(stem, ext);
 
     int remaining = content.size();
     int chain_index = 0;
@@ -272,8 +271,21 @@ std::tuple<bool,std::string>
         }
     }
 
+    return internal_filename;
+}
+
+// return (ok, internal file name)
+std::tuple<bool,std::string> 
+    FilesystemImage::save_file(const std::string & filename, bytes_t content)
+{
+    int size_in_clusters = (content.size() + 2047) / 2048;
+    auto chain = build_available_chain(size_in_clusters);
+    if (chain.size() == 0) return {false, ""};
+
+    auto internal_filename = allocate_file(filename, content, chain);
+
     // write data
-    remaining = content.size();
+    int remaining = content.size();
     auto srcptr = content.begin();
     for (auto c : chain) {
         int clust = c * 2;
@@ -291,7 +303,42 @@ std::tuple<bool,std::string>
             srcptr += tocopy;
             remaining -= tocopy;
         }
+        if (remaining == 0) {
+            break;
+        }
     }
 
     return {true, internal_filename};
+}
+
+std::tuple<std::string, std::string>
+    FilesystemImage::unique_cpm_filename(const std::string & filename)
+{
+    auto [path, stem, ext] = util::split_path(filename);
+    constexpr size_t name_sz = sizeof(MDHeader::datatype::Name);
+    constexpr size_t ext_sz = sizeof(MDHeader::datatype::Ext);
+    util::str_toupper(stem);
+    util::str_toupper(ext);
+    ext = ext.substr(1, ext_sz);
+    stem = stem.substr(0, name_sz);
+
+    auto funnychars = [](std::string s) {
+        for (auto & c : s) {
+            if (c == '.') c = '_';
+        }
+    };
+    funnychars(stem);
+    funnychars(ext);
+
+    bool name_taken = taken_names.count(stem + "." + ext);
+    int n = 1;
+    while (name_taken) {
+        int nc = std::to_string(n).size() + 1;
+        stem = stem.substr(0, name_sz - nc);
+        stem += "@" + std::to_string(n);
+        ++n;
+        name_taken = taken_names.count(stem + "." + ext);
+    }
+
+    return {stem, ext};
 }

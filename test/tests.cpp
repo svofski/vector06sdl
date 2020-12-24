@@ -262,7 +262,7 @@ struct FilesystemTest
     {
         vector<uint8_t> dummy(MDHeader::SIZE);
         MDHeader hello(&dummy[0]);
-        hello.init_with_filename("hello.com");
+        hello.init_with_filename("hello", "com");
         string name = string(hello.fields->Name, 8);
         string ext = string(hello.fields->Ext, 3);
         compare_str("HELLO   ", name, "hello.fields.Name");
@@ -367,6 +367,22 @@ struct FilesystemTest
         return true;
     }
 
+    bool test6()
+    {
+        Test t("fsimage name overlap");
+        FilesystemImage fs(840*1024);
+        for (int i = 0; i < 32; ++i) {
+            fs.save_file("longlongname" + to_string(i) + ".txt", {1,2,3});
+        }
+
+        fs.listdir([](const Dirent & d) {
+            printf("%2d: %s.%s\t%d\n", d.user(), d.name().c_str(), 
+                    d.ext().c_str(), d.size);
+                });
+
+        return true;
+    }
+
     bool test()
     {
         return 
@@ -374,7 +390,8 @@ struct FilesystemTest
             test2() &
             test3() & 
             test4() &
-            test5();
+            test5() &
+            test6();
     }
 };
 

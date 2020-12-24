@@ -149,4 +149,11 @@ std::string tmpname(const std::string & basename)
     return basename + "$$$";
 }
 
+void str_toupper(std::string & s)
+{
+    for (auto & c : s) {
+        c = std::toupper(c);
+    }
+}
+
 }

@@ -4,6 +4,8 @@
 #include <functional>
 #include <tuple>
 #include <string>
+#include <unordered_set>
+
 #include "util.h"
 
 struct MDHeaderData
@@ -41,7 +43,7 @@ struct MDHeader
         : fields(reinterpret_cast<MDHeaderData *>(bytes)), bytes(bytes) 
     {}
 
-    void init_with_filename(std::string filename);
+    void init_with_filename(std::string stem, std::string ext);
     void overwrite(const MDHeader & other);
     bool operator==(const MDHeader & rhs) const;
     bool operator!=(const MDHeader & rhs) const;
@@ -69,8 +71,24 @@ struct Dirent
 };
 
 class FilesystemImage {
+    friend struct FilesystemTest;
+
     typedef std::vector<uint8_t> bytes_t;
+    typedef std::vector<uint16_t> chain_t;
+    std::unordered_set<std::string> taken_names;
     bytes_t bytes;
+
+    chain_t build_available_chain(int length);
+    std::string allocate_file(const std::string & filename,
+            const bytes_t & content, const chain_t & chain);
+    std::tuple<int,int,int> cluster_to_ths(int cluster) const;
+    bytes_t::iterator map_sector(int track, int head, int sector);
+    // load full file information and sector map
+    Dirent load_dirent(MDHeader header);
+    bytes_t read_bytes(const Dirent & de);
+
+    std::tuple<std::string, std::string>
+        unique_cpm_filename(const std::string & filename);
 
 public:
     static constexpr int SECTOR_SIZE = 1024;
@@ -117,19 +135,14 @@ public:
 
     void set_data(const bytes_t & data);
     bytes_t& data() { return bytes; }
-    bytes_t::iterator map_sector(int track, int head, int sector);
+
     dir_iterator begin();
     dir_iterator end();
+
     Dirent find_file(const std::string & filename);
     void listdir(std::function<void(const Dirent &)> cb);
 
-    // load full file information and sector map
-    Dirent load_dirent(MDHeader header);
-
-    std::tuple<int,int,int> cluster_to_ths(int cluster);
-    bytes_t read_bytes(const Dirent & de);
     bytes_t read_file(const std::string & filename);
-    std::vector<uint16_t> build_available_chain(int length);
 
     // return ok, internal file name
     std::tuple<bool,std::string> 

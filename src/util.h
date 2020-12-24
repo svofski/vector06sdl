@@ -58,6 +58,8 @@ static inline std::string trim_copy(std::string s)
     return s;
 }
 
+void str_toupper(std::string & s);
+
 std::tuple<std::string,std::string,std::string>
 split_path(const std::string & path);
 
