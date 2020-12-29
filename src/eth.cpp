@@ -159,7 +159,7 @@ void TapDriver::send(uint8_t * srcbuf, size_t len)
 }
 
 
-Ethernet::Ethernet() : csr(0), txstate(0)
+Ethernet::Ethernet() : csr(0), txstate(0), rxstate(0)
 {
 }
 
@@ -192,7 +192,15 @@ void Ethernet::poll()
 
 uint8_t Ethernet::read_data()
 {
+    if (rxstate) {
+        --rxstate;
+    }
+    if (rxstate) {
+        return 0;
+    }
+
     if (tap.fifo.empty()) {
+        rxstate = 2;
         return 0;
     }
 

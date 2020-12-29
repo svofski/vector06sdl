@@ -37,6 +37,7 @@ class Ethernet
     std::vector<uint8_t> txbuf;
     uint16_t txlen;
     int txstate;
+    int rxstate;
 
 public:
     Ethernet();
