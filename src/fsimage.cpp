@@ -319,7 +319,7 @@ std::tuple<std::string, std::string>
     constexpr size_t ext_sz = sizeof(MDHeader::datatype::Ext);
     util::str_toupper(stem);
     util::str_toupper(ext);
-    ext = ext.substr(1, ext_sz);
+    ext = ext.size() ? ext.substr(1, ext_sz) : std::string();
     stem = stem.substr(0, name_sz);
 
     auto funnychars = [](std::string s) {
