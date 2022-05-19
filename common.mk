@@ -48,7 +48,7 @@ endif
 SDL_CFLAGS := $(shell $(SDL2_CONFIG) --cflags)
 
 ifneq ($(SDL_STATIC), )
-    SDL_LDFLAGS := -Wl,-Bstatic $(shell $(SDL2_CONFIG) --static-libs | sed s/-mwindows//g) -lSDL2_image -lpng16 -lz -Wl,-Bdynamic 
+    SDL_LDFLAGS := -Wl,-Bstatic $(shell $(SDL2_CONFIG) --static-libs | sed s/-mwindows//g) -lSDL2_image -Wl,-Bdynamic 
 else
     ifneq ($(SDL_LIBRARY_PATH), )
     	SDL_LDFLAGS := $(addprefix $(SDL_LIBRARY_PATH)/,$(SDL_LDFLAGS))

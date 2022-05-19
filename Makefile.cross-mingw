@@ -13,8 +13,9 @@ LIBROOT ?= /usr/local/cross-tools/$(ARCH)
 OPENGL_LDFLAGS := -lopengl32
 
 EXTRA_DEFS += -msse
-EXTRA_LIBS += -limm32 -lwinmm -lversion -lws2_32 -lmswsock -static-libgcc -static-libstdc++ -l:libwinpthread.a
+EXTRA_LIBS += -limm32 -lwinmm -lversion -lws2_32 -lmswsock -static-libgcc -static-libstdc++
 EXTRA_LIBS += -lsetupapi
+EXTRA_LIBS += -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive
 
 # statically link SDL libraries to avoid dll messups
 SDL_STATIC := 1

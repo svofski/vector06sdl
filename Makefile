@@ -14,13 +14,19 @@ all:	build/v06x
 native-tests:	build/v06x 
 	cd test && chmod +x runtests-native.sh && ./runtests-native.sh
 
-wine-tests:	$(WINBUILD)/v06x.exe
+wine-tests:	$(WINBUILD)/v06x.exe $(WINBUILD)/tests.exe
 	cd test && chmod +x runtests-wine.sh && ./runtests-wine.sh
+
+command-tests:	$(WINBUILD)/v06x.exe
+	cd test && chmod +x runtests-command.sh && ./runtests-command.sh
 
 build/v06x:
 	make -f Makefile.$(UNAME)
 
-$(WINBUILD)/v06x:
+$(WINBUILD):
+	mkdir $(WINBUILD)
+
+$(WINBUILD)/v06x.exe:
 	make -f Makefile.cross-mingw
 
 clean:
@@ -37,6 +43,7 @@ stripped:
 	/usr/bin/strip build/v06x
 
 version=$(shell build/v06x -h | head -1 | cut -f 2 -d '"')
+winversion=$(shell wine $(WINBUILD)/v06x.exe -h | head -1 | cut -f 2 -d '"')
 
 macos:	build/v06x stripped native-tests
 	# todo decide what goes into the package: scripts, shaders, README etc
@@ -53,4 +60,7 @@ windows:  stripped-win wine-tests
 	cp winbat/* $(WINDIST)/bin
 	cp scripts/*.chai $(WINDIST)/scripts
 	cp scripts/README.md $(WINDIST)/scripts
-	cd $(WINDIST)/.. && zip -r ../../v06x_$(version)-win64.zip v06x
+	cd $(WINDIST)/.. && zip -r v06x_$(winversion)-win64.zip v06x
+
+windows-clean:
+	rm -rf $(WINBUILD)

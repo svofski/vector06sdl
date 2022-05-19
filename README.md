@@ -169,6 +169,16 @@ cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release ..
 make -j4
 ```
 
+### Cross-compiling for Windows under Linux
+
+```
+sh docker-build.sh
+sh docker-make-windows.sh
+```
+
+Alternatively, use Dockerfile as instructions to build on the main Linux system.
+This is also possible using Docker Desktop on Windows. Tested with WSL.
+
 
 ## Building (all platforms)
 ```
