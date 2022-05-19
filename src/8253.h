@@ -323,6 +323,11 @@ public:
         int latch_set = (w8 >> 4) & 3;
         int bcd_set = (w8 & 1);
 
+        if (counter_set > sizeof(counters)/sizeof(counters[0])) {
+            // error
+            return;
+        }
+
         CounterUnit & ctr = this->counters[counter_set];
         if (latch_set == 0) {
             ctr.Latch(latch_set);

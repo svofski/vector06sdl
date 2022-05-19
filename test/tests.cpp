@@ -179,6 +179,17 @@ public:
             test_loadvalue16(2, 0x34, 0x12, 4, 0x1233) &&
             test_loadvalue16(3, 0x34, 0x12, 4, 0x1232);
     }
+
+    // crash when writing to counter 3
+    bool test_bug20()
+    {
+        Test t("8253 #20 crash when writing with nonexistent Counter Unit 3");
+        I8253 tu;
+
+        tu.write(3, 3 << 6); // access CounterUnit 3 (nonexistent)
+
+        return compare_bool(true, true, "didn't crash, maybe ok");
+    }
 };
 
 int test_CounterUnit()
@@ -186,13 +197,18 @@ int test_CounterUnit()
     TestOfCounterUnit fuc;
     fuc.test_SetMode();
     fuc.test_loadvalue();
+    fuc.test_bug20();
 
     return 1;
 }
 
 int main(int argc, char ** argv)
 {
-    test_tobcd();
-    test_frombcd();
-    test_CounterUnit();
+    int result = 1;
+
+    result &= test_tobcd();
+    result &= test_frombcd();
+    result &= test_CounterUnit();
+
+    return result ? 0 : 1;
 }
