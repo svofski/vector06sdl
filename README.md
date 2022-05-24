@@ -220,5 +220,23 @@ Now to interactively examine profiler data:
 $GOPATH/bin/pprof -http=0.0.0.0:9999 ./v06x ./v06x.prof
 ```
 
+# gdbserver
+
+v06x has a builtin gdb server on port 4000. You need gdb with z80 support (unfortunately I don't know about gdb with 8080). A pre-built version of gdb for windows is included with v06x-gdb archive. You can build your own exe for windows like so (for native Linux just remove cross-compiling --host=....
+
+```
+apt install flex bison texinfo # important prerequisites
+git clone https://github.com/b-s-a/binutils-gdb.git
+cd binutils-gdb
+mkdir build
+ ./configure --host=i686-w64-mingw32 --target=z80-unknown-elf --prefix=$(pwd)/build --exec-prefix=$(pwd)/build --with-static-standard-libraries
+make
+make install
+```
+
+To connect to a running v06x on the local machine, run z80-unknown-elf-gdb.exe and type:
+```
+target remote localhost:4000
+```
 
 
