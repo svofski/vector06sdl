@@ -114,7 +114,7 @@ func _input(event: InputEvent):
 	if event is InputEventKey:
 		if event.pressed:
 			if not event.echo: 
-				print("KeyDown: %08x" % event.scancode)
+				#print("KeyDown: %08x" % event.scancode)
 				v06x.KeyDown(event.scancode)
 			get_tree().set_input_as_handled()
 		elif not event.pressed:

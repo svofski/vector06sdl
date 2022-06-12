@@ -15,7 +15,7 @@ opts.Add(PathVariable('target_path', 'The path where the lib is installed.', 'v0
 opts.Add(PathVariable('target_name', 'The library name.', 'libv06x', PathVariable.PathAccept))
 
 # Local dependency paths, adapt them to your setup
-godot_headers_path = "godot_headers/"
+godot_headers_path = "godot-headers/"
 
 # only support 64 at this time..
 bits = 64

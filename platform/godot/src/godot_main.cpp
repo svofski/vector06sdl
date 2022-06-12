@@ -224,6 +224,10 @@ godot_variant V06X_KeyDown(godot_object* p_instance, void* p_method_data,
 {
     godot_int scancode = api->godot_variant_as_int(p_args[0]);
     lator.keydown((int)scancode);
+
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
 
 //extern "C" JNIEXPORT void JNICALL
@@ -233,6 +237,10 @@ godot_variant V06X_KeyUp(godot_object* p_instance, void* p_method_data,
 {
     godot_int scancode = api->godot_variant_as_int(p_args[0]);
     lator.keyup((int)scancode);
+
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
 
 //extern "C" JNIEXPORT void JNICALL
@@ -265,6 +273,10 @@ godot_variant V06X_LoadAsset(godot_object* p_instance, void* p_method_data,
     }
 
     api->godot_pool_byte_array_read_access_destroy(ra);
+
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
 
 //extern "C" JNIEXPORT void JNICALL
@@ -278,6 +290,10 @@ godot_variant V06X_Reset(godot_object* p_instance, void* p_method_data,
 
     auto v = static_cast<v06x_user_data *>(p_user_data);
     v->autostart_armed = blkvvod && Options.autostart;
+
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
 
 //extern "C" JNIEXPORT jbyteArray JNICALL
