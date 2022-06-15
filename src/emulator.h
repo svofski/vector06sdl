@@ -19,6 +19,7 @@ private:
         EXECUTE_FRAME,
         KEYDOWN,
         KEYUP,
+        JOY,
         QUIT,
         /* emulator to ui */
         RENDER,
@@ -50,6 +51,9 @@ private:
     boost::thread thread;
     boost::sync_queue<threadevent> ui_to_engine_queue;
     boost::sync_priority_queue<threadevent> engine_to_ui_queue;
+
+    std::array<SDL_GameController *, 2> joy;
+    std::array<uint8_t, 2> joystate;
 #else
     pthread_t thread;
     pthread_mutex_t mutex;
@@ -68,11 +72,15 @@ private:
     void join_emulator_thread();
     bool handle_keyboard_event(SDL_KeyboardEvent & event);
     int wait_event(SDL_Event * event, threadevent & ev, int timeout);
+
+    void refresh_joysticks();
+    void update_joysticks(SDL_ControllerButtonEvent &c);
 #else
 public:
     void execute_frame(); // execute frame in current thread, no mt stuff
     void keydown(int scancode);
     void keyup(int scancode);
+    void set_joysticks(int joy_0e, int joy_0f);
     void export_pixel_bytes(uint8_t * dst);
     void export_audio_frame(float * dst, size_t count);
     size_t pixel_bytes_size();
@@ -80,6 +88,7 @@ public:
 
 public:
     Emulator(Board & borat);
+    virtual ~Emulator();
     void run_event_loop();
     void start_emulator_thread();
 

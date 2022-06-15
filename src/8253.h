@@ -318,7 +318,7 @@ public:
 
     void write_cw(uint8_t w8) 
     {
-        int counter_set = (w8 >> 6) & 3;
+        unsigned counter_set = (w8 >> 6) & 3;
         int mode_set = (w8 >> 1) & 3;
         int latch_set = (w8 >> 4) & 3;
         int bcd_set = (w8 & 1);

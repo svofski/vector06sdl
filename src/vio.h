@@ -25,6 +25,8 @@ private:
     uint8_t CW, PA, PB, PC, PIA1_last;
     uint8_t CW2, PA2, PB2, PC2;
 
+    uint8_t joy_0e, joy_0f;
+
     int outport;
     int outbyte;
     int palettebyte;
@@ -48,6 +50,7 @@ public:
             palette[i] = 0xff000000;
         }
         outport = outbyte = palettebyte = -1;
+        joy_0e = joy_0f = 0xff;
     }
 
     void yellowblue()
@@ -118,6 +121,12 @@ public:
             case 0x0a:
             case 0x0b:
                 return this->timer.read(~(port & 3));
+
+                // Joystick "C"
+            case 0x0e:
+                return this->joy_0e;
+            case 0x0f:
+                return this->joy_0f;
 
             case 0x14:
             case 0x15:
@@ -347,6 +356,24 @@ public:
     Keyboard & the_keyboard() const
     {
         return this->keyboard;
+    }
+
+    // same as joystick "C", active 0
+    void set_joysticks(int j0e, int j0f)
+    {
+        this->joy_0e = j0e;
+        this->joy_0f = j0f;
+
+        // USPID = PA2
+        uint8_t inv = ~j0e;
+        this->PA2 = ((inv & 0x40) >> 3) | // button
+            ((inv & 0x02) << 3) | // left
+            ((inv & 0x08) << 2) | // down
+            ((inv & 0x01) << 6) | // right
+            ((inv & 0x04) << 5);
+
+        // PU0
+        this->PB2 = j0e;              
     }
 
     void serialize(std::vector<uint8_t> & to)

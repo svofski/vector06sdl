@@ -16,6 +16,7 @@
 #include "ay.h"
 #include "wav.h"
 #include "util.h"
+#include "scriptnik.h"
 
 #include "v06x_class.h"
 
@@ -37,6 +38,7 @@ TV tv;
 PixelFiller filler(memory, io, tv);
 Board board(memory, io, filler, soundnik, tv, tape_player);
 Emulator lator(board);
+Scriptnik scriptnik;
 
 struct LoadKind {
     enum {
@@ -243,6 +245,18 @@ godot_variant V06X_KeyUp(godot_object* p_instance, void* p_method_data,
     return ret;
 }
 
+godot_variant V06X_SetJoysticks(godot_object* p_instance, void* p_method_data, 
+        void* p_user_data, int p_num_args, godot_variant** p_args)
+{
+    godot_int joy_0e = api->godot_variant_as_int(p_args[0]);
+    godot_int joy_0f = api->godot_variant_as_int(p_args[1]);
+    lator.set_joysticks((int)joy_0e, (int)joy_0f);
+
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
+}
+
 //extern "C" JNIEXPORT void JNICALL
 //Java_com_svofski_v06x_cpp_Emulator_LoadAsset(JNIEnv *env, jobject self, jbyteArray asset, jint kind,
 //    jint org)
@@ -338,4 +352,3 @@ godot_variant V06X_RestoreState(godot_object* p_instance, void* p_method_data,
     api->godot_variant_new_bool(&ret, result);
     return ret;
 }
-

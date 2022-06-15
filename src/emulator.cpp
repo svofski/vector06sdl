@@ -7,11 +7,20 @@ static void kick_timer()
     DBG_QUEUE(putchar('K'); fflush(stdout););
 }
 
-Emulator::Emulator(Board & borat) : board(borat)
+Emulator::Emulator(Board & borat) : board(borat), joy{}, joystate{}
 {
     board.onframetimer = [=]() {
         ui_to_engine_queue.push(threadevent(EXECUTE_FRAME, 0));
     };
+}
+
+Emulator::~Emulator()
+{
+    for (size_t i = 0; i < joy.size(); ++i) {
+        if (joy[i] != nullptr) {
+            SDL_GameControllerClose(joy[i]);
+        }
+    }
 }
 
 bool Emulator::handle_keyboard_event(SDL_KeyboardEvent & event)
@@ -117,7 +126,50 @@ void Emulator::handle_render(threadevent & event, bool & stopping)
     }
 }
 
-/* handle sdl events in the main thread */
+enum v06c_stick_bv : uint8_t {
+    J06C_RIGHT = 1,
+    J06C_LEFT = 2,
+    J06C_UP = 4,
+    J06C_DOWN = 8,
+    J06C_A = 0x40,
+    J06C_B = 0x80
+};
+
+void Emulator::update_joysticks(SDL_ControllerButtonEvent &c)
+{
+    if (c.which >= (int)joystate.size()) {
+        fprintf(stderr, "Unsupported joystick: %d\n", c.which);
+        return;
+    }
+    int pressed = c.state == SDL_PRESSED;
+    printf("%s joystate[0]=%02x ", pressed ? "DOWN" : "UP", joystate[c.which]);
+    uint8_t js = joystate[c.which];
+    printf("js0=%02x ", js);
+    switch (c.button) {
+        case SDL_CONTROLLER_BUTTON_DPAD_UP:
+            js = (js & ~J06C_UP) | (pressed ? J06C_UP : 0);
+            break;
+        case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+            js = (js & ~J06C_DOWN) | (pressed ? J06C_DOWN : 0);
+            break;
+        case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+            js = (js & ~J06C_LEFT) | (pressed ? J06C_LEFT : 0);
+            break;
+        case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+            js = (js & ~J06C_RIGHT) | (pressed ? J06C_RIGHT : 0);
+            break;
+        case SDL_CONTROLLER_BUTTON_A:
+            js = (js & ~J06C_A) | (pressed ? J06C_A : 0);
+            break;
+        case SDL_CONTROLLER_BUTTON_B:
+            js = (js & ~J06C_B) | (pressed ? J06C_B : 0);
+            break;
+    }
+    joystate[c.which] = js;
+    printf("joystate[0]=%02x\n", joystate[c.which]);
+}
+
+/* handle sdl events in the main (ui) thread */
 void Emulator::run_event_loop()
 {
     SDL_Event event;
@@ -153,6 +205,16 @@ void Emulator::run_event_loop()
                     } 
                     board.handle_window_event(event);
                     break;
+                case SDL_CONTROLLERBUTTONDOWN:
+                    printf("SDL_CONTROLLERBUTTONDOWN: button=%d\n", event.cbutton.button);
+                    update_joysticks(event.cbutton);
+                    ui_to_engine_queue.push(threadevent(JOY, 0));
+                    break;
+                case SDL_CONTROLLERBUTTONUP:
+                    printf("SDL_CONTROLLERBUTTONUP: button=%d\n", event.cbutton.button);
+                    update_joysticks(event.cbutton);
+                    ui_to_engine_queue.push(threadevent(JOY, 0));
+                    break;
                 case SDL_QUIT:
                     ui_to_engine_queue.push(threadevent(QUIT, 0));
                     end = true;
@@ -175,6 +237,9 @@ void Emulator::handle_threadevent(threadevent & event)
             break;
         case KEYUP:
             board.handle_keyup(event.key);
+            break;
+        case JOY:
+            board.set_joysticks(~joystate[0], ~joystate[1]);
             break;
         case EXECUTE_FRAME:
             {
@@ -214,8 +279,30 @@ void Emulator::threadfunc()
     }
 }
 
+void Emulator::refresh_joysticks()
+{
+    if (SDL_GameControllerAddMappingsFromFile("gamecontrollerdb.txt") >= 0) {
+        printf("Added game controller mappings from gamecontrollerdb.txt\n");
+    }
+    for (size_t i = 0; i < std::max((size_t)SDL_NumJoysticks(), joy.size()); ++i) {
+        if (joy[i] != nullptr) {
+            SDL_GameControllerClose(joy[i]);
+        }
+        joy[i] = SDL_GameControllerOpen(i);
+        if (joy[i]) {
+            printf("Detected joystick %d\n", i);
+        }
+    }
+}
+
 void Emulator::start_emulator_thread()
 {
+    if (SDL_Init(SDL_INIT_GAMECONTROLLER) >= 0) {
+        refresh_joysticks();
+    }
+    else {
+        printf("No joysticks detected\n");
+    }
     thread = boost::thread(&Emulator::threadfunc, this);
 }
 

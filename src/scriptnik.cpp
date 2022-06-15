@@ -13,7 +13,9 @@
 #include "scriptnik.h"
 #include "util.h"
 
+#if !defined(__GODOT__)
 #include "SDL_keyboard.h"
+#endif
 
 std::vector<int> read_intvector(const std::string & path)
 {
@@ -52,7 +54,12 @@ struct scriptnik_engine {
         chai.add(fun([this](int scancode) { s.keydown(scancode); }), "keydown");
         chai.add(fun([this](int scancode) { s.keyup(scancode); }), "keyup");
         chai.add(fun([this](const string & name) { 
+#if !defined(__GODOT__)
                         return (int)SDL_GetScancodeFromName(name.c_str());
+#else
+#warning TODO: implement GetGodotScancodeFromName(const char *)
+                        return 0;
+#endif
                     }), 
                 "scancode_from_name");
 

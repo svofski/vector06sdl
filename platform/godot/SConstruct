@@ -8,7 +8,7 @@ env = DefaultEnvironment()
 
 # Define our options
 opts.Add(EnumVariable('target', "Compilation target", 'debug', ['d', 'debug', 'r', 'release']))
-opts.Add(EnumVariable('platform', "Compilation platform", '', ['', 'windows', 'cross-mingw', 'x11', 'linux', 'osx']))
+opts.Add(EnumVariable('platform', "Compilation platform", '', ['', 'windows', 'cross-mingw', 'cross-mingw64', 'x11', 'linux', 'osx']))
 opts.Add(EnumVariable('p', "Compilation target, alias for 'platform'", '', ['', 'windows', 'cross-mingw', 'x11', 'linux', 'osx']))
 opts.Add(BoolVariable('use_llvm', "Use the LLVM / Clang compiler", 'no'))
 opts.Add(PathVariable('target_path', 'The path where the lib is installed.', 'v06x/bin/'))
@@ -70,8 +70,33 @@ elif env['platform'] == "cross-mingw":
     env['CXX']='i686-w64-mingw32-g++'
     env['CC']='i686-w64-mingw32-gcc'
     env.Append(CCFLAGS = ['-msse'])
-    env.Append(LINKFLAGS = ['-Wl,-no-undefined', '--enable-runtime-pseudo-reloc', '-limm32', '-lwinmm', '-lversion', '-lws2_32', '-lmswsock', '-static-libgcc', '-static-libstdc++', '-lsetupapi', '-Wl,--subsystem,windows'])
+    #env.Append(LINKFLAGS = ['-Wl,-no-undefined', '--enable-runtime-pseudo-reloc', '-limm32', '-lwinmm', '-lversion', '-lws2_32', '-lmswsock', '-static-libgcc', '-static-libstdc++', '-lsetupapi', '-Wl,--subsystem,windows'])
+    env.Append(LINKFLAGS = ['-static'])
     env['target_path'] += 'win32/'
+    # This makes sure to keep the session environment variables on windows,
+    # that way you can run scons in a vs 2017 prompt and it will find all the required tools
+    env.Append(ENV = os.environ)
+
+    if env['target'] in ('debug', 'd'):
+        env.Append(CCFLAGS = ['-fPIC', '-g3','-Og', '-std=c++17'])
+    else:
+        env.Append(CCFLAGS = ['-fPIC', '-g','-O3', '-std=c++17'])
+
+    env['SHLIBSUFFIX'] = '.dll'
+
+    #env.Append(CCFLAGS = ['-DWIN32', '-D_WIN32', '-D_WINDOWS', '-W3', '-GR', '-D_CRT_SECURE_NO_WARNINGS'])
+    #if env['target'] in ('debug', 'd'):
+    #    env.Append(CCFLAGS = ['-EHsc', '-D_DEBUG', '-MDd'])
+    #else:
+    #    env.Append(CCFLAGS = ['-O2', '-EHsc', '-DNDEBUG', '-MD'])
+
+elif env['platform'] == "cross-mingw64":
+    env['CXX']='x86_64-w64-mingw32-g++'
+    env['CC']='x86_64-w64-mingw32-gcc'
+    env.Append(CCFLAGS = ['-msse'])
+    #env.Append(LINKFLAGS = ['-Wl,-no-undefined', '--enable-runtime-pseudo-reloc', '-limm32', '-lwinmm', '-lversion', '-lws2_32', '-lmswsock', '-static-libgcc', '-static-libstdc++', '-lsetupapi', '-Wl,--subsystem,windows'])
+    env.Append(LINKFLAGS = ['-static'])
+    env['target_path'] += 'win64/'
     # This makes sure to keep the session environment variables on windows,
     # that way you can run scons in a vs 2017 prompt and it will find all the required tools
     env.Append(ENV = os.environ)
@@ -95,10 +120,11 @@ env.Append(CPPPATH=['.', godot_headers_path,
     '../../coreutil/sources',
     '../../boost',
     '../../filters',
+    '../../chaiscript/include',
     '../../src'])
 
 # tweak this if you want to use different folders, or more folders, to store your source code in.
-env.Append(CCFLAGS=env['CCFLAGS'] + ['-D__GODOT__', '-DUSED_XXD=1'])
+env.Append(CCFLAGS=env['CCFLAGS'] + ['-D__GODOT__', '-DUSED_XXD=1', '-DCHAISCRIPT_NO_THREADS=1'])
 
 env.Append(CPPPATH=['src/','../../src'])
 sources = Glob('src/*.cpp')
@@ -115,7 +141,8 @@ for f in ['boot/boot.c',
         '../../src/cadence.cpp',
         '../../src/util.cpp',
         '../../src/sound.cpp',
-        '../../src/resampler.cpp']:
+        '../../src/resampler.cpp',
+        '../../src/scriptnik.cpp']:
     sources += Glob(f)
 
 

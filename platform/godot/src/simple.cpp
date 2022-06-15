@@ -20,6 +20,7 @@ GDCALLINGCONV void simple_destructor(godot_object* p_instance,
     godot_variant name(godot_object* p_instance, void* p_method_data, \
         void* p_user_data, int p_num_args, godot_variant** p_args)
 
+V06X_DECL(V06X_godot_init);
 V06X_DECL(V06X_Init);
 V06X_DECL(V06X_ExecuteFrame);
 V06X_DECL(V06X_GetSound);
@@ -30,6 +31,7 @@ V06X_DECL(V06X_Reset);
 V06X_DECL(V06X_ExportState);
 V06X_DECL(V06X_RestoreState);
 V06X_DECL(V06X_GetRusLat);
+V06X_DECL(V06X_SetJoysticks);
 
 #undef V06X_DECL
 
@@ -87,6 +89,7 @@ extern "C" void GDN_EXPORT godot_nativescript_init(void* p_handle)
     V06X_METHOD("ExportState", V06X_ExportState);
     V06X_METHOD("RestoreState", V06X_RestoreState);
     V06X_METHOD("GetRusLat", V06X_GetRusLat);
+    V06X_METHOD("SetJoysticks", V06X_SetJoysticks);
 #undef V06X_METHOD
 }
 

@@ -627,4 +627,7 @@ bool Board::deserialize(std::vector<uint8_t> &from) {
     return result;
 }
 
-
+void Board::set_joysticks(int joy_0e, int joy_0f)
+{
+  this->io.set_joysticks(joy_0e, joy_0f);
+}

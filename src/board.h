@@ -94,6 +94,8 @@ public:
     void handle_keyup(SDL_KeyboardEvent & key);
     void handle_keydown(SDL_KeyboardEvent & key);
     void handle_window_event(SDL_Event & event);
+    void set_joysticks(int joy_0e, int joy_0f);
+
     void toggle_fullscreen() { tv.toggle_fullscreen(); }
     void render_frame(int frame, bool executed); 
     void pause_sound(bool topause) { soundnik.pause((int)topause); }

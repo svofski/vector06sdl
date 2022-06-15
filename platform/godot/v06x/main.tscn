@@ -1,8 +1,17 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=11 format=2]
 
 [ext_resource path="res://main.gd" type="Script" id=1]
 [ext_resource path="res://theme.theme" type="Theme" id=2]
 [ext_resource path="res://RusLat.tscn" type="PackedScene" id=3]
+[ext_resource path="res://shaders/2. negative.shader" type="Shader" id=4]
+[ext_resource path="res://Gamepad.tscn" type="PackedScene" id=5]
+[ext_resource path="res://Knob.tscn" type="PackedScene" id=7]
+
+[sub_resource type="StyleBoxFlat" id=5]
+bg_color = Color( 0, 0, 0, 1 )
+
+[sub_resource type="ShaderMaterial" id=4]
+shader = ExtResource( 4 )
 
 [sub_resource type="StyleBoxFlat" id=1]
 bg_color = Color( 0.431373, 0.415686, 0.415686, 0.92549 )
@@ -17,12 +26,11 @@ buffer_length = 0.1
 margin_right = 800.0
 margin_bottom = 640.0
 theme = ExtResource( 2 )
+custom_styles/panel = SubResource( 5 )
 script = ExtResource( 1 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="VectorScreen" type="TextureRect" parent="."]
+material = SubResource( 4 )
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 793.0
@@ -41,15 +49,14 @@ margin_top = 32.0
 margin_right = -15.0
 margin_bottom = -42.0
 rect_min_size = Vector2( 250, 87.5 )
-theme = ExtResource( 2 )
 window_title = "Открыть файл"
 resizable = true
 mode_overrides_title = false
 mode = 0
 access = 2
 filters = PoolStringArray( "*.rom,*.r0m,*.vec,*.bin,*.fdd,*.wav" )
-current_dir = "/home/svo/projects/vector06sdl/platform/godot/v06x"
-current_path = "/home/svo/projects/vector06sdl/platform/godot/v06x/"
+current_dir = "/Users/svofs/projects/vector06sdl/platform/godot/v06x"
+current_path = "/Users/svofs/projects/vector06sdl/platform/godot/v06x/"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -59,9 +66,6 @@ margin_right = 800.0
 margin_bottom = 640.0
 size_flags_vertical = 3
 alignment = 2
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="PanelContainer" type="PanelContainer" parent="HUD"]
 margin_top = 560.0
@@ -73,7 +77,6 @@ custom_styles/panel = SubResource( 1 )
 margin_right = 800.0
 margin_bottom = 80.0
 rect_min_size = Vector2( 0, 80 )
-theme = ExtResource( 2 )
 custom_constants/margin_right = 50
 custom_constants/margin_top = 20
 custom_constants/margin_left = 50
@@ -95,50 +98,76 @@ margin_bottom = 36.0
 
 [node name="LoadAsset" type="Button" parent="HUD/PanelContainer/MarginContainer/HBoxContainer"]
 margin_left = 47.0
-margin_right = 124.0
+margin_right = 122.0
 margin_bottom = 40.0
-theme = ExtResource( 2 )
+hint_tooltip = "Загрузить чего-нибудь"
 text = "Открыть"
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="БлкВвод" type="Button" parent="HUD/PanelContainer/MarginContainer/HBoxContainer"]
-margin_left = 139.0
-margin_right = 236.0
+margin_left = 137.0
+margin_right = 232.0
 margin_bottom = 40.0
-theme = ExtResource( 2 )
+hint_tooltip = "Сброс в загрузчик"
 text = "БЛК+ВВОД"
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="БлкСбр" type="Button" parent="HUD/PanelContainer/MarginContainer/HBoxContainer"]
-margin_left = 251.0
-margin_right = 335.0
+margin_left = 247.0
+margin_right = 329.0
 margin_bottom = 40.0
-theme = ExtResource( 2 )
+hint_tooltip = "Запуск загруженной программы"
 text = "БЛК+СБР"
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="Volume" type="HSlider" parent="HUD/PanelContainer/MarginContainer/HBoxContainer"]
-margin_left = 350.0
-margin_right = 410.0
+[node name="VolumeKnob" parent="HUD/PanelContainer/MarginContainer/HBoxContainer" instance=ExtResource( 7 )]
+margin_left = 344.0
+margin_right = 384.0
 margin_bottom = 40.0
-rect_min_size = Vector2( 60, 40 )
+rect_min_size = Vector2( 40, 40 )
+hint_tooltip = "Громкость: 0dB"
 min_value = -24.0
 max_value = 3.0
-__meta__ = {
-"_edit_use_anchors_": false
-}
+speed = 0.25
+
+[node name="ShaderSel" parent="HUD/PanelContainer/MarginContainer/HBoxContainer" instance=ExtResource( 7 )]
+visible = false
+margin_left = 415.0
+margin_right = 465.0
+margin_bottom = 50.0
+rect_min_size = Vector2( 50, 50 )
+max_value = 4.0
+speed = 0.05
+rounded = true
+
+[node name="GamepadLabel" parent="HUD/PanelContainer/MarginContainer/HBoxContainer" instance=ExtResource( 5 )]
+margin_left = 399.0
+margin_top = 4.0
+margin_right = 437.0
+margin_bottom = 36.0
+
+[node name="ShaderSelectOB" type="OptionButton" parent="HUD/PanelContainer/MarginContainer/HBoxContainer"]
+margin_left = 452.0
+margin_right = 572.0
+margin_bottom = 40.0
+rect_min_size = Vector2( 120, 0 )
+hint_tooltip = "Шейдер"
+text = "Gruuu"
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
 stream = SubResource( 2 )
+
 [connection signal="gui_input" from="." to="." method="_on_main_gui_input"]
 [connection signal="file_selected" from="FileDialog" to="." method="_on_FileDialog_file_selected"]
 [connection signal="pressed" from="HUD/PanelContainer/MarginContainer/HBoxContainer/LoadAsset" to="." method="_on_Button2_pressed"]
 [connection signal="pressed" from="HUD/PanelContainer/MarginContainer/HBoxContainer/БлкВвод" to="." method="_on_blkvvod_pressed"]
 [connection signal="pressed" from="HUD/PanelContainer/MarginContainer/HBoxContainer/БлкСбр" to="." method="_on_blksbr_pressed"]
-[connection signal="value_changed" from="HUD/PanelContainer/MarginContainer/HBoxContainer/Volume" to="." method="_on_Volume_value_changed"]
+[connection signal="value_changed" from="HUD/PanelContainer/MarginContainer/HBoxContainer/VolumeKnob" to="." method="_on_Volume_value_changed"]
+[connection signal="value_changed" from="HUD/PanelContainer/MarginContainer/HBoxContainer/ShaderSel" to="." method="_on_ShaderSel_value_changed"]
+[connection signal="item_selected" from="HUD/PanelContainer/MarginContainer/HBoxContainer/ShaderSelectOB" to="." method="_on_ShaderSel_value_changed"]

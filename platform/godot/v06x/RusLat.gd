@@ -9,6 +9,6 @@ func _ready():
 
 func set_lit(lit: bool):
 	if lit:
-		stylebox.region_rect = Rect2(164, 0, 164, 164)
+		stylebox.region_rect = Rect2(0, 64, 64, 64)
 	else:
-		stylebox.region_rect = Rect2(0, 0, 164, 164)
+		stylebox.region_rect = Rect2(0, 0, 64, 64)

@@ -6,29 +6,35 @@ const FDD : int = 2
 const EDD : int = 3
 const WAV : int = 4
 
+const MIX_SAMPLERATE : int = 48000
+
 const V06X = preload("res://bin/v06x.gdns")
-onready var v06x = V06X.new()
+onready var v06x : V06X = V06X.new()
 
-var bytes
+var texture : ImageTexture
+var textureImage : Image
+var playback : AudioStreamPlayback
 
-var texture
-var textureImage
-var playback
+onready var gamepad_label = $HUD/PanelContainer/MarginContainer/HBoxContainer/GamepadLabel
+onready var rus_lat = $HUD/PanelContainer/MarginContainer/HBoxContainer/RusLat
+onready var shader_sel = $HUD/PanelContainer/MarginContainer/HBoxContainer/ShaderSelectOB
+onready var volume_knob = $HUD/PanelContainer/MarginContainer/HBoxContainer/VolumeKnob
 
 func updateTexture(buttmap : PoolByteArray):
 	if textureImage == null:
 		textureImage = Image.new()
 		textureImage.create_from_data(576,288,false,Image.FORMAT_RGBA8,buttmap)
-	
+		
 	if texture == null:
 		texture = ImageTexture.new()
-		texture.create(576, 288, Image.FORMAT_RGBA8, 7|Texture.FLAG_VIDEO_SURFACE)
+		texture.create(576, 288, Image.FORMAT_RGBA8, Texture.FLAG_VIDEO_SURFACE) # no filtering
 		$VectorScreen.texture = texture
 
 	textureImage.data.data = buttmap
 	texture.set_data(textureImage)
 
 func _ready():
+	Engine.target_fps = 50	
 	set_process(true)
 	var beef = v06x.Init()
 	print("beef: %08x" % beef)
@@ -38,26 +44,55 @@ func _ready():
 
 	playback = $AudioStreamPlayer.get_stream_playback()
 	$AudioStreamPlayer.play()
+		
 	onSizeChanged()
-	
+	Input.connect("joy_connection_changed", self, "_on_joy_connection_changed")
+	_on_joy_connection_changed(0, Input.get_joy_name(0) != "")
+	_on_joy_connection_changed(1, Input.get_joy_name(1) != "")
+
+	create_shader_list()
+
 	load_state()
 
 func _notification(what):
+	#print("notification: ", what)
 	if what == MainLoop.NOTIFICATION_WM_QUIT_REQUEST:
+		set_process(false)
+		$AudioStreamPlayer.stop()
 		save_state()
+		#$VectorScreen.texture = null
+		#texture.set_data(null)
+		#texture = null
+		#textureImage = null
 
+# Called whenever a joypad has been connected or disconnected.
+func _on_joy_connection_changed(device_id, connected):
+	if device_id == 0:
+		gamepad_label.name1 = Input.get_joy_name(device_id)
+		gamepad_label.enabled1 = connected 
+	if device_id == 1:
+		gamepad_label.name2 = Input.get_joy_name(device_id)
+		gamepad_label.enabled2 = connected
 
 func refresh_files(item):
 	$FileDialog._update_file_list()
 
+func poll_joy(cur_joy):
+	return ~(int(Input.is_joy_button_pressed(cur_joy, JOY_DPAD_RIGHT)) \
+		| (int(Input.is_joy_button_pressed(cur_joy, JOY_DPAD_LEFT)) << 1) \
+		| (int(Input.is_joy_button_pressed(cur_joy, JOY_DPAD_UP)) << 2) \
+		| (int(Input.is_joy_button_pressed(cur_joy, JOY_DPAD_DOWN)) << 3) \
+		| (int(Input.is_joy_button_pressed(cur_joy, JOY_XBOX_A)) << 6) \
+		| (int(Input.is_joy_button_pressed(cur_joy, JOY_XBOX_B)) << 7))
+		
 func _process(delta):
+	v06x.SetJoysticks(poll_joy(0), poll_joy(1))
+	
 	var buttmap = v06x.ExecuteFrame()  # buttmap is 576x288, 32bpp
 	updateTexture(buttmap)
-	#print("delta=", delta)
-	#print(playback.get_frames_available())
-	var sound = v06x.GetSound(960)  # playback.get_frames_available())
+	var sound = v06x.GetSound(MIX_SAMPLERATE / Engine.target_fps)  # playback.get_frames_available())
 	update_playback(sound)
-	$HUD/PanelContainer/MarginContainer/HBoxContainer/RusLat.set_lit(v06x.GetRusLat())
+	rus_lat.set_lit(v06x.GetRusLat())
 
 func _on_Button2_pressed():
 	$FileDialog.popup()
@@ -113,16 +148,20 @@ func _input(event: InputEvent):
 		return
 	if event is InputEventKey:
 		if event.pressed:
-			if not event.echo: 
-				#print("KeyDown: %08x" % event.scancode)
-				v06x.KeyDown(event.scancode)
+			#withmod = event.get_scancode_with_modifiers()
+			if not event.echo:
+				#print("KeyDown: %08d" % event.scancode)
+				if event.scancode == KEY_ENTER and event.alt:
+					OS.set_window_fullscreen(not OS.window_fullscreen)
+				else:	  
+					v06x.KeyDown(event.scancode)
 			get_tree().set_input_as_handled()
 		elif not event.pressed:
 			v06x.KeyUp(event.scancode)
 			get_tree().set_input_as_handled()
 			
 func _on_main_gui_input(event):
-	if event is InputEventMouseButton:
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
 		if event.pressed:
 			$HUD.visible = not $HUD.visible
 
@@ -131,6 +170,7 @@ func update_playback(buffer : PoolVector2Array):
 
 func _on_Volume_value_changed(value):
 	$AudioStreamPlayer.volume_db = value
+	volume_knob.hint_tooltip = "Громкость: %+3.0fdB" % value
 
 func save_state():
 	var state = v06x.ExportState()
@@ -158,6 +198,8 @@ func save_config():
 	cfg.load("user://v06x.settings")
 	cfg.set_value("FileDialog", "current_dir", $FileDialog.current_dir)
 	cfg.set_value("FileDialog", "current_path", $FileDialog.current_path)
+	cfg.set_value("sound", "volume_db", $AudioStreamPlayer.volume_db)
+	cfg.set_value("shader", "index", shader_sel.selected)
 	cfg.save("user://v06x.settings")
 
 func load_config():
@@ -170,3 +212,32 @@ func load_config():
 		var path = cfg.get_value("FileDialog", "current_path")
 		if path != null:
 			$FileDialog.current_path = path
+		shader_sel.select(cfg.get_value("shader", "index", 0))
+		_on_ShaderSel_value_changed(shader_sel.selected)
+		
+		volume_knob.value = cfg.get_value("sound", "volume_db", 0)
+		_on_Volume_value_changed(volume_knob.value)
+		
+
+
+#const shaders = ["nop", "negative", "bw", "bw-negative", "singlepass"]
+var shaders = []
+
+func create_shader_list():
+	var dir = Directory.new()
+	if dir.open("res://shaders/") == OK:
+		dir.list_dir_begin()
+		var file_name : String = dir.get_next()
+		while file_name != "":
+			if file_name.ends_with(".shader"):
+				var shadr = file_name.get_file().trim_suffix(".shader")
+				shader_sel.add_item(shadr)
+				shaders.push_back(shadr)
+			file_name = dir.get_next()
+		dir.list_dir_end()
+		
+
+func _on_ShaderSel_value_changed(value):
+	var mat:ShaderMaterial = $VectorScreen.material
+	mat.shader = load("res://shaders/%s.shader" % shaders[value])
+	shader_sel.hint_tooltip = shaders[value]

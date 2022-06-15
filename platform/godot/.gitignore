@@ -1,0 +1,7 @@
+v06x/bin/win32/*.dll
+v06x/bin/win64/*.dll
+.import
+*.import
+*.png.import
+.sconsign.*
+*.orig

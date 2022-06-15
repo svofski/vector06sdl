@@ -9,6 +9,10 @@ Emulator::Emulator(Board & borat) : board(borat)
 {
 }
 
+Emulator::~Emulator()
+{
+}
+
 void Emulator::execute_frame()
 {
     for (int i = 0; i < N_SCANCODES; ++i) {
@@ -63,6 +67,11 @@ void Emulator::keyup(int scancode) {
             this->keyups[i] = scancode;
         }
     }
+}
+
+void Emulator::set_joysticks(int joy_0e, int joy_0f)
+{
+    board.set_joysticks(joy_0e, joy_0f);
 }
 
 void Emulator::start_emulator_thread()
