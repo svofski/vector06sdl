@@ -1,3 +1,7 @@
+// this is only useful in the full SDL verion
+// MSC is only supported for godot so no need to read files
+#if !defined(_MSC_VER)
+
 #include <stdio.h>
 #include <time.h>
 #include <iostream>
@@ -84,3 +88,4 @@ std::vector<uint8_t> load_binfile(const std::string path_)
 }
 
 }
+#endif

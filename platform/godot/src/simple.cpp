@@ -32,6 +32,7 @@ V06X_DECL(V06X_ExportState);
 V06X_DECL(V06X_RestoreState);
 V06X_DECL(V06X_GetRusLat);
 V06X_DECL(V06X_SetJoysticks);
+V06X_DECL(V06X_SetVolumes);
 
 #undef V06X_DECL
 
@@ -90,6 +91,7 @@ extern "C" void GDN_EXPORT godot_nativescript_init(void* p_handle)
     V06X_METHOD("RestoreState", V06X_RestoreState);
     V06X_METHOD("GetRusLat", V06X_GetRusLat);
     V06X_METHOD("SetJoysticks", V06X_SetJoysticks);
+    V06X_METHOD("SetVolumes", V06X_SetVolumes);
 #undef V06X_METHOD
 }
 

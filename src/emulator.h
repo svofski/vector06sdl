@@ -5,7 +5,11 @@
 #include <boost/thread/concurrent_queues/sync_queue.hpp>
 #include <boost/thread/concurrent_queues/sync_priority_queue.hpp>
 #else
+#if defined(_MSC_VER)
+// ???
+#else
 #include <pthread.h>
+#endif
 #endif
 
 #include "board.h"
@@ -55,9 +59,13 @@ private:
     std::array<SDL_GameController *, 2> joy;
     std::array<uint8_t, 2> joystate;
 #else
+#if !defined(_MSC_VER)
     pthread_t thread;
     pthread_mutex_t mutex;
     pthread_cond_t cond;
+#else
+    // ???
+#endif
     threadevent ui_to_engine_event;
     threadevent engine_to_ui_event;
     int keydowns[N_SCANCODES];
@@ -81,6 +89,7 @@ public:
     void keydown(int scancode);
     void keyup(int scancode);
     void set_joysticks(int joy_0e, int joy_0f);
+    void set_volumes(float timer, float beeper, float ay, float covox, float master);
     void export_pixel_bytes(uint8_t * dst);
     void export_audio_frame(float * dst, size_t count);
     size_t pixel_bytes_size();

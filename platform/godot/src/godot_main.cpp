@@ -16,7 +16,9 @@
 #include "ay.h"
 #include "wav.h"
 #include "util.h"
+#if 0
 #include "scriptnik.h"
+#endif
 
 #include "v06x_class.h"
 
@@ -38,7 +40,9 @@ TV tv;
 PixelFiller filler(memory, io, tv);
 Board board(memory, io, filler, soundnik, tv, tape_player);
 Emulator lator(board);
+#if 0
 Scriptnik scriptnik;
+#endif
 
 struct LoadKind {
     enum {
@@ -350,5 +354,21 @@ godot_variant V06X_RestoreState(godot_object* p_instance, void* p_method_data,
 
     godot_variant ret;
     api->godot_variant_new_bool(&ret, result);
+    return ret;
+}
+
+godot_variant V06X_SetVolumes(godot_object* p_instance, void* p_method_data, 
+        void* p_user_data, int p_num_args, godot_variant** p_args)
+{
+    double vol8253 = api->godot_variant_as_real(p_args[0]);
+    double volBeep = api->godot_variant_as_real(p_args[1]);
+    double volAY   = api->godot_variant_as_real(p_args[2]);
+    double volCovox= api->godot_variant_as_real(p_args[3]);
+    double volMaster= api->godot_variant_as_real(p_args[4]);
+
+    lator.set_volumes(vol8253, volBeep, volAY, volCovox, volMaster);
+
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
     return ret;
 }

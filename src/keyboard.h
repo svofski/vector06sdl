@@ -297,7 +297,9 @@ public:
                 this->us = !keyup;
                 break; // ctrl/us
             case SDL_SCANCODE_LGUI:
+#if !defined(__GODOT__)
             case SDL_SCANCODE_LALT:
+#endif
             case SDL_SCANCODE_F6:
                 this->rus = !keyup;
                 break; // cmd/rus
@@ -430,17 +432,20 @@ private:
                 SDL_SCANCODE_F3,            0x120,
                 SDL_SCANCODE_F2,            0x110,
                 SDL_SCANCODE_F1,            0x108,
-                SDL_SCANCODE_ESCAPE,        0x104,
-                SDL_SCANCODE_F8,            0x102, // СТР
-                SDL_SCANCODE_F7,            0x101, // ^\ ?
-
+                SDL_SCANCODE_ESCAPE,        0x104, // AR2
+                SDL_SCANCODE_END,           0x102, // CTP  ~ End
+                SDL_SCANCODE_HOME,          0x101, // ^\ ? ~ Home
                 SDL_SCANCODE_DOWN,          0x080,
                 SDL_SCANCODE_RIGHT,         0x040,
                 SDL_SCANCODE_UP,            0x020,
                 SDL_SCANCODE_LEFT,          0x010,
                 SDL_SCANCODE_BACKSPACE,     0x008,
                 SDL_SCANCODE_RETURN,        0x004,
-                SDL_SCANCODE_RALT,          0x002,
+#if defined(__GODOT__)
+                SDL_SCANCODE_LALT,          0x002, // PS - godot has no right mod keys
+#else
+                SDL_SCANCODE_RALT,          0x002, // PS
+#endif
                 SDL_SCANCODE_TAB,           0x001,
 #endif
                 //SCANCODE_SPACE,             0x780,

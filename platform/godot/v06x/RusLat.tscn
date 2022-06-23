@@ -6,12 +6,13 @@
 [sub_resource type="StyleBoxTexture" id=1]
 resource_name = "ruslat"
 texture = ExtResource( 1 )
-region_rect = Rect2( 0, 0, 64, 128 )
+region_rect = Rect2( 0, 0, 64, 64 )
 
 [node name="RusLat" type="Label"]
 margin_right = 32.0
 margin_bottom = 32.0
 rect_min_size = Vector2( 32, 32 )
+hint_tooltip = "РУС"
 custom_styles/normal = SubResource( 1 )
 text = "     "
 script = ExtResource( 2 )

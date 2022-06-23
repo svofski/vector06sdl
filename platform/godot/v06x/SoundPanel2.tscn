@@ -1,0 +1,100 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://SoundPanel2.gd" type="Script" id=1]
+[ext_resource path="res://Knob.tscn" type="PackedScene" id=2]
+
+[node name="Panel" type="Panel"]
+rect_min_size = Vector2( 0, 120 )
+script = ExtResource( 1 )
+
+[node name="VBoxContainer" type="HBoxContainer" parent="."]
+margin_left = 50.0
+margin_right = 414.0
+margin_bottom = 120.0
+
+[node name="Knob8253" parent="VBoxContainer" instance=ExtResource( 2 )]
+margin_top = 28.0
+margin_right = 64.0
+margin_bottom = 92.0
+rect_min_size = Vector2( 64, 64 )
+hint_tooltip = "Таймер ВИ53"
+size_flags_horizontal = 4
+size_flags_vertical = 4
+max_value = 11.0
+value = 10.0
+speed = 0.15
+rounded = true
+round_precision = 10
+caption = "8253"
+center_led = true
+stops = [ 10 ]
+
+[node name="KnobBeep" parent="VBoxContainer" instance=ExtResource( 2 )]
+margin_left = 68.0
+margin_top = 28.0
+margin_right = 132.0
+margin_bottom = 92.0
+rect_min_size = Vector2( 64, 64 )
+hint_tooltip = "Бипер и лента"
+size_flags_horizontal = 4
+size_flags_vertical = 4
+max_value = 11.0
+value = 10.0
+speed = 0.15
+rounded = true
+round_precision = 10
+caption = "Beep"
+center_led = true
+stops = [ 10 ]
+
+[node name="KnobAY" parent="VBoxContainer" instance=ExtResource( 2 )]
+margin_left = 136.0
+margin_top = 28.0
+margin_right = 200.0
+margin_bottom = 92.0
+rect_min_size = Vector2( 64, 64 )
+hint_tooltip = "AY-3-8912"
+size_flags_horizontal = 4
+size_flags_vertical = 4
+max_value = 11.0
+value = 10.0
+speed = 0.15
+rounded = true
+round_precision = 10
+caption = "AY"
+center_led = true
+stops = [ 10 ]
+
+[node name="KnobCovox" parent="VBoxContainer" instance=ExtResource( 2 )]
+margin_left = 204.0
+margin_top = 28.0
+margin_right = 268.0
+margin_bottom = 92.0
+rect_min_size = Vector2( 64, 64 )
+hint_tooltip = "ЦАП на ПУ"
+size_flags_horizontal = 4
+size_flags_vertical = 4
+max_value = 11.0
+value = 10.0
+speed = 0.15
+rounded = true
+round_precision = 10
+caption = "Covox"
+center_led = true
+stops = [ 10 ]
+
+[node name="KnobMaster" parent="VBoxContainer" instance=ExtResource( 2 )]
+margin_left = 272.0
+margin_top = 28.0
+margin_right = 336.0
+margin_bottom = 92.0
+rect_min_size = Vector2( 64, 64 )
+size_flags_vertical = 4
+max_value = 11.0
+value = 5.0
+speed = 0.15
+rounded = true
+round_precision = 10
+caption = "Master"
+center_led = true
+stops = [ 5, 10 ]

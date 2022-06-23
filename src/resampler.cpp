@@ -1,6 +1,13 @@
 #include <cmath>
 #include "resampler.h"
+
+#if defined(_MSC_VER)
+#define WITHOUT_COREDSP
+#endif
+
+#if !defined(WITHOUT_COREDSP)
 #include "coredsp/filter.h"
+#endif
 
 #define SAVERAW 0
 #define SAVERAW_DOWNSAMPLED 0
@@ -34,8 +41,10 @@ using namespace std;
 
 #include "../filters/interp.h"
 
+#if !defined(WITHOUT_COREDSP)
 static constexpr int NTAPS = (ALLTAPS+Resampler::UP)/Resampler::UP;
 typedef coredsp::FIR<NTAPS, coreutil::simd_t<float>> fir_t;
+#endif
 
 Resampler::Resampler() 
 {
@@ -51,7 +60,7 @@ Resampler::Resampler()
 
 void Resampler::create_filter()
 {
-
+#if !defined(WITHOUT_COREDSP)
     float padded[ALLTAPS + UP];
     float n[NTAPS];
 
@@ -71,6 +80,7 @@ void Resampler::create_filter()
         fir->coefs(n);
         this->filterbank[phase] = fir;
     }
+#endif
 
     dcm_ctr = 0;
 }
@@ -84,6 +94,8 @@ float Resampler::sample(float s)
         fwrite(buf, 1, sizeof(buf), raw);
     }
 #endif
+
+#if !defined(WITHOUT_COREDSP)
     if (!this->thru) {
         /* Rational resampler as described in 
          * "Introduction to Digital Resampling" by Dr. Mike Porteous
@@ -135,7 +147,9 @@ float Resampler::sample(float s)
         }
 #endif
     }
-    else {
+    else 
+#endif // !defined(WITHOUT_COREDSP)
+    {
         dcm_ctr += UP;
         if (dcm_ctr >= DOWN) {
             dcm_ctr -= DOWN;
@@ -149,9 +163,11 @@ float Resampler::sample(float s)
 
 Resampler::~Resampler()
 {
+#if !defined(WITHOUT_COREDSP)
     for (int i = 0; i < UP; ++i) {
         delete (fir_t *)this->filterbank[i];
     }
+#endif
 
 #if SAVERAW || SAVERAW_DOWNSAMPLED
     fclose(raw);

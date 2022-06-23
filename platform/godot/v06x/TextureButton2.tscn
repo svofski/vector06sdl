@@ -1,0 +1,21 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://TextureButton2.gd" type="Script" id=2]
+
+[node name="TextureButton2" type="PanelContainer"]
+margin_left = 439.0
+margin_top = 14.0
+margin_right = 471.0
+margin_bottom = 46.0
+rect_min_size = Vector2( 32, 32 )
+hint_tooltip = "Шейдер"
+size_flags_vertical = 4
+script = ExtResource( 2 )
+
+[node name="TextureButton" type="TextureButton" parent="."]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 25.0
+margin_bottom = 25.0
+mouse_filter = 1
+expand = true

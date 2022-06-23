@@ -1,8 +1,4 @@
 #include "emulator.h"
-#include "pthread.h"
-#include <sched.h>
-#include <sys/time.h>
-//#include <sys/resource.h>
 #include "util.h"
 
 Emulator::Emulator(Board & borat) : board(borat)
@@ -72,6 +68,16 @@ void Emulator::keyup(int scancode) {
 void Emulator::set_joysticks(int joy_0e, int joy_0f)
 {
     board.set_joysticks(joy_0e, joy_0f);
+}
+
+void Emulator::set_volumes(float timer, float beeper, float ay, float covox, 
+        float master)
+{
+    Options.volume.timer = timer;
+    Options.volume.beeper = beeper;
+    Options.volume.ay = ay;
+    Options.volume.covox = covox;
+    Options.volume.global = master;
 }
 
 void Emulator::start_emulator_thread()

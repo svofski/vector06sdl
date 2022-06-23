@@ -59,6 +59,7 @@ elif env['platform'] == "windows":
     env.Append(ENV = os.environ)
 
     env.Append(CCFLAGS = ['-DWIN32', '-D_WIN32', '-D_WINDOWS', '-W3', '-GR', '-D_CRT_SECURE_NO_WARNINGS'])
+    env.Append(CCFLAGS = ['/std:c++20'])
     if env['target'] in ('debug', 'd'):
         env.Append(CCFLAGS = ['-EHsc', '-D_DEBUG', '-MDd'])
     else:
@@ -93,8 +94,6 @@ elif env['platform'] == "cross-mingw":
 elif env['platform'] == "cross-mingw64":
     env['CXX']='x86_64-w64-mingw32-g++'
     env['CC']='x86_64-w64-mingw32-gcc'
-    env.Append(CCFLAGS = ['-msse'])
-    #env.Append(LINKFLAGS = ['-Wl,-no-undefined', '--enable-runtime-pseudo-reloc', '-limm32', '-lwinmm', '-lversion', '-lws2_32', '-lmswsock', '-static-libgcc', '-static-libstdc++', '-lsetupapi', '-Wl,--subsystem,windows'])
     env.Append(LINKFLAGS = ['-static'])
     env['target_path'] += 'win64/'
     # This makes sure to keep the session environment variables on windows,
@@ -102,6 +101,7 @@ elif env['platform'] == "cross-mingw64":
     env.Append(ENV = os.environ)
 
     if env['target'] in ('debug', 'd'):
+        env.Append(CCFLAGS = ['-DWITHOUT_COREDSP=1']) # for shites and goggles
         env.Append(CCFLAGS = ['-fPIC', '-g3','-Og', '-std=c++17'])
     else:
         env.Append(CCFLAGS = ['-fPIC', '-g','-O3', '-std=c++17'])
@@ -142,7 +142,8 @@ for f in ['boot/boot.c',
         '../../src/util.cpp',
         '../../src/sound.cpp',
         '../../src/resampler.cpp',
-        '../../src/scriptnik.cpp']:
+        # '../../src/scriptnik.cpp'
+        ]:
     sources += Glob(f)
 
 

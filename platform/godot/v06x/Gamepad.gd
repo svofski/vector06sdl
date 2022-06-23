@@ -46,7 +46,7 @@ func update_hint():
 			msg += "\n"
 		msg += "2: " + name2
 	if len(msg) == 0:
-		msg = "No game controllers connected"
+		msg = "Геймпады не подключены"
 	self.hint_tooltip = msg
 
 func _set_name1(n):

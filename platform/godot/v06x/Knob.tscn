@@ -1,15 +1,71 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=8 format=2]
 
 [ext_resource path="res://Knob.gd" type="Script" id=1]
-[ext_resource path="res://assets/knob1.png" type="Texture" id=2]
+[ext_resource path="res://assets/unipo-orange-128px-bevel.png" type="Texture" id=2]
+[ext_resource path="res://assets/Dual_LED.png" type="Texture" id=3]
+[ext_resource path="res://assets/Rubik-Regular.ttf" type="DynamicFontData" id=4]
+[ext_resource path="res://assets/unipo-orange-128px-texture.png" type="Texture" id=5]
 
-[node name="Knob" type="Control"]
-margin_right = 72.0
-margin_bottom = 72.0
+[sub_resource type="StyleBoxFlat" id=1]
+bg_color = Color( 0.25098, 0.25098, 0.25098, 0.407843 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color( 0.180392, 0.180392, 0.180392, 1 )
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="DynamicFont" id=2]
+size = 10
+font_data = ExtResource( 4 )
+
+[node name="Knob" type="Container"]
+margin_right = 79.0
+margin_bottom = 76.0
 rect_min_size = Vector2( 32, 32 )
 script = ExtResource( 1 )
+tag = -1
+color_ledhole = Color( 0.1, 0.1, 0.1, 1 )
+color_ledlight = Color( 1, 0.562, 0.4, 1 )
+
+[node name="bg" type="Panel" parent="."]
+visible = false
+margin_right = 79.0
+margin_bottom = 76.0
+mouse_filter = 2
+size_flags_horizontal = 2
+size_flags_vertical = 2
+custom_styles/panel = SubResource( 1 )
+
+[node name="Bevel" type="Sprite" parent="."]
+position = Vector2( 39.5, 38 )
+scale = Vector2( 0.59375, 0.59375 )
+texture = ExtResource( 2 )
+vframes = 101
 
 [node name="Sprite" type="Sprite" parent="."]
-texture = ExtResource( 2 )
-centered = false
-vframes = 101
+position = Vector2( 39.5, 38 )
+scale = Vector2( 0.59375, 0.59375 )
+texture = ExtResource( 5 )
+
+[node name="Label" type="Label" parent="."]
+visible = false
+margin_right = 40.0
+margin_bottom = 14.0
+custom_colors/font_color = Color( 0.513726, 0.513726, 0.513726, 1 )
+custom_fonts/font = SubResource( 2 )
+align = 1
+
+[node name="Led" type="Sprite" parent="."]
+position = Vector2( 39.5, 38 )
+scale = Vector2( 0.59375, 0.59375 )
+texture = ExtResource( 3 )
+vframes = 2
+frame = 1
+
+[node name="Pointer" type="Sprite" parent="."]
+position = Vector2( 39.5, 38 )
+scale = Vector2( 0.59375, 0.59375 )

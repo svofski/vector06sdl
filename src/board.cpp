@@ -56,13 +56,16 @@ void Board::init()
 
 void Board::init_bootrom()
 {
+#if !defined(_MSC_VER)
     std::vector<uint8_t> userboot = util::load_binfile(Options.bootromfile);
     if (userboot.size() > 0) {
         printf("User bootrom: %s (%d bytes)\n", Options.bootromfile.c_str(),
                 (int)userboot.size());
         this->boot = userboot;
     }
-    else {
+    else 
+#endif
+    {
         // inialize bootrom using default boot
         this->boot.resize((size_t)boots_bin_len);
         uint8_t * src = (uint8_t *) &boots_bin;
@@ -356,7 +359,9 @@ void Board::dump_memory(int start, int count)
 
 std::string Board::read_memory(int start, int count)
 {
-    char buf[count * 2 + 1];
+    // VLA: char buf[count * 2 + 1];
+    std::string buf;
+    buf.reserve(count * 2 + 1);
     for (int i = start, k = 0; i < start + count; ++i, k+=2) {
         sprintf(&buf[k], "%02x", this->memory.read(i, false));
     }

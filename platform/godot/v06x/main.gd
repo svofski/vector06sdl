@@ -17,8 +17,17 @@ var playback : AudioStreamPlayback
 
 onready var gamepad_label = $HUD/PanelContainer/MarginContainer/HBoxContainer/GamepadLabel
 onready var rus_lat = $HUD/PanelContainer/MarginContainer/HBoxContainer/RusLat
-onready var shader_sel = $HUD/PanelContainer/MarginContainer/HBoxContainer/ShaderSelectOB
+onready var shader_sel = $HUD/PanelContainer/MarginContainer/HBoxContainer/ShaderSelectButton
 onready var volume_knob = $HUD/PanelContainer/MarginContainer/HBoxContainer/VolumeKnob
+onready var panel2 = $HUD/Panel2
+onready var sound_panel = $HUD/Panel2/SoundPanel
+onready var shader_panel = $HUD/Panel2/ShaderPanel
+onready var osk_panel = $HUD/Panel2/OnScreenKeyboard
+var shader_index = 0
+var shaders = []
+
+onready var resume_timer: Timer = $ResumeTimer
+onready var click_timer: Timer = $ClickTimer
 
 func updateTexture(buttmap : PoolByteArray):
 	if textureImage == null:
@@ -29,12 +38,14 @@ func updateTexture(buttmap : PoolByteArray):
 		texture = ImageTexture.new()
 		texture.create(576, 288, Image.FORMAT_RGBA8, Texture.FLAG_VIDEO_SURFACE) # no filtering
 		$VectorScreen.texture = texture
+		shader_panel.set_texture(texture)
 
 	textureImage.data.data = buttmap
 	texture.set_data(textureImage)
 
 func _ready():
-	Engine.target_fps = 50	
+	Engine.target_fps = 50
+	OS.set_use_vsync(false)
 	set_process(true)
 	var beef = v06x.Init()
 	print("beef: %08x" % beef)
@@ -49,21 +60,32 @@ func _ready():
 	Input.connect("joy_connection_changed", self, "_on_joy_connection_changed")
 	_on_joy_connection_changed(0, Input.get_joy_name(0) != "")
 	_on_joy_connection_changed(1, Input.get_joy_name(1) != "")
-
 	create_shader_list()
+	shader_panel.set_shader_list(shaders)
 
 	load_state()
+	_on_SoundPanel_volumes_changed()
 
+	# this timer is to resume audio after toggle fullscreen (avoid hiccups)
+	resume_timer.one_shot = true
+	resume_timer.connect("timeout", self, "_timer_resume")
+	# this timer is to delay single clicks and get clean doubleclicks
+	click_timer.wait_time = 0.25
+	click_timer.one_shot = true
+	click_timer.connect("timeout", self, "_on_click_timer")
+	
+	$HUD/Panel2/OnScreenKeyboard.connect("key_make", self, "_osk_make")
+	$HUD/Panel2/OnScreenKeyboard.connect("key_break", self, "_osk_break")
+	
+	
 func _notification(what):
 	#print("notification: ", what)
 	if what == MainLoop.NOTIFICATION_WM_QUIT_REQUEST:
 		set_process(false)
 		$AudioStreamPlayer.stop()
 		save_state()
-		#$VectorScreen.texture = null
-		#texture.set_data(null)
-		#texture = null
-		#textureImage = null
+	if what == NOTIFICATION_WM_FOCUS_OUT:
+		osk_panel.all_keys_up()
 
 # Called whenever a joypad has been connected or disconnected.
 func _on_joy_connection_changed(device_id, connected):
@@ -110,9 +132,12 @@ func onSizeChanged():
 		rs = Vector2(sz[0], sz[0] * 1/maintained_aspect)
 	self.rect_size = sz
 	$VectorScreen.rect_size = rs
-	$VectorScreen.rect_position = Vector2(sz[0]/2 - rs[0]/2,
-		sz[1]/2 - rs[1]/2)
-	$HUD.rect_size = sz
+	$VectorScreen.rect_position = Vector2(sz[0]/2 - rs[0]/2, 0)
+		#sz[1]/2 - rs[1]/2)
+	$HUD.rect_size.x = rs.x
+	$HUD.rect_size.y = rect_size.y
+	$HUD.rect_position.x = $VectorScreen.rect_position.x
+	$HUD.rect_position.y = 0 #rect_size.y - $HUD.rect_size.y
 
 func _on_FileDialog_file_selected(path):
 	print("File selected: ", path)
@@ -143,34 +168,48 @@ func _on_blkvvod_pressed():
 func _on_blksbr_pressed():
 	v06x.Reset(false)
 
+func _osk_make(scancode):
+	print("make: ", scancode)
+	v06x.KeyDown(scancode)
+	
+func _osk_break(scancode):
+	print("break: ", scancode)
+	v06x.KeyUp(scancode)
+
 func _input(event: InputEvent):
 	if $FileDialog.visible:
 		return
 	if event is InputEventKey:
 		if event.pressed:
-			#withmod = event.get_scancode_with_modifiers()
 			if not event.echo:
-				#print("KeyDown: %08d" % event.scancode)
+				print("KeyDown: %08d" % event.scancode)
 				if event.scancode == KEY_ENTER and event.alt:
-					OS.set_window_fullscreen(not OS.window_fullscreen)
-				else:	  
-					v06x.KeyDown(event.scancode)
+					toggle_fullscreen()
+				else:
+					osk_panel._on_key_make(event.scancode)
+					#v06x.KeyDown(event.scancode)
+					#osk_panel.show_key_down(event.scancode)
 			get_tree().set_input_as_handled()
 		elif not event.pressed:
-			v06x.KeyUp(event.scancode)
+			#v06x.KeyUp(event.scancode)
+			osk_panel._on_key_break(event.scancode)
+			#osk_panel.show_key_up(event.scancode)
 			get_tree().set_input_as_handled()
-			
+
+func _on_click_timer():
+	$HUD.visible = not $HUD.visible
+	
 func _on_main_gui_input(event):
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
 		if event.pressed:
-			$HUD.visible = not $HUD.visible
+			if event.doubleclick:
+				click_timer.stop()
+				toggle_fullscreen()
+			else:
+				click_timer.start()
 
 func update_playback(buffer : PoolVector2Array):
 	playback.push_buffer(buffer)
-
-func _on_Volume_value_changed(value):
-	$AudioStreamPlayer.volume_db = value
-	volume_knob.hint_tooltip = "Громкость: %+3.0fdB" % value
 
 func save_state():
 	var state = v06x.ExportState()
@@ -199,7 +238,7 @@ func save_config():
 	cfg.set_value("FileDialog", "current_dir", $FileDialog.current_dir)
 	cfg.set_value("FileDialog", "current_path", $FileDialog.current_path)
 	cfg.set_value("sound", "volume_db", $AudioStreamPlayer.volume_db)
-	cfg.set_value("shader", "index", shader_sel.selected)
+	cfg.set_value("shader", "index", shader_index)
 	cfg.save("user://v06x.settings")
 
 func load_config():
@@ -212,16 +251,11 @@ func load_config():
 		var path = cfg.get_value("FileDialog", "current_path")
 		if path != null:
 			$FileDialog.current_path = path
-		shader_sel.select(cfg.get_value("shader", "index", 0))
-		_on_ShaderSel_value_changed(shader_sel.selected)
+		shader_index = cfg.get_value("shader", "index", 0)
+		_on_shader_selected(shader_index)
 		
 		volume_knob.value = cfg.get_value("sound", "volume_db", 0)
 		_on_Volume_value_changed(volume_knob.value)
-		
-
-
-#const shaders = ["nop", "negative", "bw", "bw-negative", "singlepass"]
-var shaders = []
 
 func create_shader_list():
 	var dir = Directory.new()
@@ -231,13 +265,71 @@ func create_shader_list():
 		while file_name != "":
 			if file_name.ends_with(".shader"):
 				var shadr = file_name.get_file().trim_suffix(".shader")
-				shader_sel.add_item(shadr)
 				shaders.push_back(shadr)
 			file_name = dir.get_next()
 		dir.list_dir_end()
 		
 
-func _on_ShaderSel_value_changed(value):
+func _on_shader_selected(num):
+	shader_index = num
+	var shader_name = shaders[num]
 	var mat:ShaderMaterial = $VectorScreen.material
-	mat.shader = load("res://shaders/%s.shader" % shaders[value])
-	shader_sel.hint_tooltip = shaders[value]
+	mat.shader = load("res://shaders/%s.shader" % shader_name)
+	panel2.visible = false
+	
+# Sound stuffs: Volume etc
+
+func _on_Volume_value_changed(value):
+	$AudioStreamPlayer.volume_db = value
+	volume_knob.hint_tooltip = "Громкость: %+3.0fdB" % value
+
+func _on_SoundPanel_volumes_changed():
+	v06x.SetVolumes(sound_panel.get_volume(0),
+		sound_panel.get_volume(1),
+		sound_panel.get_volume(2),
+		sound_panel.get_volume(3),
+		sound_panel.get_volume(4))
+
+func _on_oskeyboard_pressed():
+	if panel2.visible and osk_panel.visible:
+		panel2.visible = false
+	elif not panel2.visible:
+		panel2.visible = true
+	if panel2.visible:
+		sound_panel.visible = false
+		shader_panel.visible = false
+		osk_panel.visible = true
+
+func _on_shaderselect_pressed():
+	if panel2.visible and shader_panel.visible:
+		panel2.visible = false	
+	elif not panel2.visible:
+		panel2.visible = true
+	if panel2.visible:
+		osk_panel.visible = false
+		sound_panel.visible = false
+		shader_panel.visible = true
+		print("shader min_size=", shader_panel.rect_min_size)
+		#shader_panel.rect_min_size = shader_panel.grid_size
+
+func _on_VolumeKnob_pressed(tag):
+	if panel2.visible and sound_panel.visible:
+		panel2.visible = false	
+	elif not panel2.visible:
+		panel2.visible = true
+	if panel2.visible:
+		osk_panel.visible = false
+		shader_panel.visible = false
+		sound_panel.visible = true
+		#panel2.rect_min_size.y = sound_panel.rect_min_size.y
+		
+func _timer_resume():
+	$AudioStreamPlayer.stream_paused = false
+	#set_process(true)		
+		
+func toggle_fullscreen():
+	$AudioStreamPlayer.stream_paused = true
+	#set_process(false)
+	OS.window_fullscreen = not OS.window_fullscreen
+	resume_timer.wait_time = 0.1
+	resume_timer.start()
