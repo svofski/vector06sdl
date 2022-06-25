@@ -407,5 +407,9 @@ public:
         PA2 = *it++;
         PB2 = *it++;
         PC2 = *it++;
+
+        if (this->onmodechange) this->onmodechange((this->PB & 0x10) != 0);
+        if (this->onborderchange) this->onborderchange(this->PB & 0x0f);
+        if (this->onruslat) this->onruslat((this->PC & 8) == 0);
     }
 };

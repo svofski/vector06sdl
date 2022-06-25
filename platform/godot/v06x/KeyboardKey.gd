@@ -18,17 +18,24 @@ onready var overlay = $Overlay
 
 var engaged = false
 var hover = false
+onready var stylebox_hover = self.get_stylebox("key_hover").duplicate()
 
 func _ready():
 	if key_style == null:
 		key_style = get("custom_styles/panel")
 	update_visuals()
 	overlay.add_stylebox_override("panel", self.get_stylebox("key_normal"))
-	
+
 func _set_visual_pressed(v):
 	visual_pressed = v
-	if visual_pressed:
-		overlay.add_stylebox_override("panel", self.get_stylebox("key_hover"))
+	update_style()
+	
+func update_style():
+	if stylebox_hover == null:
+		return
+		
+	if visual_pressed or hover:
+		overlay.add_stylebox_override("panel", stylebox_hover)
 		var left = self.get_stylebox("panel").content_margin_left
 		var top = self.get_stylebox("panel").content_margin_top
 		var right = self.get_stylebox("panel").content_margin_right
@@ -73,10 +80,12 @@ func update_visuals():
 	rect_size = rect_min_size
 
 func _on_mouse_entered():
-	_set_visual_pressed(true)
+	hover = true
+	update_style()
 
 func _on_mouse_exited():
-	_set_visual_pressed(false)
+	hover = false
+	update_style()
 	if engaged:
 		engaged = false
 		emit_signal("key_break", scancode)
@@ -85,10 +94,12 @@ func _gui_input(event):
 	if event is InputEventMouseButton:
 		if event.pressed:
 			if event.button_index == BUTTON_LEFT:
-				emit_signal("key_make", scancode)
 				engaged = true
+				update_style()
+				emit_signal("key_make", scancode)
 		else:
 			if engaged and event.button_index == BUTTON_LEFT:
 				engaged = false
+				update_style()
 				emit_signal("key_break", scancode)
 

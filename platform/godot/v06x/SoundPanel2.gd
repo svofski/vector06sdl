@@ -1,4 +1,4 @@
-extends Panel
+extends PanelContainer
 
 signal volumes_changed
 
@@ -27,11 +27,16 @@ func _ready():
 	pass # Replace with function body.
 
 func get_volume(which: int):
-	var mul = 0.01
+	var mul = 0.01 * int(knobs[which].center_led)
 	if which == 4: # master volume 
-		mul = 0.5
-	return knobs[which].value * mul * int(knobs[which].center_led)
+		if not knobs[which].center_led:
+			return -INF
+		else:
+			return knobs[which].value
+	return knobs[which].value * mul
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-#func _process(delta):
-#	pass
+func set_volume(which: int, value: float):
+	var mul = 100
+	if which == 4: # master, dB
+		mul = 1
+	knobs[which].value = value * mul

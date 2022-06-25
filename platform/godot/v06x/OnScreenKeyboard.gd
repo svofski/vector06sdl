@@ -4,10 +4,13 @@ extends Panel
 signal key_make(scancode)
 signal key_break(scancode)
 
+export var bezel_color: Color = Color8(20, 20, 20, 128)
+
 const longKeys = [300, 311, 400, 401, 403, 404] # also brown
 const greenishKeys = [402, 50,51,52, 252, 200]
 const mustardKeys = [150,151,152, 250,251, 352]
 const spaceKey = 402
+const stickyCodes = [KEY_CONTROL, KEY_SHIFT]
 
 const top_text = [
 			"; 1 2 3 4 5 6 7 8 9 0 - /",
@@ -75,12 +78,9 @@ onready var style_brownpoop = $BrownPoop.key_style
 
 var scancode2key = {}
 var pressed_keys = {}
+var stuck_keys = []
 
 func _ready():
-	#var vbox1 = $HBoxContainer/VBoxContainer1
-	#for i in range(vbox1.get_child_count()-1, -1, -1):
-	#	var child = vbox1.get_child(i)
-	#	vbox1.remove_child(child)
 	create_keys()
 	
 func _notification(what):
@@ -88,10 +88,9 @@ func _notification(what):
 		(what == NOTIFICATION_VISIBILITY_CHANGED) or \
 		(what == NOTIFICATION_THEME_CHANGED):
 		
-		$HBoxContainer.add_constant_override("separation", $Normal.rect_min_size.x + HSEPARATION)	
+		$HBoxContainer.add_constant_override("separation", $Normal.rect_min_size.x * 0.75)	
 		rect_min_size = Vector2(($Normal.rect_min_size.x + HSEPARATION) * 17,
 			($Normal.rect_min_size.y + VSEPARATION) * 5)
-		#rect_size = rect_min_size
 
 func _get_key(code: int):
 	var row = floor(code/100)
@@ -100,31 +99,59 @@ func _get_key(code: int):
 	if col >= 50:
 		col -= 50
 		num = 1
-	
+
 	if num == 0: 
 		var marginbox = vbox.get_child(row)
-		var hbox = marginbox.get_child(0)
+		var bezel = marginbox.get_child(0)
+		var hbox = bezel.get_child(0)
 		return hbox.get_child(col)
 	else:
-		var hbox = vboxnum.get_child(row)
+		var panel = vboxnum.get_child(row)
+		var hbox = panel.get_child(0)
 		return hbox.get_child(col)
+
+func make_bezel_panel(row, num):
+	var bezelpanel = PanelContainer.new()
+	bezelpanel.theme = self.theme
+	var panel_sb: String
+	if num:
+		if row == 0:
+			panel_sb = "kbd_bezel_top"
+		elif row == 4:
+			panel_sb = "kbd_bezel_bottom"
+		else:
+			panel_sb = "kbd_bezel_mid"
+	else:
+		match row:
+			0: panel_sb = "kbd_bezel_both"
+			1: panel_sb = "kbd_bezel_mid2"
+			2: panel_sb = "kbd_bezel_top"
+			3: panel_sb = "kbd_bezel_mid"
+			4: panel_sb = "kbd_bezel_bottom"
+	var sb_bezeltop = bezelpanel.get_stylebox(panel_sb)
+	sb_bezeltop.set("bg_color", bezel_color)
+	bezelpanel.add_stylebox_override("panel", sb_bezeltop)
+	return bezelpanel
 
 func create_keys():
 	var height = 0
 	
 	var key
-	vbox.add_constant_override("separation", VSEPARATION)
-	vboxnum.add_constant_override("separation", VSEPARATION)
+	vbox.add_constant_override("separation", 0)
+	vboxnum.add_constant_override("separation", 0)
 	
 	for row in range(len(top_text)):
 		var txt_top  = top_text[row].split(" ")
 		var txt_bot = bottom_text[row].split(" ")
 		var txt_num = num_text[row].split(" ")
 		
+		# MarginBox[ BezelPanel[ HBox [Keys...]]]
 		var marginbox = MarginContainer.new()
+		var bezelpanel = make_bezel_panel(row, false)
+		marginbox.add_child(bezelpanel)
 		var hbox = HBoxContainer.new()
 		hbox.add_constant_override("separation", HSEPARATION)
-		marginbox.add_child(hbox)
+		bezelpanel.add_child(hbox)
 		
 		vbox.add_child(marginbox)
 		for col in range(len(txt_top)):
@@ -138,32 +165,39 @@ func create_keys():
 			key = makekey(s1, s2, scancodes[row][col])
 			hbox.add_child(key)
 			key.text_color = Color.black
+			key.key_style = style_normal
+			
 		#print("key size=", key.rect_size)
 		height = height + key.rect_min_size.y + 2*vbox.get_constant("separation")
 		if row == 1:
 			marginbox.add_constant_override("margin_left", key.rect_size.x / 2)
+			marginbox.add_constant_override("margin_right", key.rect_size.x / 2 + HSEPARATION)
 
 		# second vbox, numpad
+		var deeppanel = make_bezel_panel(row, true)
+		vboxnum.add_child(deeppanel)
+		
 		var hbox2 = HBoxContainer.new()
 		hbox2.add_constant_override("separation", HSEPARATION)
-		vboxnum.add_child(hbox2)
+		deeppanel.add_child(hbox2)
 		for col in range(len(txt_num)):
 			key = makekey(txt_num[col], "", scancodes_num[row][col])
 			hbox2.add_child(key)
 			key.text_color = Color.black
-			#key.key_style = style_normal
+			key.key_style = style_normal
 
 	rect_min_size = Vector2(rect_min_size.x, height)
 	
 	for l in longKeys:
 		var key15 = _get_key(l)
-		key15.rect_min_size.x = key.rect_min_size.x * 1.5
+		key15.rect_min_size.x = (key15.rect_min_size.x) * 1.5 + HSEPARATION/2
 		key15.key_style = style_brownpoop
 		key15.text_color = Color.white
 	
 	for l in [spaceKey]:
 		var key7 = _get_key(l)
-		key7.rect_min_size.x = (key.rect_min_size.x + HSEPARATION) * 7
+		#key7.rect_min_size.x = (key.rect_min_size.x + HSEPARATION) * 7
+		key7.rect_min_size.x = (key.rect_min_size.x + HSEPARATION) * 7 - HSEPARATION
 
 	for l in mustardKeys:
 		var k = _get_key(l)
@@ -183,23 +217,32 @@ func makekey(txt_top, txt_bot, scancode):
 	scancode2key[scancode] = butt
 	return butt
 
-func _on_key_make(scancode):
+func _on_key_make(scancode, nostick=false):
 	pressed_keys[scancode] = true
+	if not nostick and scancode in stickyCodes:
+		if stuck_keys.find(scancode) == -1:
+			stuck_keys.append(scancode)
 	show_key_down(scancode)
 	emit_signal("key_make", scancode)
 
 func _on_key_break(scancode):
+	if stuck_keys.find(scancode) != -1:
+		return
 	pressed_keys.erase(scancode)
 	show_key_up(scancode)
 	emit_signal("key_break", scancode)
+	for k in stuck_keys:
+		show_key_up(k)
+		emit_signal("key_break", k)
+	stuck_keys.clear()
 	
 func show_key_down(scancode):
-	var key = scancode2key[scancode]
+	var key = scancode2key.get(scancode, null)
 	if key != null:
 		key.visual_pressed = true
 		
 func show_key_up(scancode):
-	var key = scancode2key[scancode]
+	var key = scancode2key.get(scancode, null)
 	if key != null:
 		key.visual_pressed = false
 
@@ -208,3 +251,7 @@ func all_keys_up():
 		show_key_up(scancode)
 		emit_signal("key_break", scancode)
 	pressed_keys.clear()
+	for k in stuck_keys:
+		show_key_up(k)
+		emit_signal("key_break", k)
+	stuck_keys.clear()

@@ -23,49 +23,53 @@ size = 10
 font_data = ExtResource( 4 )
 
 [node name="Knob" type="Container"]
-margin_right = 79.0
-margin_bottom = 76.0
+margin_right = 193.0
+margin_bottom = 83.0
 rect_min_size = Vector2( 32, 32 )
 script = ExtResource( 1 )
+caption = "Babor"
+caption_side = 1
 tag = -1
 color_ledhole = Color( 0.1, 0.1, 0.1, 1 )
 color_ledlight = Color( 1, 0.562, 0.4, 1 )
 
 [node name="bg" type="Panel" parent="."]
 visible = false
-margin_right = 79.0
-margin_bottom = 76.0
+margin_right = 193.0
+margin_bottom = 83.0
 mouse_filter = 2
 size_flags_horizontal = 2
 size_flags_vertical = 2
 custom_styles/panel = SubResource( 1 )
 
 [node name="Bevel" type="Sprite" parent="."]
-position = Vector2( 39.5, 38 )
-scale = Vector2( 0.59375, 0.59375 )
+position = Vector2( 41.5, 41.5 )
+scale = Vector2( 0.648438, 0.648438 )
 texture = ExtResource( 2 )
 vframes = 101
 
 [node name="Sprite" type="Sprite" parent="."]
-position = Vector2( 39.5, 38 )
-scale = Vector2( 0.59375, 0.59375 )
+position = Vector2( 41.5, 41.5 )
+scale = Vector2( 0.648438, 0.648438 )
 texture = ExtResource( 5 )
 
 [node name="Label" type="Label" parent="."]
-visible = false
-margin_right = 40.0
-margin_bottom = 14.0
+margin_left = 83.0
+margin_top = 34.5
+margin_right = 123.0
+margin_bottom = 48.5
 custom_colors/font_color = Color( 0.513726, 0.513726, 0.513726, 1 )
 custom_fonts/font = SubResource( 2 )
+text = "Babor"
 align = 1
 
 [node name="Led" type="Sprite" parent="."]
-position = Vector2( 39.5, 38 )
-scale = Vector2( 0.59375, 0.59375 )
+position = Vector2( 41.5, 41.5 )
+scale = Vector2( 0.648438, 0.648438 )
 texture = ExtResource( 3 )
 vframes = 2
 frame = 1
 
 [node name="Pointer" type="Sprite" parent="."]
-position = Vector2( 39.5, 38 )
-scale = Vector2( 0.59375, 0.59375 )
+position = Vector2( 41.5, 41.5 )
+scale = Vector2( 0.648438, 0.648438 )

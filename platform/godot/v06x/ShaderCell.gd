@@ -1,3 +1,4 @@
+tool
 extends PanelContainer
 
 export var texture: Texture setget _set_texture
@@ -10,7 +11,6 @@ var tr: TextureRect
 var label: Label
 var engaged = false
 var hover = false
-
 
 func _ready():
 	tr = $TextureRect
@@ -64,3 +64,8 @@ func _gui_input(event):
 			engaged = false
 			if hover and event.button_index == BUTTON_LEFT:
 				emit_signal("pressed")	
+
+
+# maintain aspect
+func _on_resized():
+	rect_min_size.y = rect_size.x * 4 / 5

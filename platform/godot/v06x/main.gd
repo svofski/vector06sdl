@@ -15,19 +15,23 @@ var texture : ImageTexture
 var textureImage : Image
 var playback : AudioStreamPlayback
 
-onready var gamepad_label = $HUD/PanelContainer/MarginContainer/HBoxContainer/GamepadLabel
-onready var rus_lat = $HUD/PanelContainer/MarginContainer/HBoxContainer/RusLat
-onready var shader_sel = $HUD/PanelContainer/MarginContainer/HBoxContainer/ShaderSelectButton
-onready var volume_knob = $HUD/PanelContainer/MarginContainer/HBoxContainer/VolumeKnob
-onready var panel2 = $HUD/Panel2
-onready var sound_panel = $HUD/Panel2/SoundPanel
-onready var shader_panel = $HUD/Panel2/ShaderPanel
-onready var osk_panel = $HUD/Panel2/OnScreenKeyboard
+onready var gamepad_label = find_node("GamepadLabel")
+onready var rus_lat = find_node("RusLat")
+onready var shader_sel = find_node("ShaderSelectButton")
+onready var panel2 = find_node("Panel2")
+onready var sound_panel = find_node("SoundPanel")
+onready var osk_panel = find_node("OnScreenKeyboard")
 var shader_index = 0
 var shaders = []
 
 onready var resume_timer: Timer = $ResumeTimer
 onready var click_timer: Timer = $ClickTimer
+
+# for saving / restoring config
+var file_path: String = ""
+var file_kind = [ROM, 256, false]
+
+const DYNAMIC_SHADER_LIST = false
 
 func updateTexture(buttmap : PoolByteArray):
 	if textureImage == null:
@@ -38,7 +42,7 @@ func updateTexture(buttmap : PoolByteArray):
 		texture = ImageTexture.new()
 		texture.create(576, 288, Image.FORMAT_RGBA8, Texture.FLAG_VIDEO_SURFACE) # no filtering
 		$VectorScreen.texture = texture
-		shader_panel.set_texture(texture)
+		panel2.set_texture(texture)
 
 	textureImage.data.data = buttmap
 	texture.set_data(textureImage)
@@ -46,25 +50,26 @@ func updateTexture(buttmap : PoolByteArray):
 func _ready():
 	Engine.target_fps = 50
 	OS.set_use_vsync(false)
-	set_process(true)
+	#set_process(true)
+	set_physics_process(true)
 	var beef = v06x.Init()
 	print("beef: %08x" % beef)
 	$VectorScreen.texture = texture
 	
-	get_tree().get_root().connect("size_changed", self, "onSizeChanged")	
+	get_tree().get_root().connect("size_changed", self, "_on_size_changed")	
 
 	playback = $AudioStreamPlayer.get_stream_playback()
 	$AudioStreamPlayer.play()
 		
-	onSizeChanged()
+	_on_size_changed()
 	Input.connect("joy_connection_changed", self, "_on_joy_connection_changed")
 	_on_joy_connection_changed(0, Input.get_joy_name(0) != "")
 	_on_joy_connection_changed(1, Input.get_joy_name(1) != "")
 	create_shader_list()
-	shader_panel.set_shader_list(shaders)
+	if not DYNAMIC_SHADER_LIST:
+		panel2.set_shader_list(shaders)
 
 	load_state()
-	_on_SoundPanel_volumes_changed()
 
 	# this timer is to resume audio after toggle fullscreen (avoid hiccups)
 	resume_timer.one_shot = true
@@ -74,10 +79,15 @@ func _ready():
 	click_timer.one_shot = true
 	click_timer.connect("timeout", self, "_on_click_timer")
 	
-	$HUD/Panel2/OnScreenKeyboard.connect("key_make", self, "_osk_make")
-	$HUD/Panel2/OnScreenKeyboard.connect("key_break", self, "_osk_break")
-	
-	
+	osk_panel.connect("key_make", self, "_osk_make")
+	osk_panel.connect("key_break", self, "_osk_break")
+
+	# the absolutely bloody insane dance to make sure
+	# that grid cell sizes are updated at the time 
+	# we attach panel2 on top of the main hud	
+	panel2.connect("visibility_changed", self, "shader_panel_visibility_changed")
+	panel2.connect("resized", self, "place_shader_panel_please")
+
 func _notification(what):
 	#print("notification: ", what)
 	if what == MainLoop.NOTIFICATION_WM_QUIT_REQUEST:
@@ -107,7 +117,8 @@ func poll_joy(cur_joy):
 		| (int(Input.is_joy_button_pressed(cur_joy, JOY_XBOX_A)) << 6) \
 		| (int(Input.is_joy_button_pressed(cur_joy, JOY_XBOX_B)) << 7))
 		
-func _process(delta):
+#func _process(delta):
+func _physics_process(delta):
 	v06x.SetJoysticks(poll_joy(0), poll_joy(1))
 	
 	var buttmap = v06x.ExecuteFrame()  # buttmap is 576x288, 32bpp
@@ -116,11 +127,19 @@ func _process(delta):
 	update_playback(sound)
 	rus_lat.set_lit(v06x.GetRusLat())
 
-func _on_Button2_pressed():
+func _on_load_asset_pressed():
 	$FileDialog.popup()
 	
-func onSizeChanged():
+func _on_size_changed():
 	var sz = get_viewport_rect().size
+	
+	$HUD.rect_size.x = sz.x
+	$HUD.rect_position.x = 0
+	$HUD.rect_position.y = sz.y - $HUD.rect_size.y
+
+	if $HUD.visible:
+		sz.y -= $HUD.rect_size.y
+		
 	var maintained_aspect = 5.0/4
 	var aspect = sz[0]/sz[1]
 	var rs = self.rect_size
@@ -131,22 +150,51 @@ func onSizeChanged():
 		# taller than needed
 		rs = Vector2(sz[0], sz[0] * 1/maintained_aspect)
 	self.rect_size = sz
+
 	$VectorScreen.rect_size = rs
 	$VectorScreen.rect_position = Vector2(sz[0]/2 - rs[0]/2, 0)
-		#sz[1]/2 - rs[1]/2)
-	$HUD.rect_size.x = rs.x
-	$HUD.rect_size.y = rect_size.y
-	$HUD.rect_position.x = $VectorScreen.rect_position.x
-	$HUD.rect_position.y = 0 #rect_size.y - $HUD.rect_size.y
+
+	if panel2.visible:
+		shader_panel_visibility_changed()
+
+func place_shader_panel_please():
+	if $HUD.visible:
+		panel2.rect_position.y = $HUD.rect_position.y - panel2.rect_size.y
+	else:
+		panel2.rect_position.y = get_viewport_rect().size.y - panel2.rect_size.y
+
+func shader_panel_visibility_changed():
+	if panel2.visible:
+		panel2.rect_position = $VectorScreen.rect_position
+		panel2.rect_size = $VectorScreen.rect_size
+		panel2.rect_size.y = 0
+	else:
+		if DYNAMIC_SHADER_LIST:
+			panel2.set_shader_list([])
+		
+func show_shader_panel():
+	if DYNAMIC_SHADER_LIST:
+		panel2.set_shader_list(shaders)
+	panel2.visible = true
+
+func hide_shader_panel():
+	panel2.visible = false
+
+# return true if should autostart
+func load_file(path):
+	var file = File.new()
+	if file.open(path, File.READ) == OK:
+		var content = file.get_buffer(min(file.get_len(), 1024*1024))
+		var korg = getKind(path)
+		file_kind = korg
+		file_path = path
+		v06x.LoadAsset(content, korg[0], korg[1])
+		return korg[2]
+	return false
 
 func _on_FileDialog_file_selected(path):
 	print("File selected: ", path)
-	var file = File.new()
-	file.open(path, File.READ)	
-	var content = file.get_buffer(min(file.get_len(), 1024*1024))
-	var korg = getKind(path)
-	v06x.LoadAsset(content, korg[0], korg[1])
-	if korg[2]:
+	if load_file(path):
 		v06x.Reset(false)
 
 func getKind(path : String):
@@ -169,11 +217,11 @@ func _on_blksbr_pressed():
 	v06x.Reset(false)
 
 func _osk_make(scancode):
-	print("make: ", scancode)
+	#print("make: ", scancode)
 	v06x.KeyDown(scancode)
 	
 func _osk_break(scancode):
-	print("break: ", scancode)
+	#print("break: ", scancode)
 	v06x.KeyUp(scancode)
 
 func _input(event: InputEvent):
@@ -182,23 +230,28 @@ func _input(event: InputEvent):
 	if event is InputEventKey:
 		if event.pressed:
 			if not event.echo:
-				print("KeyDown: %08d" % event.scancode)
 				if event.scancode == KEY_ENTER and event.alt:
 					toggle_fullscreen()
 				else:
-					osk_panel._on_key_make(event.scancode)
-					#v06x.KeyDown(event.scancode)
-					#osk_panel.show_key_down(event.scancode)
+					osk_panel._on_key_make(event.scancode, true)
 			get_tree().set_input_as_handled()
 		elif not event.pressed:
-			#v06x.KeyUp(event.scancode)
 			osk_panel._on_key_break(event.scancode)
-			#osk_panel.show_key_up(event.scancode)
 			get_tree().set_input_as_handled()
 
 func _on_click_timer():
-	$HUD.visible = not $HUD.visible
-	
+	if $HUD.visible:
+		panel2.visible = false
+		$HUD.visible = false
+		_on_size_changed()
+	else:
+		$HUD.rect_position.y = get_viewport_rect().size.y
+		$HUD.visible = true
+		var anim = $AnimationPlayer.get_animation("hud_slide_in")
+		anim.track_set_key_value(0, 0, Vector2(0, $HUD.rect_position.y))
+		anim.track_set_key_value(0, 1, Vector2(0, get_viewport_rect().size.y - $HUD.rect_size.y))
+		$AnimationPlayer.play("hud_slide_in")
+
 func _on_main_gui_input(event):
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
 		if event.pressed:
@@ -219,7 +272,7 @@ func save_state():
 	file.store_buffer(state)
 	file.close()
 
-	save_config()	
+	save_config()
 
 func load_state():
 	var file = File.new()
@@ -237,7 +290,16 @@ func save_config():
 	cfg.load("user://v06x.settings")
 	cfg.set_value("FileDialog", "current_dir", $FileDialog.current_dir)
 	cfg.set_value("FileDialog", "current_path", $FileDialog.current_path)
-	cfg.set_value("sound", "volume_db", $AudioStreamPlayer.volume_db)
+	cfg.set_value("asset0", "file", file_path)
+	cfg.set_value("asset0", "kind", file_kind[0])
+	cfg.set_value("asset0", "org", file_kind[1])
+	cfg.set_value("asset0", "autostart", file_kind[2])
+	cfg.set_value("sound", "volume_8253", sound_panel.get_volume(0))
+	cfg.set_value("sound", "volume_beep", sound_panel.get_volume(1))
+	cfg.set_value("sound", "volume_ay", sound_panel.get_volume(2))
+	cfg.set_value("sound", "volume_covox", sound_panel.get_volume(3))
+	cfg.set_value("sound", "volume_db", sound_panel.get_volume(4))
+	
 	cfg.set_value("shader", "index", shader_index)
 	cfg.save("user://v06x.settings")
 
@@ -254,8 +316,21 @@ func load_config():
 		shader_index = cfg.get_value("shader", "index", 0)
 		_on_shader_selected(shader_index)
 		
-		volume_knob.value = cfg.get_value("sound", "volume_db", 0)
-		_on_Volume_value_changed(volume_knob.value)
+		sound_panel.set_volume(0, cfg.get_value("sound", "volume_8253", 10))
+		sound_panel.set_volume(1, cfg.get_value("sound", "volume_beep", 10))
+		sound_panel.set_volume(2, cfg.get_value("sound", "volume_ay", 10))
+		sound_panel.set_volume(3, cfg.get_value("sound", "volume_covox", 10))
+		sound_panel.set_volume(4, cfg.get_value("sound", "volume_db", 0))
+		_on_SoundPanel_volumes_changed()
+
+		file_path = cfg.get_value("asset0", "file", "")
+		file_kind[0] = cfg.get_value("asset0", "kind", ROM)
+		file_kind[1] = cfg.get_value("asset0", "org", 256)
+		file_kind[2] = cfg.get_value("asset0", "autostart", false)
+		
+		if file_kind[0] in [FDD]:
+			load_file(file_path) # load but no restart
+
 
 func create_shader_list():
 	var dir = Directory.new()
@@ -268,7 +343,6 @@ func create_shader_list():
 				shaders.push_back(shadr)
 			file_name = dir.get_next()
 		dir.list_dir_end()
-		
 
 func _on_shader_selected(num):
 	shader_index = num
@@ -276,57 +350,26 @@ func _on_shader_selected(num):
 	var mat:ShaderMaterial = $VectorScreen.material
 	mat.shader = load("res://shaders/%s.shader" % shader_name)
 	panel2.visible = false
-	
-# Sound stuffs: Volume etc
 
-func _on_Volume_value_changed(value):
-	$AudioStreamPlayer.volume_db = value
-	volume_knob.hint_tooltip = "Громкость: %+3.0fdB" % value
 
 func _on_SoundPanel_volumes_changed():
 	v06x.SetVolumes(sound_panel.get_volume(0),
 		sound_panel.get_volume(1),
 		sound_panel.get_volume(2),
 		sound_panel.get_volume(3),
-		sound_panel.get_volume(4))
-
-func _on_oskeyboard_pressed():
-	if panel2.visible and osk_panel.visible:
-		panel2.visible = false
-	elif not panel2.visible:
-		panel2.visible = true
-	if panel2.visible:
-		sound_panel.visible = false
-		shader_panel.visible = false
-		osk_panel.visible = true
+		1.5)
+	$AudioStreamPlayer.volume_db = sound_panel.get_volume(4)
 
 func _on_shaderselect_pressed():
-	if panel2.visible and shader_panel.visible:
-		panel2.visible = false	
-	elif not panel2.visible:
-		panel2.visible = true
 	if panel2.visible:
-		osk_panel.visible = false
-		sound_panel.visible = false
-		shader_panel.visible = true
-		print("shader min_size=", shader_panel.rect_min_size)
-		#shader_panel.rect_min_size = shader_panel.grid_size
+		panel2.visible = false
+	else:
+		show_shader_panel()
 
-func _on_VolumeKnob_pressed(tag):
-	if panel2.visible and sound_panel.visible:
-		panel2.visible = false	
-	elif not panel2.visible:
-		panel2.visible = true
-	if panel2.visible:
-		osk_panel.visible = false
-		shader_panel.visible = false
-		sound_panel.visible = true
-		#panel2.rect_min_size.y = sound_panel.rect_min_size.y
-		
 func _timer_resume():
 	$AudioStreamPlayer.stream_paused = false
-	#set_process(true)		
-		
+
+
 func toggle_fullscreen():
 	$AudioStreamPlayer.stream_paused = true
 	#set_process(false)

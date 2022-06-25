@@ -7,12 +7,6 @@ export var name2 := "" setget _set_name2
 
 var stylebox: StyleBoxTexture
 
-# Declare member variables here. Examples:
-# var a = 2
-# var b = "text"
-
-
-# Called when the node enters the scene tree for the first time.
 func _ready():
 	stylebox = self.get_stylebox("normal")
 	$Second.add_stylebox_override("normal", stylebox)

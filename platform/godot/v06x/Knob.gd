@@ -8,12 +8,14 @@ export var speed: float = 1
 export var rounded: bool = false
 export var round_precision: int = 1
 export var caption: String setget _set_caption
+export var caption_side: int = 0 setget _set_caption_side
 export var center_led: bool = false setget _set_center_led
 export var tag: int = 0
 export var number_leds: int = 16
 export var stops = [0]
 export var color_ledhole: Color = Color.black.lightened(0.1)
 export var color_ledlight: Color = Color.orangered.lightened(0.4)
+
 
 signal value_changed(value)
 signal pressed(tag)
@@ -53,6 +55,8 @@ func _ready():
 	pointer.connect("draw", self, "_sprite_draw")
 
 func _sprite_draw():	
+	if pointer == null:
+		return
 	var x = 32 * cos(deg2rad(pointer_angle))
 	var y = 32 * sin(deg2rad(pointer_angle))
 	#var x = 48 * cos(deg2rad(pointer_angle))
@@ -60,7 +64,6 @@ func _sprite_draw():
 	pointer.draw_circle(Vector2(x, y), 2 + int(hover), Color.white)
 
 func _draw():
-	
 	if led == null:
 		return
 	for p in range(number_leds):
@@ -71,7 +74,6 @@ func _draw():
 
 		if angle <= pointer_angle:
 			draw_circle(led.position + base_scale * Vector2(x, y), base_scale.x * 1.8, color_ledlight)
-		
 
 func _set_center_led(v):
 	center_led = v
@@ -82,6 +84,10 @@ func _set_caption(v):
 	if label != null:
 		label.text = v	
 		update_sizes()
+
+func _set_caption_side(v):
+	caption_side = v
+	update_sizes()
 
 func _set_min_value(v):
 	min_value = v
@@ -114,35 +120,59 @@ func update_visuals():
 	pointer.update()
 	
 	#$Text.text = "%+3.1fdB" % value
-		
+
 func update_sizes():
-	label = $Label
+	if label == null:
+		return
+	if top == null:
+		return		
+		
 	$bg.rect_size = rect_size
 	label.visible = len(label.text) > 0
 	var label_height = 0
+	var label_width = 0
 	if label.visible:
 		label_height = label.rect_size.y
-	var sz = min(rect_size.x, rect_size.y - label_height)
-	var w = $Sprite.texture.get_size()[0] / $Sprite.hframes
-	var h = $Sprite.texture.get_size()[1] / $Sprite.vframes	
-	#print("sprite tex size=", w, " ", h, " rect_size=", rect_size, " scale=", sz/w)
+		label_width = label.rect_size.x
+
+	var sz = min(rect_size.x, rect_size.y)
+	if caption_side in [0, 2]:
+		sz = min(rect_size.x, rect_size.y - label_height)
+	else:
+		sz = min(rect_size.x - label_width, rect_size.y)
 	
-	if top == null:
-		return
-		
+	var w = $Sprite.texture.get_size()[0] / $Sprite.hframes
+	var h = $Sprite.texture.get_size()[1] / $Sprite.vframes
+	#print("sprite tex size=", w, " ", h, " rect_size=", rect_size, " scale=", sz/w)
+
+
 	base_scale = Vector2(sz / w, sz / h)
 	top.scale = base_scale
 	bevel.scale = base_scale
 	led.scale = base_scale
-	led.position = Vector2(rect_size.x / 2, sz / 2)
+	pointer.scale = base_scale
+	if label.visible:
+		match caption_side:
+			0: # buttom
+				label.rect_position.x = rect_size.x / 2 - label.rect_size.x / 2
+				label.rect_position.y = sz
+				led.position = Vector2(rect_size.x / 2, sz / 2)
+			2: # top
+				label.rect_position.x = rect_size.x / 2 - label.rect_size.x / 2
+				label.rect_position.y = 0
+				led.position = Vector2(rect_size.x / 2, rect_size.y - sz / 2)
+			1: # right
+				led.position = Vector2(sz / 2, rect_size.y / 2)
+				label.rect_position.x = sz
+				label.rect_position.y = led.position.y - label.rect_size.y / 2
+			3: # left
+				led.position = Vector2(label.rect_size.x + sz / 2, rect_size.y / 2)
+				label.rect_position.x = 0
+				label.rect_position.y = rect_size.y / 2 - label.rect_size.y / 2
+		#print(caption, " label@=", label.rect_position)
 	top.position = led.position
 	bevel.position = led.position
 	pointer.position = led.position
-	pointer.scale = base_scale
-	if label.visible:
-		label.rect_position.x = rect_size.x / 2 - label.rect_size.x / 2
-		label.rect_position.y = sz
-		#print(caption, " label@=", label.rect_position)
 	
 	update() # redraw background
 	

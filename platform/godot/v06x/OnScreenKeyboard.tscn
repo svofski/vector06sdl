@@ -1,17 +1,25 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=8 format=2]
 
 [ext_resource path="res://OnScreenKeyboard.gd" type="Script" id=1]
 [ext_resource path="res://KeyboardKey.tscn" type="PackedScene" id=2]
+[ext_resource path="res://theme.theme" type="Theme" id=3]
 
 [sub_resource type="StyleBoxFlat" id=3]
 content_margin_left = 7.0
 content_margin_right = 7.0
 content_margin_top = 5.0
 content_margin_bottom = 5.0
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color( 0, 0, 0, 1 )
+border_blend = true
 corner_radius_top_left = 2
 corner_radius_top_right = 2
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
+shadow_color = Color( 0, 0, 0, 1 )
 
 [sub_resource type="StyleBoxFlat" id=4]
 content_margin_left = 7.0
@@ -19,10 +27,17 @@ content_margin_right = 7.0
 content_margin_top = 5.0
 content_margin_bottom = 5.0
 bg_color = Color( 0.45098, 0.466667, 0.388235, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color( 0, 0, 0, 1 )
+border_blend = true
 corner_radius_top_left = 2
 corner_radius_top_right = 2
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
+shadow_color = Color( 0, 0, 0, 1 )
 
 [sub_resource type="StyleBoxFlat" id=5]
 content_margin_left = 3.0
@@ -30,10 +45,17 @@ content_margin_right = 3.0
 content_margin_top = 5.0
 content_margin_bottom = 5.0
 bg_color = Color( 0.364706, 0.384314, 0.298039, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color( 0, 0, 0, 1 )
+border_blend = true
 corner_radius_top_left = 2
 corner_radius_top_right = 2
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
+shadow_color = Color( 0, 0, 0, 1 )
 
 [sub_resource type="StyleBoxFlat" id=6]
 content_margin_left = 7.0
@@ -41,19 +63,28 @@ content_margin_right = 7.0
 content_margin_top = 5.0
 content_margin_bottom = 5.0
 bg_color = Color( 0.196078, 0.117647, 0.054902, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color( 0, 0, 0, 1 )
+border_blend = true
 corner_radius_top_left = 2
 corner_radius_top_right = 2
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
+shadow_color = Color( 0, 0, 0, 1 )
 
 [node name="OnScreenKeyboard" type="Panel"]
 margin_right = 578.0
 margin_bottom = 170.0
 rect_min_size = Vector2( 612, 180 )
+theme = ExtResource( 3 )
 script = ExtResource( 1 )
 
 [node name="Normal" parent="." instance=ExtResource( 2 )]
 visible = false
+custom_styles/panel = SubResource( 3 )
 key_style = SubResource( 3 )
 
 [node name="LightGreenPoop" parent="." instance=ExtResource( 2 )]
@@ -75,156 +106,156 @@ key_style = SubResource( 6 )
 margin_right = 40.0
 margin_bottom = 40.0
 size_flags_horizontal = 0
-custom_constants/separation = 36
+custom_constants/separation = 24
 
 [node name="VBoxContainer1" type="VBoxContainer" parent="HBoxContainer"]
-margin_right = 464.0
-margin_bottom = 176.0
-custom_constants/separation = 4
+margin_right = 472.0
+margin_bottom = 182.0
+custom_constants/separation = 0
 
 [node name="VBoxContainer2" type="VBoxContainer" parent="HBoxContainer"]
-margin_left = 500.0
-margin_right = 604.0
-margin_bottom = 176.0
-custom_constants/separation = 4
+margin_left = 496.0
+margin_right = 608.0
+margin_bottom = 182.0
+custom_constants/separation = 0
 
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey2" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey2" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey3" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey3" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey4" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey4" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey5" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey5" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey6" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey6" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey6" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey6" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey7" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey7" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey7" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey7" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey8" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey8" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey8" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey8" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey9" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey9" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey9" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey9" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey10" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey10" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey10" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey10" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey11" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey11" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey11" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey11" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey12" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey12" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey12" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey12" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey13" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey13" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey13" to="HBoxContainer/VBoxContainer1/MarginContainer/HBoxContainer/KeyboardKey13" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey2" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey2" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey3" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey3" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey4" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey4" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey5" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey5" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey6" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey6" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey6" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey6" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey7" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey7" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey7" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey7" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey8" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey8" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey8" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey8" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey9" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey9" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey9" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey9" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey10" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey10" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey10" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey10" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey11" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey11" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey11" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey11" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey12" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey12" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey12" to="HBoxContainer/VBoxContainer1/MarginContainer2/HBoxContainer/KeyboardKey12" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey2" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey2" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey3" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey3" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey4" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey4" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey5" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey5" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey6" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey6" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey6" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey6" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey7" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey7" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey7" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey7" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey8" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey8" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey8" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey8" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey9" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey9" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey9" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey9" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey10" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey10" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey10" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey10" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey11" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey11" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey11" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey11" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey12" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey12" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey12" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey12" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey13" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey13" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey13" to="HBoxContainer/VBoxContainer1/MarginContainer3/HBoxContainer/KeyboardKey13" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey2" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey2" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey3" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey3" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey4" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey4" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey5" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey5" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey6" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey6" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey6" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey6" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey7" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey7" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey7" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey7" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey8" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey8" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey8" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey8" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey9" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey9" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey9" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey9" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey10" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey10" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey10" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey10" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey11" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey11" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey11" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey11" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey12" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey12" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey12" to="HBoxContainer/VBoxContainer1/MarginContainer4/HBoxContainer/KeyboardKey12" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey2" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey2" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey3" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey3" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey4" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey4" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey5" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer5/HBoxContainer/KeyboardKey5" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer2/HBoxContainer/KeyboardKey" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer2/HBoxContainer/KeyboardKey" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer2/HBoxContainer/KeyboardKey2" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer2/HBoxContainer/KeyboardKey2" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer2/HBoxContainer/KeyboardKey3" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer2/HBoxContainer/KeyboardKey3" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/HBoxContainer2/KeyboardKey" to="HBoxContainer/VBoxContainer2/HBoxContainer2/KeyboardKey" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/HBoxContainer2/KeyboardKey" to="HBoxContainer/VBoxContainer2/HBoxContainer2/KeyboardKey" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/HBoxContainer2/KeyboardKey2" to="HBoxContainer/VBoxContainer2/HBoxContainer2/KeyboardKey2" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/HBoxContainer2/KeyboardKey2" to="HBoxContainer/VBoxContainer2/HBoxContainer2/KeyboardKey2" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/HBoxContainer2/KeyboardKey3" to="HBoxContainer/VBoxContainer2/HBoxContainer2/KeyboardKey3" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/HBoxContainer2/KeyboardKey3" to="HBoxContainer/VBoxContainer2/HBoxContainer2/KeyboardKey3" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/HBoxContainer3/KeyboardKey" to="HBoxContainer/VBoxContainer2/HBoxContainer3/KeyboardKey" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/HBoxContainer3/KeyboardKey" to="HBoxContainer/VBoxContainer2/HBoxContainer3/KeyboardKey" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/HBoxContainer3/KeyboardKey2" to="HBoxContainer/VBoxContainer2/HBoxContainer3/KeyboardKey2" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/HBoxContainer3/KeyboardKey2" to="HBoxContainer/VBoxContainer2/HBoxContainer3/KeyboardKey2" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/HBoxContainer3/KeyboardKey3" to="HBoxContainer/VBoxContainer2/HBoxContainer3/KeyboardKey3" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/HBoxContainer3/KeyboardKey3" to="HBoxContainer/VBoxContainer2/HBoxContainer3/KeyboardKey3" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/HBoxContainer4/KeyboardKey" to="HBoxContainer/VBoxContainer2/HBoxContainer4/KeyboardKey" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/HBoxContainer4/KeyboardKey" to="HBoxContainer/VBoxContainer2/HBoxContainer4/KeyboardKey" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/HBoxContainer4/KeyboardKey2" to="HBoxContainer/VBoxContainer2/HBoxContainer4/KeyboardKey2" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/HBoxContainer4/KeyboardKey2" to="HBoxContainer/VBoxContainer2/HBoxContainer4/KeyboardKey2" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/HBoxContainer4/KeyboardKey3" to="HBoxContainer/VBoxContainer2/HBoxContainer4/KeyboardKey3" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/HBoxContainer4/KeyboardKey3" to="HBoxContainer/VBoxContainer2/HBoxContainer4/KeyboardKey3" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/HBoxContainer5/KeyboardKey" to="HBoxContainer/VBoxContainer2/HBoxContainer5/KeyboardKey" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/HBoxContainer5/KeyboardKey" to="HBoxContainer/VBoxContainer2/HBoxContainer5/KeyboardKey" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/HBoxContainer5/KeyboardKey2" to="HBoxContainer/VBoxContainer2/HBoxContainer5/KeyboardKey2" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/HBoxContainer5/KeyboardKey2" to="HBoxContainer/VBoxContainer2/HBoxContainer5/KeyboardKey2" method="_on_mouse_exited"]
-[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/HBoxContainer5/KeyboardKey3" to="HBoxContainer/VBoxContainer2/HBoxContainer5/KeyboardKey3" method="_on_mouse_entered"]
-[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/HBoxContainer5/KeyboardKey3" to="HBoxContainer/VBoxContainer2/HBoxContainer5/KeyboardKey3" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey2" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey2" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey3" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey3" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey4" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey4" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey5" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey5" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey6" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey6" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey6" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey6" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey7" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey7" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey7" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey7" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey8" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey8" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey8" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey8" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey9" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey9" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey9" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey9" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey10" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey10" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey10" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey10" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey11" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey11" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey11" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey11" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey12" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey12" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey12" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey12" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey13" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey13" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey13" to="HBoxContainer/VBoxContainer1/MarginContainer/PanelContainer/HBoxContainer/KeyboardKey13" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey2" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey2" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey3" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey3" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey4" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey4" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey5" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey5" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey6" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey6" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey6" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey6" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey7" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey7" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey7" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey7" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey8" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey8" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey8" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey8" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey9" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey9" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey9" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey9" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey10" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey10" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey10" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey10" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey11" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey11" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey11" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey11" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey12" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey12" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey12" to="HBoxContainer/VBoxContainer1/MarginContainer2/PanelContainer/HBoxContainer/KeyboardKey12" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey2" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey2" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey3" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey3" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey4" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey4" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey5" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey5" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey6" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey6" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey6" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey6" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey7" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey7" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey7" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey7" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey8" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey8" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey8" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey8" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey9" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey9" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey9" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey9" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey10" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey10" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey10" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey10" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey11" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey11" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey11" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey11" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey12" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey12" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey12" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey12" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey13" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey13" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey13" to="HBoxContainer/VBoxContainer1/MarginContainer3/PanelContainer/HBoxContainer/KeyboardKey13" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey2" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey2" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey3" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey3" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey4" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey4" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey5" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey5" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey6" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey6" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey6" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey6" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey7" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey7" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey7" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey7" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey8" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey8" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey8" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey8" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey9" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey9" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey9" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey9" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey10" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey10" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey10" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey10" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey11" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey11" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey11" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey11" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey12" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey12" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey12" to="HBoxContainer/VBoxContainer1/MarginContainer4/PanelContainer/HBoxContainer/KeyboardKey12" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey2" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey2" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey3" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey3" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey4" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey4" to="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey4" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey5" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey5" to="HBoxContainer/VBoxContainer1/MarginContainer5/PanelContainer/HBoxContainer/KeyboardKey5" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/PanelContainer/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer2/PanelContainer/HBoxContainer/KeyboardKey" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/PanelContainer/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer2/PanelContainer/HBoxContainer/KeyboardKey" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/PanelContainer/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer2/PanelContainer/HBoxContainer/KeyboardKey2" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/PanelContainer/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer2/PanelContainer/HBoxContainer/KeyboardKey2" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/PanelContainer/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer2/PanelContainer/HBoxContainer/KeyboardKey3" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/PanelContainer/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer2/PanelContainer/HBoxContainer/KeyboardKey3" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/PanelContainer2/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer2/PanelContainer2/HBoxContainer/KeyboardKey" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/PanelContainer2/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer2/PanelContainer2/HBoxContainer/KeyboardKey" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/PanelContainer2/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer2/PanelContainer2/HBoxContainer/KeyboardKey2" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/PanelContainer2/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer2/PanelContainer2/HBoxContainer/KeyboardKey2" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/PanelContainer2/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer2/PanelContainer2/HBoxContainer/KeyboardKey3" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/PanelContainer2/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer2/PanelContainer2/HBoxContainer/KeyboardKey3" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/PanelContainer3/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer2/PanelContainer3/HBoxContainer/KeyboardKey" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/PanelContainer3/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer2/PanelContainer3/HBoxContainer/KeyboardKey" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/PanelContainer3/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer2/PanelContainer3/HBoxContainer/KeyboardKey2" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/PanelContainer3/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer2/PanelContainer3/HBoxContainer/KeyboardKey2" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/PanelContainer3/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer2/PanelContainer3/HBoxContainer/KeyboardKey3" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/PanelContainer3/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer2/PanelContainer3/HBoxContainer/KeyboardKey3" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/PanelContainer4/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer2/PanelContainer4/HBoxContainer/KeyboardKey" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/PanelContainer4/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer2/PanelContainer4/HBoxContainer/KeyboardKey" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/PanelContainer4/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer2/PanelContainer4/HBoxContainer/KeyboardKey2" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/PanelContainer4/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer2/PanelContainer4/HBoxContainer/KeyboardKey2" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/PanelContainer4/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer2/PanelContainer4/HBoxContainer/KeyboardKey3" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/PanelContainer4/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer2/PanelContainer4/HBoxContainer/KeyboardKey3" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/PanelContainer5/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer2/PanelContainer5/HBoxContainer/KeyboardKey" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/PanelContainer5/HBoxContainer/KeyboardKey" to="HBoxContainer/VBoxContainer2/PanelContainer5/HBoxContainer/KeyboardKey" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/PanelContainer5/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer2/PanelContainer5/HBoxContainer/KeyboardKey2" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/PanelContainer5/HBoxContainer/KeyboardKey2" to="HBoxContainer/VBoxContainer2/PanelContainer5/HBoxContainer/KeyboardKey2" method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="HBoxContainer/VBoxContainer2/PanelContainer5/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer2/PanelContainer5/HBoxContainer/KeyboardKey3" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="HBoxContainer/VBoxContainer2/PanelContainer5/HBoxContainer/KeyboardKey3" to="HBoxContainer/VBoxContainer2/PanelContainer5/HBoxContainer/KeyboardKey3" method="_on_mouse_exited"]

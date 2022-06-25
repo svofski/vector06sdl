@@ -6,7 +6,6 @@
 [sub_resource type="StyleBoxTexture" id=1]
 texture = ExtResource( 1 )
 region_rect = Rect2( 0, 0, 512, 512 )
-modulate_color = Color( 0, 0, 0, 1 )
 
 [node name="Label" type="Label"]
 margin_right = 38.0

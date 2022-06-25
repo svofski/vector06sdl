@@ -61,6 +61,7 @@ void Emulator::keyup(int scancode) {
     for (int i = 0; i < N_SCANCODES; ++i) {
         if (this->keyups[i] == 0 || this->keyups[i] == scancode) {
             this->keyups[i] = scancode;
+            break;
         }
     }
 }
