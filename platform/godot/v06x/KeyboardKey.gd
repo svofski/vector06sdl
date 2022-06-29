@@ -103,3 +103,19 @@ func _gui_input(event):
 				update_style()
 				emit_signal("key_break", scancode)
 
+func _notification(what):
+	if what == NOTIFICATION_RESIZED:
+		update_sizes()
+		
+func update_sizes():
+	pass
+	# this is no worky
+	#var ks = rect_size.x / 17.0
+	#var scale = ks / 32 # min size
+	#var font_size = 10
+	#font_size = font_size * scale
+	#var keysize = Vector2(ks - HSEPARATION, ks - VSEPARATION) 
+	#for k in all_keys:
+	#		k.rect_min_size = keysize
+	#	k.find_node("Label1").get("custom_fonts/font").size = font_size
+	

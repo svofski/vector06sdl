@@ -15,12 +15,16 @@ var texture : ImageTexture
 var textureImage : Image
 var playback : AudioStreamPlayback
 
+onready var hud_panel = find_node("HUD")
 onready var gamepad_label = find_node("GamepadLabel")
 onready var rus_lat = find_node("RusLat")
 onready var shader_sel = find_node("ShaderSelectButton")
 onready var panel2 = find_node("Panel2")
 onready var sound_panel = find_node("SoundPanel")
 onready var osk_panel = find_node("OnScreenKeyboard")
+onready var scope_panel = find_node("ScopePanel")
+onready var default_scope_panel_pos = scope_panel.rect_position
+
 var shader_index = 0
 var shaders = []
 
@@ -32,6 +36,10 @@ var file_path: String = ""
 var file_kind = [ROM, 256, false]
 
 const DYNAMIC_SHADER_LIST = false
+
+const SCOPE_SMALL: int = 0
+const SCOPE_BIG: int = 1
+var scope_state: int = SCOPE_SMALL
 
 func updateTexture(buttmap : PoolByteArray):
 	if textureImage == null:
@@ -48,7 +56,15 @@ func updateTexture(buttmap : PoolByteArray):
 	texture.set_data(textureImage)
 
 func _ready():
+	var cmdline_asset: String = ""
+	for arg in OS.get_cmdline_args():
+		#print("arg: ", arg)
+		if not arg.startswith("--"):
+			cmdline_asset = arg
+			print("Will try to load asset: ", cmdline_asset)
+	
 	Engine.target_fps = 50
+	Engine.iterations_per_second = 50
 	OS.set_use_vsync(false)
 	#set_process(true)
 	set_physics_process(true)
@@ -70,6 +86,8 @@ func _ready():
 		panel2.set_shader_list(shaders)
 
 	load_state()
+	if len(cmdline_asset) > 0:
+		v06x.LoadAsset(cmdline_asset)
 
 	# this timer is to resume audio after toggle fullscreen (avoid hiccups)
 	resume_timer.one_shot = true
@@ -87,6 +105,27 @@ func _ready():
 	# we attach panel2 on top of the main hud	
 	panel2.connect("visibility_changed", self, "shader_panel_visibility_changed")
 	panel2.connect("resized", self, "place_shader_panel_please")
+
+	#move_hud_to_viewport()
+
+func move_hud_to_viewport():
+	#$ViewportContainer/Viewport.set_size_override(true, Vector2(800, 222))
+	var screen_pixel_width = OS.get_screen_size().x
+	var ratio = screen_pixel_width / 800.0
+	var render_size = Vector2(800 * ratio, 250 * ratio)
+	$ViewportContainer/Viewport.set_size_override(true, render_size)
+	$ViewportContainer/Viewport.size_override_stretch = true
+	$ViewportContainer.rect_size = hud_panel.rect_size
+
+	print(hud_panel.get_children())
+	for child in hud_panel.get_children():
+		child.rect_position = child.rect_position * ratio
+		child.rect_size = child.rect_size * ratio
+
+
+	hud_panel.get_parent().remove_child(hud_panel)
+	$ViewportContainer/Viewport.add_child(hud_panel)
+	hud_panel.rect_size = render_size
 
 func _notification(what):
 	#print("notification: ", what)
@@ -127,18 +166,23 @@ func _physics_process(delta):
 	update_playback(sound)
 	rus_lat.set_lit(v06x.GetRusLat())
 
+	if hud_panel == null:
+		return
+
+	if hud_panel.visible || scope_panel.get_parent() == self:
+		scope_panel.update_texture(sound)
+
 func _on_load_asset_pressed():
 	$FileDialog.popup()
 	
 func _on_size_changed():
-	var sz = get_viewport_rect().size
+	var sz = get_viewport_rect().size # viewport maintains project size
+	#var sz = get_viewport().size # this is real window pixel size
 	
-	$HUD.rect_size.x = sz.x
-	$HUD.rect_position.x = 0
-	$HUD.rect_position.y = sz.y - $HUD.rect_size.y
-
-	if $HUD.visible:
-		sz.y -= $HUD.rect_size.y
+	hud_panel.rect_position.y = sz.y - hud_panel.rect_size.y
+	hud_panel.rect_position.x = (sz.x - hud_panel.rect_size.x) / 2
+	if hud_panel.visible:
+		sz.y -= hud_panel.rect_size.y
 		
 	var maintained_aspect = 5.0/4
 	var aspect = sz[0]/sz[1]
@@ -156,10 +200,12 @@ func _on_size_changed():
 
 	if panel2.visible:
 		shader_panel_visibility_changed()
+	if scope_panel.visible:
+		update_scope_size()
 
 func place_shader_panel_please():
-	if $HUD.visible:
-		panel2.rect_position.y = $HUD.rect_position.y - panel2.rect_size.y
+	if hud_panel.visible:
+		panel2.rect_position.y = hud_panel.rect_position.y - panel2.rect_size.y
 	else:
 		panel2.rect_position.y = get_viewport_rect().size.y - panel2.rect_size.y
 
@@ -202,11 +248,13 @@ func getKind(path : String):
 	var ext = path.to_lower().get_extension()
 	if ext == "rom" || ext == "com":
 		ret = [ROM, 256, true]
-	if ext == "fdd":
+	elif ext == "r0m":
+		ret = [ROM, 0, true]
+	elif ext == "fdd":
 		ret = [FDD, 0, false]
-	if ext == "edd":
+	elif ext == "edd":
 		ret = [EDD, 0, true]
-	if ext == "wav":
+	elif ext == "wav":
 		ret = [WAV, 0, false]
 	return ret
 
@@ -240,16 +288,16 @@ func _input(event: InputEvent):
 			get_tree().set_input_as_handled()
 
 func _on_click_timer():
-	if $HUD.visible:
+	if hud_panel.visible:
 		panel2.visible = false
-		$HUD.visible = false
+		hud_panel.visible = false
 		_on_size_changed()
 	else:
-		$HUD.rect_position.y = get_viewport_rect().size.y
-		$HUD.visible = true
+		hud_panel.rect_position.y = get_viewport_rect().size.y
+		hud_panel.visible = true
 		var anim = $AnimationPlayer.get_animation("hud_slide_in")
-		anim.track_set_key_value(0, 0, Vector2(0, $HUD.rect_position.y))
-		anim.track_set_key_value(0, 1, Vector2(0, get_viewport_rect().size.y - $HUD.rect_size.y))
+		anim.track_set_key_value(0, 0, Vector2(0, hud_panel.rect_position.y))
+		anim.track_set_key_value(0, 1, Vector2(0, get_viewport_rect().size.y - hud_panel.rect_size.y))
 		$AnimationPlayer.play("hud_slide_in")
 
 func _on_main_gui_input(event):
@@ -351,7 +399,6 @@ func _on_shader_selected(num):
 	mat.shader = load("res://shaders/%s.shader" % shader_name)
 	panel2.visible = false
 
-
 func _on_SoundPanel_volumes_changed():
 	v06x.SetVolumes(sound_panel.get_volume(0),
 		sound_panel.get_volume(1),
@@ -369,10 +416,48 @@ func _on_shaderselect_pressed():
 func _timer_resume():
 	$AudioStreamPlayer.stream_paused = false
 
-
 func toggle_fullscreen():
 	$AudioStreamPlayer.stream_paused = true
 	#set_process(false)
 	OS.window_fullscreen = not OS.window_fullscreen
 	resume_timer.wait_time = 0.1
 	resume_timer.start()
+
+func make_scope_big():
+	default_scope_panel_pos = scope_panel.rect_position
+	scope_panel.get_parent().remove_child(scope_panel)
+	add_child(scope_panel)
+	var r = hud_panel.rect_size
+	r.y = 0.5 * r.y
+	scope_panel.rect_size = r
+	var p = hud_panel.rect_position
+	p.y -= scope_panel.rect_size.y
+	scope_panel.rect_position = p
+	scope_state = SCOPE_BIG
+
+func make_scope_small():
+	#scope_panel.prepare_to_resize()
+	scope_panel.prepare_to_resize()
+	scope_panel.rect_size = scope_panel.rect_min_size
+	scope_panel.emit_signal("item_rect_changed")
+	scope_panel.get_parent().remove_child(scope_panel)
+	hud_panel.add_child(scope_panel)
+	scope_panel.rect_position = default_scope_panel_pos
+	scope_state = SCOPE_SMALL
+	scope_panel.call_deferred("update_sizes")
+
+func update_scope_size():
+	if scope_panel.get_parent() == self:
+		scope_panel.rect_size = Vector2(rect_size.x, rect_size.x * 0.1)
+		scope_panel.rect_position.y = rect_size.y - scope_panel.rect_size.y
+		scope_panel.rect_position.x = 0
+
+func _on_ScopePanel_long_hover():
+	pass
+
+func _on_ScopePanel_pressed():
+	if scope_state == SCOPE_SMALL:
+		make_scope_big()
+	else:
+		make_scope_small()
+

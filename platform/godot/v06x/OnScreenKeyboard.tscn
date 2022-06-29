@@ -76,8 +76,8 @@ corner_radius_bottom_left = 2
 shadow_color = Color( 0, 0, 0, 1 )
 
 [node name="OnScreenKeyboard" type="Panel"]
-margin_right = 578.0
-margin_bottom = 170.0
+margin_right = 612.0
+margin_bottom = 180.0
 rect_min_size = Vector2( 612, 180 )
 theme = ExtResource( 3 )
 script = ExtResource( 1 )
@@ -103,14 +103,14 @@ custom_styles/panel = SubResource( 6 )
 key_style = SubResource( 6 )
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
-margin_right = 40.0
-margin_bottom = 40.0
-size_flags_horizontal = 0
+margin_right = 608.0
+margin_bottom = 182.0
 custom_constants/separation = 24
 
 [node name="VBoxContainer1" type="VBoxContainer" parent="HBoxContainer"]
 margin_right = 472.0
 margin_bottom = 182.0
+size_flags_stretch_ratio = 2.0
 custom_constants/separation = 0
 
 [node name="VBoxContainer2" type="VBoxContainer" parent="HBoxContainer"]

@@ -40,3 +40,18 @@ func set_volume(which: int, value: float):
 	if which == 4: # master, dB
 		mul = 1
 	knobs[which].value = value * mul
+	
+func update_sizes():
+	if knobs == null:
+		return
+	var scale = rect_size.x / 120.0
+	var font_size = 10 * scale
+	for k in knobs:
+		k.rect_min_size = Vector2(32 * scale, 32 * scale)
+		k.find_node("Label").get("custom_fonts/font").size = font_size
+	#for k in knobs:
+	#	k.update_sizes()
+	
+func _notification(what):
+	if what == NOTIFICATION_RESIZED:
+		update_sizes()

@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=2]
+[gd_scene load_steps=26 format=2]
 
 [ext_resource path="res://main.gd" type="Script" id=1]
 [ext_resource path="res://theme.theme" type="Theme" id=2]
@@ -12,6 +12,7 @@
 [ext_resource path="res://assets/shader-icon.png" type="Texture" id=10]
 [ext_resource path="res://OnScreenKeyboard.tscn" type="PackedScene" id=11]
 [ext_resource path="res://assets/tape-black-small-vec1.png" type="Texture" id=12]
+[ext_resource path="res://ScopePanel.tscn" type="PackedScene" id=13]
 
 [sub_resource type="StyleBoxFlat" id=1]
 bg_color = Color( 0, 0, 0, 1 )
@@ -30,15 +31,22 @@ corner_radius_top_right = 5
 shadow_size = 10
 shadow_offset = Vector2( 0, -10 )
 
-[sub_resource type="StyleBoxFlat" id=11]
-bg_color = Color( 0.0470588, 0.0470588, 0.0470588, 0.443137 )
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-expand_margin_left = 5.0
-expand_margin_top = 5.0
-expand_margin_bottom = 5.0
+[sub_resource type="StyleBoxFlat" id=33]
+bg_color = Color( 0.627451, 0.611765, 0.6, 1 )
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+
+[sub_resource type="DynamicFont" id=13]
+size = 10
+font_data = ExtResource( 7 )
+
+[sub_resource type="DynamicFont" id=12]
+size = 12
+outline_size = 1
+use_filter = true
+font_data = ExtResource( 7 )
+
+[sub_resource type="DynamicFont" id=8]
 
 [sub_resource type="StyleBoxFlat" id=32]
 draw_center = false
@@ -47,14 +55,6 @@ corner_radius_top_left = 2
 corner_radius_top_right = 2
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
-
-[sub_resource type="DynamicFont" id=8]
-
-[sub_resource type="DynamicFont" id=12]
-size = 12
-outline_size = 1
-use_filter = true
-font_data = ExtResource( 7 )
 
 [sub_resource type="StyleBoxFlat" id=6]
 content_margin_left = 10.0
@@ -65,33 +65,31 @@ bg_color = Color( 0.168627, 0.168627, 0.168627, 0 )
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 
-[sub_resource type="DynamicFont" id=13]
-size = 10
-font_data = ExtResource( 7 )
+[sub_resource type="StyleBoxFlat" id=11]
+content_margin_left = 10.0
+bg_color = Color( 0.0470588, 0.0470588, 0.0470588, 0.607843 )
+border_width_right = 1
+border_width_bottom = 1
+border_blend = true
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+expand_margin_left = 5.0
+expand_margin_top = 5.0
+expand_margin_bottom = 5.0
 
 [sub_resource type="Animation" id=9]
 resource_name = "hud_slide_in"
 length = 0.101
 step = 0.01
-tracks/0/type = "value"
-tracks/0/path = NodePath("HUD:rect_position")
+tracks/0/type = "method"
+tracks/0/path = NodePath(".")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/imported = false
 tracks/0/enabled = true
 tracks/0/keys = {
-"times": PoolRealArray( 0, 0.1 ),
-"transitions": PoolRealArray( 1, 1 ),
-"update": 0,
-"values": [ Vector2( 0, 600 ), Vector2( 0, 0 ) ]
-}
-tracks/1/type = "method"
-tracks/1/path = NodePath(".")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/keys = {
 "times": PoolRealArray( 0.05, 0.1 ),
 "transitions": PoolRealArray( 1, 1 ),
 "values": [ {
@@ -142,14 +140,6 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="HUDold" type="VBoxContainer" parent="."]
-visible = false
-margin_right = 712.0
-margin_bottom = 200.0
-size_flags_vertical = 0
-custom_constants/separation = 0
-alignment = 2
-
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
 stream = SubResource( 4 )
 
@@ -166,83 +156,88 @@ margin_bottom = 110.0
 size_flags_horizontal = 1
 custom_styles/panel = SubResource( 10 )
 
-[node name="HUD" type="CenterContainer" parent="."]
-margin_top = 600.0
+[node name="HUD" type="Panel" parent="."]
 margin_right = 800.0
-margin_bottom = 812.0
+margin_bottom = 250.0
+custom_styles/panel = SubResource( 33 )
 
-[node name="HUDPanel" type="Panel" parent="HUD"]
-margin_right = 800.0
-margin_bottom = 212.0
-rect_min_size = Vector2( 800, 212 )
-custom_styles/panel = SubResource( 10 )
+[node name="HomeLabel" type="Label" parent="HUD"]
+margin_left = 7.0
+margin_top = 231.0
+margin_right = 619.0
+margin_bottom = 244.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 13 )
+text = "v06x by svofski https://github.com/svofski/v06x"
 
-[node name="SoundPanel" parent="HUD/HUDPanel" instance=ExtResource( 6 )]
-margin_left = 705.0
-margin_top = 18.0
-margin_right = 792.0
-margin_bottom = 194.0
-size_flags_vertical = 8
-custom_styles/panel = SubResource( 11 )
+[node name="ScopePanel" parent="HUD" instance=ExtResource( 13 )]
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_left = 74.0
+margin_top = 7.0
+margin_right = 681.0
+margin_bottom = 39.0
+rect_min_size = Vector2( 607, 32 )
 
-[node name="GamepadLabel" parent="HUD/HUDPanel" instance=ExtResource( 5 )]
-margin_left = 18.0
-margin_top = 109.0
-margin_right = 56.0
-margin_bottom = 141.0
-
-[node name="LoadAss2" parent="HUD/HUDPanel" instance=ExtResource( 9 )]
-margin_left = 14.0
-margin_top = 147.0
-margin_right = 64.0
-margin_bottom = 181.0
-custom_styles/panel = SubResource( 32 )
-texture = ExtResource( 12 )
-
-[node name="ShaderSelectButton" parent="HUD/HUDPanel" instance=ExtResource( 9 )]
-margin_left = 20.0
-margin_top = 68.0
-margin_right = 52.0
-margin_bottom = 100.0
-texture = ExtResource( 10 )
-
-[node name="RusLat" parent="HUD/HUDPanel" instance=ExtResource( 3 )]
-margin_left = 21.0
-margin_top = 19.0
-margin_right = 53.0
-margin_bottom = 51.0
-mouse_filter = 1
-size_flags_horizontal = 0
-custom_fonts/font = SubResource( 8 )
-
-[node name="RusLabel" type="Label" parent="HUD/HUDPanel"]
-margin_left = 27.0
-margin_top = 10.0
-margin_right = 67.0
-margin_bottom = 31.0
-custom_colors/font_color = Color( 0, 0, 0, 0 )
-custom_colors/font_outline_modulate = Color( 0, 0, 0, 0.219608 )
+[node name="RusLabel" type="Label" parent="HUD"]
+margin_left = 24.0
+margin_top = 20.0
+margin_right = 62.0
+margin_bottom = 36.0
+custom_colors/font_color = Color( 0, 0, 0, 0.247059 )
+custom_colors/font_outline_modulate = Color( 0, 0, 0, 0.223529 )
 custom_constants/shadow_offset_x = 13
 custom_constants/shadow_as_outline = 2
 custom_fonts/font = SubResource( 12 )
 text = "РУС"
 
-[node name="OnScreenKeyboard" parent="HUD/HUDPanel" instance=ExtResource( 11 )]
-margin_left = 84.0
-margin_top = 15.0
-margin_right = 696.0
-margin_bottom = 195.0
-size_flags_horizontal = 4
+[node name="RusLat" parent="HUD" instance=ExtResource( 3 )]
+margin_left = 19.0
+margin_top = 33.0
+margin_right = 51.0
+margin_bottom = 65.0
+mouse_filter = 1
+size_flags_horizontal = 0
+custom_fonts/font = SubResource( 8 )
+
+[node name="ShaderSelectButton" parent="HUD" instance=ExtResource( 9 )]
+margin_left = 19.0
+margin_top = 85.0
+margin_right = 51.0
+margin_bottom = 117.0
+custom_styles/panel = SubResource( 32 )
+texture = ExtResource( 10 )
+
+[node name="LoadAss2" parent="HUD" instance=ExtResource( 9 )]
+margin_left = 11.0
+margin_top = 138.0
+margin_right = 59.0
+margin_bottom = 170.0
+custom_styles/panel = SubResource( 32 )
+texture = ExtResource( 12 )
+
+[node name="GamepadLabel" parent="HUD" instance=ExtResource( 5 )]
+margin_left = 18.0
+margin_top = 184.0
+margin_right = 56.0
+margin_bottom = 216.0
+
+[node name="OnScreenKeyboard" parent="HUD" instance=ExtResource( 11 )]
+margin_left = 73.0
+margin_top = 45.0
+margin_right = 685.0
+margin_bottom = 225.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
 custom_styles/panel = SubResource( 6 )
 
-[node name="Label" type="Label" parent="HUD/HUDPanel"]
-margin_left = 7.0
-margin_top = 198.0
-margin_right = 289.0
-margin_bottom = 219.0
-custom_colors/font_color = Color( 0, 0, 0, 1 )
-custom_fonts/font = SubResource( 13 )
-text = "v06x by svofski https://github.com/svofski/v06x"
+[node name="SoundPanel" parent="HUD" instance=ExtResource( 6 )]
+margin_left = 696.0
+margin_top = 17.0
+margin_right = 786.0
+margin_bottom = 221.0
+rect_min_size = Vector2( 80, 204 )
+custom_styles/panel = SubResource( 11 )
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 anims/hud_slide_in = SubResource( 9 )
@@ -250,6 +245,8 @@ anims/hud_slide_in = SubResource( 9 )
 [connection signal="gui_input" from="." to="." method="_on_main_gui_input"]
 [connection signal="file_selected" from="FileDialog" to="." method="_on_FileDialog_file_selected"]
 [connection signal="selected" from="Panel2" to="." method="_on_shader_selected"]
-[connection signal="volumes_changed" from="HUD/HUDPanel/SoundPanel" to="." method="_on_SoundPanel_volumes_changed"]
-[connection signal="pressed" from="HUD/HUDPanel/LoadAss2" to="." method="_on_load_asset_pressed"]
-[connection signal="pressed" from="HUD/HUDPanel/ShaderSelectButton" to="." method="_on_shaderselect_pressed"]
+[connection signal="long_hover" from="HUD/ScopePanel" to="." method="_on_ScopePanel_long_hover"]
+[connection signal="pressed" from="HUD/ScopePanel" to="." method="_on_ScopePanel_pressed"]
+[connection signal="pressed" from="HUD/ShaderSelectButton" to="." method="_on_shaderselect_pressed"]
+[connection signal="pressed" from="HUD/LoadAss2" to="." method="_on_load_asset_pressed"]
+[connection signal="volumes_changed" from="HUD/SoundPanel" to="." method="_on_SoundPanel_volumes_changed"]

@@ -80,6 +80,9 @@ var scancode2key = {}
 var pressed_keys = {}
 var stuck_keys = []
 
+var all_keys = []
+var key_sizes = {}
+
 func _ready():
 	create_keys()
 	
@@ -91,6 +94,9 @@ func _notification(what):
 		$HBoxContainer.add_constant_override("separation", $Normal.rect_min_size.x * 0.75)	
 		rect_min_size = Vector2(($Normal.rect_min_size.x + HSEPARATION) * 17,
 			($Normal.rect_min_size.y + VSEPARATION) * 5)
+	
+		if len(all_keys) > 0:
+			update_sizes()
 
 func _get_key(code: int):
 	var row = floor(code/100)
@@ -134,6 +140,8 @@ func make_bezel_panel(row, num):
 	return bezelpanel
 
 func create_keys():
+	all_keys.clear()
+	
 	var height = 0
 	
 	var key
@@ -193,12 +201,14 @@ func create_keys():
 		key15.rect_min_size.x = (key15.rect_min_size.x) * 1.5 + HSEPARATION/2
 		key15.key_style = style_brownpoop
 		key15.text_color = Color.white
+		key_sizes[key15] = key15.rect_min_size
 	
 	for l in [spaceKey]:
 		var key7 = _get_key(l)
 		#key7.rect_min_size.x = (key.rect_min_size.x + HSEPARATION) * 7
 		key7.rect_min_size.x = (key.rect_min_size.x + HSEPARATION) * 7 - HSEPARATION
-
+		key_sizes[key7] = key7.rect_min_size
+		
 	for l in mustardKeys:
 		var k = _get_key(l)
 		k.key_style = style_lightpoop
@@ -215,6 +225,8 @@ func makekey(txt_top, txt_bot, scancode):
 	butt.connect("key_make", self, "_on_key_make")
 	butt.connect("key_break", self, "_on_key_break")
 	scancode2key[scancode] = butt
+	all_keys.append(butt)
+	key_sizes[butt] = butt.rect_min_size
 	return butt
 
 func _on_key_make(scancode, nostick=false):
@@ -255,3 +267,20 @@ func all_keys_up():
 		show_key_up(k)
 		emit_signal("key_break", k)
 	stuck_keys.clear()
+
+func update_sizes():
+	if len(all_keys) == 0:
+		return
+
+	## this is no worky
+	var ks = rect_size.x / 17
+	var sep = HSEPARATION
+	var scale = ks / (32 + sep) # base key size
+	var font_size = 10  #
+	font_size = font_size * scale
+	#var keysize = Vector2(ks - HSEPARATION*2, ks - VSEPARATION*2) 
+	for k in all_keys:
+		var keysize = key_sizes[k] * scale
+		k.rect_min_size = keysize
+		k.find_node("Label1").get("custom_fonts/font").size = font_size
+	
