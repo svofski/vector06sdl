@@ -101,6 +101,8 @@ public:
     void run_event_loop();
     void start_emulator_thread();
 
+    void export_memory_bytes(uint8_t * dst, int addr, int size);
+        
     void save_state(vector<uint8_t> & to);
     bool restore_state(vector<uint8_t> & to);
 };

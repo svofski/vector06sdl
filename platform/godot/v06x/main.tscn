@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=2]
+[gd_scene load_steps=29 format=2]
 
 [ext_resource path="res://main.gd" type="Script" id=1]
 [ext_resource path="res://theme.theme" type="Theme" id=2]
@@ -13,6 +13,8 @@
 [ext_resource path="res://OnScreenKeyboard.tscn" type="PackedScene" id=11]
 [ext_resource path="res://assets/tape-black-small-vec1.png" type="Texture" id=12]
 [ext_resource path="res://ScopePanel.tscn" type="PackedScene" id=13]
+[ext_resource path="res://MemoryView.tscn" type="PackedScene" id=14]
+[ext_resource path="res://assets/debugger-bowser.png" type="Texture" id=15]
 
 [sub_resource type="StyleBoxFlat" id=1]
 bg_color = Color( 0, 0, 0, 1 )
@@ -55,6 +57,11 @@ corner_radius_top_left = 2
 corner_radius_top_right = 2
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
+
+[sub_resource type="AtlasTexture" id=34]
+flags = 5
+atlas = ExtResource( 15 )
+region = Rect2( 175, 15, 150, 150 )
 
 [sub_resource type="StyleBoxFlat" id=6]
 content_margin_left = 10.0
@@ -134,8 +141,6 @@ mode_overrides_title = false
 mode = 0
 access = 2
 filters = PoolStringArray( "*.rom,*.r0m,*.vec,*.bin,*.fdd,*.wav" )
-current_dir = "/Users/svofs/projects/vector06sdl/platform/godot/v06x"
-current_path = "/Users/svofs/projects/vector06sdl/platform/godot/v06x/"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -181,9 +186,9 @@ rect_min_size = Vector2( 607, 32 )
 
 [node name="RusLabel" type="Label" parent="HUD"]
 margin_left = 24.0
-margin_top = 20.0
+margin_top = 11.0
 margin_right = 62.0
-margin_bottom = 36.0
+margin_bottom = 27.0
 custom_colors/font_color = Color( 0, 0, 0, 0.247059 )
 custom_colors/font_outline_modulate = Color( 0, 0, 0, 0.223529 )
 custom_constants/shadow_offset_x = 13
@@ -193,34 +198,44 @@ text = "РУС"
 
 [node name="RusLat" parent="HUD" instance=ExtResource( 3 )]
 margin_left = 19.0
-margin_top = 33.0
+margin_top = 19.0
 margin_right = 51.0
-margin_bottom = 65.0
+margin_bottom = 51.0
 mouse_filter = 1
 size_flags_horizontal = 0
 custom_fonts/font = SubResource( 8 )
 
 [node name="ShaderSelectButton" parent="HUD" instance=ExtResource( 9 )]
 margin_left = 19.0
-margin_top = 85.0
+margin_top = 98.0
 margin_right = 51.0
-margin_bottom = 117.0
+margin_bottom = 130.0
 custom_styles/panel = SubResource( 32 )
 texture = ExtResource( 10 )
 
+[node name="DebuggerButton" parent="HUD" instance=ExtResource( 9 )]
+margin_left = 14.0
+margin_top = 143.0
+margin_right = 56.0
+margin_bottom = 182.0
+hint_tooltip = "Базырь"
+custom_styles/panel = SubResource( 32 )
+texture = SubResource( 34 )
+
 [node name="LoadAss2" parent="HUD" instance=ExtResource( 9 )]
 margin_left = 11.0
-margin_top = 138.0
+margin_top = 54.0
 margin_right = 59.0
-margin_bottom = 170.0
+margin_bottom = 86.0
+hint_tooltip = "Загрузка"
 custom_styles/panel = SubResource( 32 )
 texture = ExtResource( 12 )
 
 [node name="GamepadLabel" parent="HUD" instance=ExtResource( 5 )]
 margin_left = 18.0
-margin_top = 184.0
+margin_top = 187.0
 margin_right = 56.0
-margin_bottom = 216.0
+margin_bottom = 219.0
 
 [node name="OnScreenKeyboard" parent="HUD" instance=ExtResource( 11 )]
 margin_left = 73.0
@@ -242,11 +257,17 @@ custom_styles/panel = SubResource( 11 )
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 anims/hud_slide_in = SubResource( 9 )
 
+[node name="MemoryView" parent="." instance=ExtResource( 14 )]
+visible = false
+margin_right = 393.0
+margin_bottom = 470.0
+
 [connection signal="gui_input" from="." to="." method="_on_main_gui_input"]
 [connection signal="file_selected" from="FileDialog" to="." method="_on_FileDialog_file_selected"]
 [connection signal="selected" from="Panel2" to="." method="_on_shader_selected"]
 [connection signal="long_hover" from="HUD/ScopePanel" to="." method="_on_ScopePanel_long_hover"]
 [connection signal="pressed" from="HUD/ScopePanel" to="." method="_on_ScopePanel_pressed"]
 [connection signal="pressed" from="HUD/ShaderSelectButton" to="." method="_on_shaderselect_pressed"]
+[connection signal="pressed" from="HUD/DebuggerButton" to="." method="_on_DebuggerButton_pressed"]
 [connection signal="pressed" from="HUD/LoadAss2" to="." method="_on_load_asset_pressed"]
 [connection signal="volumes_changed" from="HUD/SoundPanel" to="." method="_on_SoundPanel_volumes_changed"]

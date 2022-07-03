@@ -24,7 +24,7 @@ void Memory::control_write(uint8_t w8)
     //        this->mode_stack, this->mode_map, this->page_map, this->page_stack);
 }
 
-uint32_t Memory::bigram_select(uint32_t addr, bool stackrq) 
+uint32_t Memory::bigram_select(uint32_t addr, bool stackrq) const
 {
     if (!(this->mode_map || this->mode_stack)) {
         return addr;
@@ -36,12 +36,12 @@ uint32_t Memory::bigram_select(uint32_t addr, bool stackrq)
     return addr;
 }
 
-uint32_t Memory::tobank(uint32_t a) 
+uint32_t Memory::tobank(uint32_t a) const
 {
     return (a & 0x78000) | ((a<<2)&0x7ffc) | ((a>>13)&3);
 }
 
-uint8_t Memory::read(uint32_t addr, bool stackrq)
+uint8_t Memory::read(uint32_t addr, bool stackrq) const
 {
     uint8_t value;
     uint32_t phys = addr;
@@ -62,11 +62,17 @@ uint8_t Memory::read(uint32_t addr, bool stackrq)
 
 void Memory::write(uint32_t addr, uint8_t w8, bool stackrq)
 {
-    uint32_t phys = this->tobank(this->bigram_select(addr & 0xffff, stackrq));
+    uint32_t bigaddr = this->bigram_select(addr & 0xffff, stackrq);
+    uint32_t phys = this->tobank(bigaddr);
     if (this->onwrite) {
         this->onwrite(addr, phys, stackrq, w8);
     }
     this->bytes[phys] = w8;
+
+    if (bigaddr < this->heatmap.size()) {
+        //this->heatmap[phys] = std::clamp(this->heatmap[phys] + 64, 0, 255);
+        this->heatmap[bigaddr] = 255;
+    }
 }
 
 void Memory::init_from_vector(const vector<uint8_t> & from, uint32_t start_addr)
@@ -135,4 +141,23 @@ void Memory::deserialize(std::vector<uint8_t>::iterator it, uint32_t size)
     this->bootbytes.assign(it, begin + size);
 }
 
+void Memory::cool_off_heatmap()
+{
+    for (auto it = heatmap.begin(); it < heatmap.end(); ++it) {
+        //if (*it > 0) printf("%04x %02x\n ", it - heatmap.begin(), *it);
+        int i = *it;
+        if (i > 64) {
+            *it -= 10;
+        }
+        else {
+            *it = std::clamp(static_cast<int>(*it) - 5, 0, 255);
+        }
+    }
+}
 
+void Memory::export_bytes(uint8_t * dst, uint32_t addr, uint32_t size) const
+{
+    for (uint32_t i = 0; i < size; ++i) {
+        dst[i] = this->bytes[this->tobank(addr + i)];
+    }
+}

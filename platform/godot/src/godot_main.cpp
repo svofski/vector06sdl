@@ -162,6 +162,12 @@ godot_variant V06X_ExecuteFrame(godot_object* p_instance, void* p_method_data,
 
         api->godot_pool_byte_array_new(&v->state); // for serializing
 
+        api->godot_pool_byte_array_new(&v->memory); // for dump / debug
+        api->godot_pool_byte_array_resize(&v->memory, memory.buffer_size());
+
+        api->godot_pool_byte_array_new(&v->heatmap);
+        api->godot_pool_byte_array_resize(&v->heatmap, memory.get_heatmap().size());
+
         v->initialized = true;
     }
 
@@ -171,6 +177,8 @@ godot_variant V06X_ExecuteFrame(godot_object* p_instance, void* p_method_data,
     uint8_t * wrptr = api->godot_pool_byte_array_write_access_ptr(wraccess);
 
     lator.export_pixel_bytes(wrptr);
+
+    memory.cool_off_heatmap();
 
     // destroy write_access
     api->godot_pool_byte_array_write_access_destroy(wraccess);
@@ -372,3 +380,66 @@ godot_variant V06X_SetVolumes(godot_object* p_instance, void* p_method_data,
     api->godot_variant_new_bool(&ret, 1);
     return ret;
 }
+
+// GetMem(int addr, int length) -> PoolArrayBytes
+godot_variant V06X_GetMem(godot_object* p_instance, void* p_method_data, 
+        void* p_user_data, int p_num_args, godot_variant** p_args)
+{
+    godot_variant ret;
+    // obtain instance user data
+    v06x_user_data * v = static_cast<v06x_user_data *>(p_user_data);
+
+    if (!v->initialized) {
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
+
+    godot_int addr = api->godot_variant_as_int(p_args[0]);
+    godot_int size = api->godot_variant_as_int(p_args[1]);
+
+    // obtain the pointer to bytes
+    godot_pool_byte_array_write_access * wraccess = 
+        api->godot_pool_byte_array_write(&v->memory);
+    uint8_t * wrptr = api->godot_pool_byte_array_write_access_ptr(wraccess);
+
+    memory.export_bytes(wrptr, addr, size);
+
+    // destroy write_access
+    api->godot_pool_byte_array_write_access_destroy(wraccess);
+
+    api->godot_variant_new_pool_byte_array(&ret, &v->memory);
+    return ret;
+}
+
+// GetHeatmap(addr, length) -> PoolIntArray
+godot_variant V06X_GetHeatmap(godot_object* p_instance, void* p_method_data, 
+        void* p_user_data, int p_num_args, godot_variant** p_args)
+{
+    godot_variant ret;
+    // obtain instance user data
+    v06x_user_data * v = static_cast<v06x_user_data *>(p_user_data);
+
+    if (!v->initialized) {
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
+
+    godot_int addr = api->godot_variant_as_int(p_args[0]);
+    godot_int size = api->godot_variant_as_int(p_args[1]);
+
+    // obtain the pointer to ints
+    godot_pool_byte_array_write_access * wraccess = 
+        api->godot_pool_byte_array_write(&v->heatmap);
+    uint8_t * wrptr = api->godot_pool_byte_array_write_access_ptr(wraccess);
+
+    std::copy(memory.get_heatmap().begin(), memory.get_heatmap().end(),
+            wrptr);
+
+
+    // destroy write_access
+    api->godot_pool_byte_array_write_access_destroy(wraccess);
+
+    api->godot_variant_new_pool_byte_array(&ret, &v->heatmap);
+    return ret;
+}
+

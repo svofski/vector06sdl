@@ -15,6 +15,8 @@ var texture : ImageTexture
 var textureImage : Image
 var playback : AudioStreamPlayback
 
+var maintained_aspect = 5.0/4
+
 onready var hud_panel = find_node("HUD")
 onready var gamepad_label = find_node("GamepadLabel")
 onready var rus_lat = find_node("RusLat")
@@ -23,6 +25,7 @@ onready var panel2 = find_node("Panel2")
 onready var sound_panel = find_node("SoundPanel")
 onready var osk_panel = find_node("OnScreenKeyboard")
 onready var scope_panel = find_node("ScopePanel")
+onready var debug_panel = find_node("MemoryView")
 onready var default_scope_panel_pos = scope_panel.rect_position
 
 var shader_index = 0
@@ -59,7 +62,7 @@ func _ready():
 	var cmdline_asset: String = ""
 	for arg in OS.get_cmdline_args():
 		#print("arg: ", arg)
-		if not arg.startswith("--"):
+		if not arg.begins_swith("--"):
 			cmdline_asset = arg
 			print("Will try to load asset: ", cmdline_asset)
 	
@@ -106,26 +109,6 @@ func _ready():
 	panel2.connect("visibility_changed", self, "shader_panel_visibility_changed")
 	panel2.connect("resized", self, "place_shader_panel_please")
 
-	#move_hud_to_viewport()
-
-func move_hud_to_viewport():
-	#$ViewportContainer/Viewport.set_size_override(true, Vector2(800, 222))
-	var screen_pixel_width = OS.get_screen_size().x
-	var ratio = screen_pixel_width / 800.0
-	var render_size = Vector2(800 * ratio, 250 * ratio)
-	$ViewportContainer/Viewport.set_size_override(true, render_size)
-	$ViewportContainer/Viewport.size_override_stretch = true
-	$ViewportContainer.rect_size = hud_panel.rect_size
-
-	print(hud_panel.get_children())
-	for child in hud_panel.get_children():
-		child.rect_position = child.rect_position * ratio
-		child.rect_size = child.rect_size * ratio
-
-
-	hud_panel.get_parent().remove_child(hud_panel)
-	$ViewportContainer/Viewport.add_child(hud_panel)
-	hud_panel.rect_size = render_size
 
 func _notification(what):
 	#print("notification: ", what)
@@ -172,36 +155,71 @@ func _physics_process(delta):
 	if hud_panel.visible || scope_panel.get_parent() == self:
 		scope_panel.update_texture(sound)
 
+	if debug_panel.visible:
+		debug_panel.ram = v06x.GetMem(0, 65536)
+		debug_panel.heatmap = v06x.GetHeatmap(0, 65536)
+		debug_panel.emit_signal("visibility_changed")
+
 func _on_load_asset_pressed():
 	$FileDialog.popup()
-	
+
+func update_debugger_size():
+	var vert_available_size = hud_panel.rect_position.y
+	if not hud_panel.visible:
+		vert_available_size = get_viewport_rect().size.y
+	if debug_panel.visible:
+		debug_panel.rect_position = Vector2(0, 0)
+		debug_panel.rect_size.y = vert_available_size
+		debug_panel.rect_size.x = debug_panel.rect_min_size.x
+
+func update_crt_size(fit_to: Rect2):
+	var sz = Vector2(fit_to.size.x, fit_to.size.x / maintained_aspect)
+	if sz.y > fit_to.size.y:
+		sz = Vector2(fit_to.size.y * maintained_aspect, fit_to.size.y)
+	var centre = Vector2((fit_to.size.x - sz.x) / 2, (fit_to.size.y - sz.y) / 2)
+
+	$VectorScreen.rect_size = sz
+	$VectorScreen.rect_position = fit_to.position + centre
+
+func update_scope_size(pos: Vector2, sz: Vector2):
+	# if bigg
+	print("update_scope_size: rect_size=", sz)
+	if scope_panel.get_parent() == self:
+		scope_panel.rect_size = Vector2(sz.x, sz.x * 0.1)
+		scope_panel.rect_position.y = sz.y - scope_panel.rect_size.y
+		scope_panel.rect_position.x = pos.x
+
 func _on_size_changed():
 	var sz = get_viewport_rect().size # viewport maintains project size
-	#var sz = get_viewport().size # this is real window pixel size
 	
 	hud_panel.rect_position.y = sz.y - hud_panel.rect_size.y
 	hud_panel.rect_position.x = (sz.x - hud_panel.rect_size.x) / 2
 	if hud_panel.visible:
 		sz.y -= hud_panel.rect_size.y
-		
-	var maintained_aspect = 5.0/4
-	var aspect = sz[0]/sz[1]
-	var rs = self.rect_size
-	if aspect > maintained_aspect:
-		# wider than needed
-		rs = Vector2(sz[1] * maintained_aspect, sz[1])
-	else:
-		# taller than needed
-		rs = Vector2(sz[0], sz[0] * 1/maintained_aspect)
-	self.rect_size = sz
 
-	$VectorScreen.rect_size = rs
-	$VectorScreen.rect_position = Vector2(sz[0]/2 - rs[0]/2, 0)
+	update_debugger_size()
+
+	var crt_rect = Rect2(Vector2(0, 0), sz)
+	if debug_panel.visible:
+		crt_rect = crt_rect.grow_individual(-debug_panel.rect_size.x, 0, 0, 0) 
+	update_crt_size(crt_rect)
 
 	if panel2.visible:
 		shader_panel_visibility_changed()
+		
+	sz = get_viewport_rect().size
+	if debug_panel.visible:
+		sz.x = sz.x - debug_panel.rect_size.x
+	if hud_panel.visible:
+		sz.y = hud_panel.rect_position.y
 	if scope_panel.visible:
-		update_scope_size()
+		var pos = Vector2(0, 0)
+		if debug_panel.visible:
+			pos.x = debug_panel.rect_size.x
+		update_scope_size(pos, sz)
+	
+	if debug_panel.visible:
+		$VectorScreen.rect_position.x = debug_panel.rect_size.x
 
 func place_shader_panel_please():
 	if hud_panel.visible:
@@ -291,7 +309,8 @@ func _on_click_timer():
 	if hud_panel.visible:
 		panel2.visible = false
 		hud_panel.visible = false
-		_on_size_changed()
+		hud_panel.rect_position.y = get_viewport_rect().size.y
+		call_deferred("_on_size_changed")
 	else:
 		hud_panel.rect_position.y = get_viewport_rect().size.y
 		hud_panel.visible = true
@@ -427,12 +446,13 @@ func make_scope_big():
 	default_scope_panel_pos = scope_panel.rect_position
 	scope_panel.get_parent().remove_child(scope_panel)
 	add_child(scope_panel)
-	var r = hud_panel.rect_size
-	r.y = 0.5 * r.y
-	scope_panel.rect_size = r
-	var p = hud_panel.rect_position
-	p.y -= scope_panel.rect_size.y
-	scope_panel.rect_position = p
+	call_deferred("_on_size_changed")
+	#var r = hud_panel.rect_size
+	#r.y = 0.5 * r.y
+	#scope_panel.rect_size = r
+	#var p = hud_panel.rect_position
+	#p.y -= scope_panel.rect_size.y
+	#scope_panel.rect_position = p
 	scope_state = SCOPE_BIG
 
 func make_scope_small():
@@ -446,12 +466,6 @@ func make_scope_small():
 	scope_state = SCOPE_SMALL
 	scope_panel.call_deferred("update_sizes")
 
-func update_scope_size():
-	if scope_panel.get_parent() == self:
-		scope_panel.rect_size = Vector2(rect_size.x, rect_size.x * 0.1)
-		scope_panel.rect_position.y = rect_size.y - scope_panel.rect_size.y
-		scope_panel.rect_position.x = 0
-
 func _on_ScopePanel_long_hover():
 	pass
 
@@ -460,4 +474,8 @@ func _on_ScopePanel_pressed():
 		make_scope_big()
 	else:
 		make_scope_small()
+
+func _on_DebuggerButton_pressed():
+	debug_panel.visible = not debug_panel.visible
+	call_deferred("_on_size_changed")
 

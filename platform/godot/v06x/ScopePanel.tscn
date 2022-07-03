@@ -3,7 +3,7 @@
 [ext_resource path="res://ScopePanel.gd" type="Script" id=1]
 
 [sub_resource type="StyleBoxFlat" id=1]
-bg_color = Color( 0.027451, 0.0784314, 0.0196078, 1 )
+bg_color = Color( 0.027451, 0.0784314, 0.0196078, 0.784314 )
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
