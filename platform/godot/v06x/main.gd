@@ -156,8 +156,8 @@ func _physics_process(delta):
 		scope_panel.update_texture(sound)
 
 	if debug_panel.visible:
-		debug_panel.ram = v06x.GetMem(0, 65536)
-		debug_panel.heatmap = v06x.GetHeatmap(0, 65536)
+		debug_panel.ram = v06x.GetMem(0, 65536*5)
+		debug_panel.heatmap = v06x.GetHeatmap(0, 65536*5)
 		debug_panel.emit_signal("visibility_changed")
 
 func _on_load_asset_pressed():
