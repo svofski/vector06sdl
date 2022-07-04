@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://MemoryTexture.gd" type="Script" id=1]
+[ext_resource path="res://Reticle.tscn" type="PackedScene" id=2]
 
 [node name="Control" type="PanelContainer"]
 script = ExtResource( 1 )
@@ -10,3 +11,7 @@ margin_left = 7.0
 margin_top = 7.0
 margin_right = 7.0
 margin_bottom = 7.0
+
+[node name="Reticle" parent="TextureRect" instance=ExtResource( 2 )]
+
+[connection signal="gui_input" from="TextureRect" to="." method="_on_TextureRect_gui_input"]

@@ -170,7 +170,8 @@ func update_debugger_size():
 	if debug_panel.visible:
 		debug_panel.rect_position = Vector2(0, 0)
 		debug_panel.rect_size.y = vert_available_size
-		debug_panel.rect_size.x = debug_panel.rect_min_size.x
+		debug_panel.rect_size.x = debug_panel.dump._get_minimum_size().x
+		#print("update_debugger_size: debug_panel.rect_size is set to ", debug_panel.rect_size, " debug_panel.dump wants ", debug_panel.dump._get_minimum_size().x)
 
 func update_crt_size(fit_to: Rect2):
 	var sz = Vector2(fit_to.size.x, fit_to.size.x / maintained_aspect)
@@ -183,7 +184,7 @@ func update_crt_size(fit_to: Rect2):
 
 func update_scope_size(pos: Vector2, sz: Vector2):
 	# if bigg
-	print("update_scope_size: rect_size=", sz)
+	#print("update_scope_size: rect_size=", sz)
 	if scope_panel.get_parent() == self:
 		scope_panel.rect_size = Vector2(sz.x, sz.x * 0.1)
 		scope_panel.rect_position.y = sz.y - scope_panel.rect_size.y

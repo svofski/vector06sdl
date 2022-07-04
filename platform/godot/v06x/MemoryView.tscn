@@ -11,31 +11,43 @@ size_flags_horizontal = 0
 size_flags_vertical = 0
 script = ExtResource( 2 )
 
-[node name="ScrollContainer" type="ScrollContainer" parent="."]
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 396.0
+margin_bottom = 186.0
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
+margin_right = 389.0
+margin_bottom = 161.0
+mouse_filter = 1
+size_flags_horizontal = 3
+size_flags_vertical = 3
+scroll_horizontal_enabled = false
+
+[node name="Dump" parent="VBoxContainer/ScrollContainer" instance=ExtResource( 1 )]
+margin_right = 377.0
+margin_bottom = 204800.0
+
+[node name="ScrollContainer2" type="ScrollContainer" parent="VBoxContainer"]
 visible = false
-margin_left = 7.0
-margin_top = 7.0
-margin_right = 386.0
-margin_bottom = 186.0
+margin_right = 373.0
 mouse_filter = 1
+size_flags_horizontal = 3
+size_flags_vertical = 3
 scroll_horizontal_enabled = false
 
-[node name="Dump" parent="ScrollContainer" instance=ExtResource( 1 )]
-margin_right = 367.0
-mouse_filter = 2
-
-[node name="ScrollContainer2" type="ScrollContainer" parent="."]
-margin_left = 7.0
-margin_top = 7.0
-margin_right = 380.0
-margin_bottom = 186.0
-mouse_filter = 1
-scroll_horizontal_enabled = false
-
-[node name="Bitmaps" parent="ScrollContainer2" instance=ExtResource( 3 )]
+[node name="Bitmaps" parent="VBoxContainer/ScrollContainer2" instance=ExtResource( 3 )]
 margin_right = 14.0
 margin_bottom = 14.0
 mouse_filter = 2
+
+[node name="HintLabel" type="Label" parent="VBoxContainer"]
+margin_top = 165.0
+margin_right = 389.0
+margin_bottom = 179.0
+size_flags_vertical = 8
+text = "Helpful hints"
 
 [connection signal="gui_input" from="." to="." method="_on_gui_input"]
 [connection signal="visibility_changed" from="." to="." method="_on_PanelContainer_visibility_changed"]

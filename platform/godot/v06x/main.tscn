@@ -16,39 +16,39 @@
 [ext_resource path="res://MemoryView.tscn" type="PackedScene" id=14]
 [ext_resource path="res://assets/debugger-bowser.png" type="Texture" id=15]
 
-[sub_resource type="StyleBoxFlat" id=1]
+[sub_resource type="StyleBoxFlat" id=33]
 bg_color = Color( 0, 0, 0, 1 )
 
-[sub_resource type="ShaderMaterial" id=2]
+[sub_resource type="ShaderMaterial" id=34]
 shader = ExtResource( 4 )
 
-[sub_resource type="AudioStreamGenerator" id=4]
+[sub_resource type="AudioStreamGenerator" id=35]
 mix_rate = 48000.0
 buffer_length = 0.1
 
-[sub_resource type="StyleBoxFlat" id=10]
+[sub_resource type="StyleBoxFlat" id=36]
 bg_color = Color( 0.439216, 0.419608, 0.407843, 0.905882 )
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 shadow_size = 10
 shadow_offset = Vector2( 0, -10 )
 
-[sub_resource type="StyleBoxFlat" id=33]
+[sub_resource type="StyleBoxFlat" id=37]
 bg_color = Color( 0.627451, 0.611765, 0.6, 1 )
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 
-[sub_resource type="DynamicFont" id=13]
+[sub_resource type="DynamicFont" id=38]
 size = 10
 font_data = ExtResource( 7 )
 
-[sub_resource type="DynamicFont" id=12]
+[sub_resource type="DynamicFont" id=39]
 size = 12
 outline_size = 1
 use_filter = true
 font_data = ExtResource( 7 )
 
-[sub_resource type="DynamicFont" id=8]
+[sub_resource type="DynamicFont" id=40]
 
 [sub_resource type="StyleBoxFlat" id=32]
 draw_center = false
@@ -58,12 +58,12 @@ corner_radius_top_right = 2
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 
-[sub_resource type="AtlasTexture" id=34]
-flags = 5
+[sub_resource type="AtlasTexture" id=41]
+flags = 4
 atlas = ExtResource( 15 )
 region = Rect2( 175, 15, 150, 150 )
 
-[sub_resource type="StyleBoxFlat" id=6]
+[sub_resource type="StyleBoxFlat" id=42]
 content_margin_left = 10.0
 content_margin_right = 10.0
 content_margin_top = 10.0
@@ -72,7 +72,7 @@ bg_color = Color( 0.168627, 0.168627, 0.168627, 0 )
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 
-[sub_resource type="StyleBoxFlat" id=11]
+[sub_resource type="StyleBoxFlat" id=43]
 content_margin_left = 10.0
 bg_color = Color( 0.0470588, 0.0470588, 0.0470588, 0.607843 )
 border_width_right = 1
@@ -86,7 +86,7 @@ expand_margin_left = 5.0
 expand_margin_top = 5.0
 expand_margin_bottom = 5.0
 
-[sub_resource type="Animation" id=9]
+[sub_resource type="Animation" id=44]
 resource_name = "hud_slide_in"
 length = 0.101
 step = 0.01
@@ -112,11 +112,11 @@ tracks/0/keys = {
 margin_right = 800.0
 margin_bottom = 640.0
 theme = ExtResource( 2 )
-custom_styles/panel = SubResource( 1 )
+custom_styles/panel = SubResource( 33 )
 script = ExtResource( 1 )
 
 [node name="VectorScreen" type="TextureRect" parent="."]
-material = SubResource( 2 )
+material = SubResource( 34 )
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 793.0
@@ -146,7 +146,7 @@ __meta__ = {
 }
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
-stream = SubResource( 4 )
+stream = SubResource( 35 )
 
 [node name="ResumeTimer" type="Timer" parent="."]
 
@@ -159,12 +159,12 @@ margin_top = 10.0
 margin_right = 600.0
 margin_bottom = 110.0
 size_flags_horizontal = 1
-custom_styles/panel = SubResource( 10 )
+custom_styles/panel = SubResource( 36 )
 
 [node name="HUD" type="Panel" parent="."]
 margin_right = 800.0
 margin_bottom = 250.0
-custom_styles/panel = SubResource( 33 )
+custom_styles/panel = SubResource( 37 )
 
 [node name="HomeLabel" type="Label" parent="HUD"]
 margin_left = 7.0
@@ -172,7 +172,7 @@ margin_top = 231.0
 margin_right = 619.0
 margin_bottom = 244.0
 custom_colors/font_color = Color( 0, 0, 0, 1 )
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 38 )
 text = "v06x by svofski https://github.com/svofski/v06x"
 
 [node name="ScopePanel" parent="HUD" instance=ExtResource( 13 )]
@@ -193,7 +193,7 @@ custom_colors/font_color = Color( 0, 0, 0, 0.247059 )
 custom_colors/font_outline_modulate = Color( 0, 0, 0, 0.223529 )
 custom_constants/shadow_offset_x = 13
 custom_constants/shadow_as_outline = 2
-custom_fonts/font = SubResource( 12 )
+custom_fonts/font = SubResource( 39 )
 text = "РУС"
 
 [node name="RusLat" parent="HUD" instance=ExtResource( 3 )]
@@ -203,7 +203,7 @@ margin_right = 51.0
 margin_bottom = 51.0
 mouse_filter = 1
 size_flags_horizontal = 0
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 40 )
 
 [node name="ShaderSelectButton" parent="HUD" instance=ExtResource( 9 )]
 margin_left = 19.0
@@ -220,7 +220,7 @@ margin_right = 56.0
 margin_bottom = 182.0
 hint_tooltip = "Базырь"
 custom_styles/panel = SubResource( 32 )
-texture = SubResource( 34 )
+texture = SubResource( 41 )
 
 [node name="LoadAss2" parent="HUD" instance=ExtResource( 9 )]
 margin_left = 11.0
@@ -244,7 +244,7 @@ margin_right = 685.0
 margin_bottom = 225.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-custom_styles/panel = SubResource( 6 )
+custom_styles/panel = SubResource( 42 )
 
 [node name="SoundPanel" parent="HUD" instance=ExtResource( 6 )]
 margin_left = 696.0
@@ -252,15 +252,16 @@ margin_top = 17.0
 margin_right = 786.0
 margin_bottom = 221.0
 rect_min_size = Vector2( 80, 204 )
-custom_styles/panel = SubResource( 11 )
+custom_styles/panel = SubResource( 43 )
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
-anims/hud_slide_in = SubResource( 9 )
+anims/hud_slide_in = SubResource( 44 )
 
 [node name="MemoryView" parent="." instance=ExtResource( 14 )]
 visible = false
 margin_right = 393.0
 margin_bottom = 470.0
+size_flags_horizontal = 2
 
 [connection signal="gui_input" from="." to="." method="_on_main_gui_input"]
 [connection signal="file_selected" from="FileDialog" to="." method="_on_FileDialog_file_selected"]
