@@ -48,6 +48,7 @@ function test60 {
     announce "$cmd"
     $cmd >> $LOG
     ./pngdiff.py expected/$2 out/$3 |& tee -a $RES
+    sleep 1
 }
 
 function testwav {
@@ -80,10 +81,10 @@ function scrltest {
     $cmd >> $LOG
     (
     ./pngdiff.py expected/scrltest_40.png  out/scrltest_40.png
-    ./pngdiff.py expected/scrltest_98.png  out/scrltest_98.png  
-    ./pngdiff.py expected/scrltest_101.png out/scrltest_101.png 
-    ./pngdiff.py expected/scrltest_110.png out/scrltest_110.png 
-    ./pngdiff.py expected/scrltest_113.png out/scrltest_113.png 
+    ./pngdiff.py expected/scrltest_98.png  out/scrltest_98.png
+    ./pngdiff.py expected/scrltest_101.png out/scrltest_101.png
+    ./pngdiff.py expected/scrltest_110.png out/scrltest_110.png
+    ./pngdiff.py expected/scrltest_113.png out/scrltest_113.png
     ) |& tee -a $RES
 }
 
@@ -105,8 +106,8 @@ fi
 
 $tests | tee -a $RES
 
-test_boot_cas xoxoxo boot-cas.png boots_42.png 
-test_boot_fdc xoxoxo boot-fdd.png boots_43.png 
+test_boot_cas xoxoxo boot-cas.png boots_42.png
+test_boot_fdc xoxoxo boot-fdd.png boots_43.png
 test60 bord2.rom        bord2.rom.png       bord2_60.png
 test60 brdtestx.rom     brdtestx.rom.png     brdtestx_60.png
 test60 chkvi53.rom      chkvi53.rom.png     chkvi53_60.png
@@ -120,7 +121,7 @@ testfdd test.fdd 318 test_318.png test_318.png
 test1800 vst.rom        vst_1800.png        vst_1800.png
 testwav clrs.wav        clrs_240.png        clrs_240.png
 
-if grep -qi error $RES ; then 
+if grep -qi error $RES ; then
     eggog "errors found"
-    exit 1 
+    exit 1
 fi

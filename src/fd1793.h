@@ -8,32 +8,210 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
+
 #include "options.h"
+#include "util.h"
+#include "fsimage.h"
 
-class FD1793
+struct DiskImage
 {
+    virtual uint8_t get(int i) { return 0; }
+    virtual void set(int /*index*/, uint8_t /*value*/) {}
+    virtual size_t size() { return 0; }
+    virtual void flush() {}
+    virtual ~DiskImage() {}
+};
+
+struct CardboardDiskImage : public DiskImage
+{
+};
+
+class DetachedDiskImage : public DiskImage
+{
+    std::vector<uint8_t> _data;
 public:
-    virtual void write(int addr, int value)
-    {
+    DetachedDiskImage() = delete;
+
+    DetachedDiskImage(const std::vector<uint8_t> & data) 
+        : _data(data)
+    {}
+
+    ~DetachedDiskImage() override {
+        FILE * dump = fopen(".saved.fdd", "wb");
+        if (dump) {
+            fwrite(&_data[0], 1, _data.size(), dump);
+        }
+        fclose(dump);
     }
 
-    virtual int read(int addr)
+    uint8_t get(int index) override
     {
-        return 0xff;
+        if (index < 0 || index >= (int)size()) 
+            throw std::out_of_range("boundary error");
+        return _data[index]; 
     }
 
-    virtual bool loadDsk(int drive, const char * name, 
-            const std::vector<uint8_t> & fdd_data) 
+    void set(int index, uint8_t value) override
     {
-        return false;
+        if (index < 0 || index >= (int)size()) 
+            throw std::out_of_range("boundary error");
+        _data[index] = value;
+    }
+
+    size_t size() override {
+        return _data.size();
     }
 };
+
+class FileDiskImage : public DiskImage
+{
+    std::string filename;
+    std::vector<uint8_t> _data;
+    bool loaded;
+    bool dirty;
+public:
+    FileDiskImage(const std::string & path) 
+        : filename(path), loaded(false), dirty(false)
+    {
+    }
+
+    ~FileDiskImage()
+    {
+        flush();
+    }
+
+    uint8_t get(int index) override
+    {
+        if (index < 0 || index >= (int)size()) 
+            throw std::out_of_range("boundary error");
+        return _data[index]; 
+    }
+
+    void set(int index, uint8_t value) override
+    {
+        if (index < 0 || index >= (int)size()) 
+            throw std::out_of_range("boundary error");
+        bool changed = _data[index] != value;
+        if (changed) {
+            _data[index] = value;
+            dirty = true;
+        }
+    }
+
+    size_t size() override {
+        load();
+        return _data.size();
+    }
+    
+    void load()
+    {
+        if (!loaded) {
+            _data = util::load_binfile(filename);
+            loaded = true;
+        }
+    }
+
+    void flush() override
+    {
+        if (dirty) {
+            std::string tmp = util::tmpname(filename).c_str();
+            FILE * copy = fopen(tmp.c_str(), "wb");
+            if (copy) {
+                fwrite(&_data[0], 1, _data.size(), copy);
+            }
+            fclose(copy);
+            rename(tmp.c_str(), filename.c_str());
+
+            dirty = false;
+        }
+    }
+
+    bool is_valid()
+    {
+        load();
+        return _data.size() > 0;
+    }
+};
+
+class DirectoryImage : public DiskImage
+{
+    std::string path;
+    std::string dirimage;
+    FilesystemImage dir;
+    
+    bool loaded;
+    bool dirty;
+public:
+    DirectoryImage(const std::string & path) 
+        : path(path), dir(FilesystemImage::MAX_FS_BYTES), 
+          loaded(false), dirty(false)
+    {}
+
+    ~DirectoryImage()
+    {
+        flush();
+    }
+
+    uint8_t get(int index) override
+    {
+        if (index < 0 || index >= (int)size()) 
+            throw std::out_of_range("boundary error");
+        return dir.data()[index]; 
+    }
+
+    void set(int index, uint8_t value) override
+    {
+        if (index < 0 || index >= (int)size()) 
+            throw std::out_of_range("boundary error");
+        bool changed = dir.data()[index] != value;
+        if (changed) {
+            dir.data()[index] = value;
+            dirty = true;
+        }
+    }
+
+    size_t size() override {
+        load();
+        return dir.data().size();
+    }
+    
+    void load()
+    {
+        if (!loaded) {
+            dir.mount_local_dir(path);
+            loaded = true;
+
+            dirimage = path + "/" + "dirimage.fdd";
+            dirty = true;
+            flush();
+        }
+    }
+
+    void flush() override
+    {
+        if (dirty) {
+            std::string tmp = util::tmpname(dirimage).c_str();
+            FILE * copy = fopen(tmp.c_str(), "wb");
+            if (copy) {
+                fwrite(&dir.data()[0], 1, dir.data().size(), copy);
+            }
+            fclose(copy);
+            rename(tmp.c_str(), dirimage.c_str());
+
+            dirty = false;
+        }
+    }
+};
+
 
 class FDisk
 {
 private:
     std::string name;
-    std::vector<uint8_t> dsk; 
+public:
+    std::unique_ptr<DiskImage> dsk;
+private:
     int sectorsPerTrack;
     int sectorSize;
     int totSec;
@@ -49,9 +227,27 @@ private:
     int readSource;
     uint8_t readBuffer[6];
 
+
 public:
-    FDisk() 
+    FDisk() : dsk(std::make_unique<CardboardDiskImage>())
     {
+        this->init();
+    }
+
+
+    void attach(const std::vector<uint8_t> & data) 
+    {
+        this->dsk = std::make_unique<DetachedDiskImage>(data);
+        this->init();
+    }
+
+    void attach(const std::string & file)
+    {
+        this->dsk = std::make_unique<FileDiskImage>(file);
+        if (this->dsk->size() == 0) {
+            this->dsk = std::make_unique<DirectoryImage>(file);
+        }
+        this->init();
     }
 
     void init()
@@ -69,6 +265,7 @@ public:
         this->readOffset = 0;
         this->readLength = 0;
         this->readSource = 0; // 0: dsk, 1: readBuffer
+        this->parse_v06c();
     }
 
     static int sector_length_to_code(int length)
@@ -85,15 +282,8 @@ public:
 
     bool isReady() const 
     {
-        return this->dsk.size() > 0;
+        return this->dsk->size() > 0;
     }
-
-    bool loadDsk(const char * name, const std::vector<uint8_t> & fdd_raw)
-    {
-        this->name = std::string(name);
-        this->dsk = fdd_raw;
-        return this->parse_v06c();
-    };
 
     void seek(int track, int sector, int side)
     {
@@ -104,7 +294,7 @@ public:
             this->track = track;
             this->side = side;
             if (Options.log.fdc) {
-                printf("FD1793: disk seek position: %02x "
+                printf("FD1793: disk seek position: %08x "
                         "(side:%d,trk:%d,sec:%d)\n", this->position, this->side,
                         this->track, sector);
             }
@@ -141,7 +331,7 @@ public:
             if (this->readSource) {
                 this->data = this->readBuffer[this->readOffset];
             } else {
-                this->data = this->dsk[this->position + this->readOffset];
+                this->data = this->dsk->get(this->position + this->readOffset);
             }
             this->readOffset++;
         } else {
@@ -154,20 +344,60 @@ public:
         return finished;
     }
 
+    bool write_data(uint8_t data)
+    {
+        bool finished = true;
+        if (this->readOffset < this->readLength) {
+            finished = false;
+            this->dsk->set(this->position + this->readOffset, data);
+            this->readOffset++;
+            if (this->readOffset == this->readLength) {
+                this->dsk->flush();
+            }
+        }
+        else {
+            if (Options.log.fdc) {
+                printf("FD1793: write finished: position=%08x\n", this->position);
+
+                for (int i = 0; i < this->readLength; ++i) {
+                    printf("%02x ", this->dsk->get(this->position + i));
+
+                    if ((i + 1) % 16 == 0 || i + 1 == this->readLength) {
+                        printf("  ");
+                        for (int j = -15; j <= 0; ++j) {
+                            printf("%c", util::printable_char(
+                                        this->dsk->get(this->position + i + j)));
+                        }
+                        printf("  W\n");
+                    }
+                }
+            }
+        }
+        return finished;
+    }
+
+    void writeSector(int sector)
+    {
+        this->readLength = this->sectorSize;
+        this->readOffset = 0;
+        this->readSource = 0;
+        this->sector = sector;
+        this->seek(this->track, this->sector, this->side);
+    }
+
     // Vector-06c floppy: 2 sides, 5 sectors of 1024 bytes
     bool parse_v06c() 
     {
         const int FDD_NSECTORS = 5;
 
         if (!this->isReady()) {
-            printf("FD1793: no disk\n");
             return false;
         }
-        this->tracksPerSide = (this->dsk.size() >> 10) / 2 * FDD_NSECTORS;
+        this->tracksPerSide = (this->dsk->size() >> 10) / 2 * FDD_NSECTORS;
         this->numHeads = 2;
         this->sectorSize = 1024;
         this->sectorsPerTrack = 5;
-        this->totSec = this->dsk.size() / 1024;
+        this->totSec = this->dsk->size() / 1024;
 
         return true;
     };
@@ -176,13 +406,14 @@ public:
     {
         return this->data;
     }
+
 };
 
-class FD1793_Real : public FD1793
+
+class FD1793
 {
 private:
     FDisk _disks[4];
-    FDisk & _dsk;
     int _pr;    // port 4, parameter register: SS,MON,DDEN,HLD,DS3,DS2,DS1,DS0
                 // motor on: 1: motor on
                 // double density: 1: on
@@ -198,12 +429,17 @@ private:
     int _sector;
     int _stepdir;
     int _lingertime;
+    int _dsksel;
 
     int LINGER_BEFORE;
     int LINGER_AFTER;
 
     char debug_buf[16];
     int debug_n;
+
+    FDisk & dsk(int n = -1) {
+        return _disks[n == -1 ? _dsksel : n];
+    }
 
 public:
     const int ST_NOTREADY = 0x80; // sampled before read/write
@@ -225,6 +461,7 @@ public:
 
     const int CMD_READSEC = 1;
     const int CMD_READADDR = 2;
+    const int CMD_WRITESEC = 3;
 
 
     // Delays, not yet implemented:
@@ -234,7 +471,7 @@ public:
     //  - restore (03) command
     //  - steps until !TRO0 goes low (track 0)
     //
-    FD1793_Real() : _dsk(_disks[0])
+    FD1793() : _dsksel(0)
     {
         LINGER_AFTER = 2;
         _lingertime = 3;
@@ -243,23 +480,14 @@ public:
 
     void init()
     {
-        for (unsigned i = 0; i < sizeof(_disks)/sizeof(_disks[0]); ++i) {
-            _disks[i].init();
-        }
     }
 
-    bool loadDsk(int drive, const char * name, 
-            const std::vector<uint8_t> & fdd_data) 
-    {
+    FDisk & disk(int drive) {
         if (drive < 0 || drive > 3) {
-            printf("FD1793: illegal drive: %d\n", drive);
-            return false;
+            throw std::out_of_range("drives must be in range 0..3");
         }
-        if (Options.log.fdc) {
-            printf("FD1793: loadDsk: %s\n", name);
-        }
-        return this->_disks[drive].loadDsk(name, fdd_data);
-    };
+        return this->_disks[drive];
+    }
 
     void exec() 
     {
@@ -270,29 +498,38 @@ public:
                 printf("FD1793: invalid read\n");
                 return;
             }
-            finished = this->_dsk.read();
+            finished = this->dsk().read();
             if (finished) {
                 this->_status &= ~ST_BUSY;
                 this->_intrq = PRT_INTRQ;
             } else {
                 this->_status |= ST_DRQ;
-                this->_data = this->_dsk.read_data();
+                this->_data = this->dsk().read_data();
             }
             //if (Options.log.fdc) {
             //    printf("FD1793: exec - read done, "
             //            "finished: %d data: %02x status: %02x\n", 
             //            finished, this->_data, this->_status);
             //}
-        } else {
+        }
+        else if (this->_commandtr == CMD_WRITESEC) {
+            if ((this->_status & ST_DRQ) == 0) {
+                finished = this->dsk().write_data(this->_data);
+                if (finished) {
+                    this->_status &= ~ST_BUSY;
+                    this->_intrq = PRT_INTRQ;
+                }
+                else {
+                    this->_status |= ST_DRQ;
+                }
+            }
+        } 
+        else {
             // finish lingering
             this->_status &= ~ST_BUSY;
         }
     }
 
-    char printable_char(int c) const 
-    {
-        return (c < 32 || c > 128) ? '.' : c;
-    }
 
     int sectorcnt = 0;
     int readcnt = 0;
@@ -302,7 +539,7 @@ public:
     {
         if (Options.nofdc) return 0xff;
         int result = 0;
-        if (this->_dsk.isReady()) this->_status &= ~ST_NOTREADY;
+        if (this->dsk().isReady()) this->_status &= ~ST_NOTREADY;
         else this->_status |= ST_NOTREADY;
         int returnStatus;
         switch (addr) {
@@ -367,7 +604,7 @@ public:
                             printf("  ");
                             this->debug_n = 0;
                             for (int i = 0; i < 16; ++i) {
-                                printf("%c", this->printable_char(
+                                printf("%c", util::printable_char(
                                             this->debug_buf[i]));
                             }
                             printf("\n");
@@ -416,9 +653,9 @@ public:
                     printf("CMD restore\n");
                 }
                 this->_intrq = PRT_INTRQ;
-                if (this->_dsk.isReady()) {
+                if (this->dsk().isReady()) {
                     this->_track = 0;
-                    this->_dsk.seek(this->_track, 1, this->_side);
+                    this->dsk().seek(this->_track, 1, this->_side);
                 } else {
                     this->_status |= ST_SEEKERR;
                 }
@@ -427,7 +664,7 @@ public:
                 if (Options.log.fdc) {
                     printf("CMD seek: %02x\n", param);
                 }
-                this->_dsk.seek(this->_data, this->_sector, this->_side);
+                this->dsk().seek(this->_data, this->_sector, this->_side);
                 this->_track = this->_data;
                 this->_intrq = PRT_INTRQ;
                 this->_status |= ST_BUSY;
@@ -454,7 +691,7 @@ public:
                 this->_track += this->_stepdir;
                 this->_lingertime = this->LINGER_BEFORE;
                 this->_status |= ST_BUSY;
-                //this->_dsk.seek(this->_track, this->_sector, this->_side);
+                //this->dsk().seek(this->_track, this->_sector, this->_side);
                 break;
             case 0x06: // step out, u = 0
             case 0x07: // step out, u = 1
@@ -477,8 +714,8 @@ public:
                 //int rsSideSelect = (param & 8) >> 3;
                 this->_commandtr = CMD_READSEC;
                 this->_status |= ST_BUSY;
-                this->_dsk.seek(this->_track, this->_sector, this->_side);
-                this->_dsk.readSector(this->_sector);
+                this->dsk().seek(this->_track, this->_sector, this->_side);
+                this->dsk().readSector(this->_sector);
                 this->debug_n = 0;
                 if (Options.log.fdc) {
                     printf("CMD read sector m:%d p:%02x sector:%d "
@@ -490,14 +727,25 @@ public:
                 break;
             case 0x0A: // write sector, m = 0
             case 0x0B: // write sector, m = 1
+                {
+                this->_commandtr = CMD_WRITESEC;
+                this->_status |= ST_BUSY;
+                this->_status |= ST_DRQ;
+                this->dsk().seek(this->_track, this->_sector, this->_side);
+                this->dsk().writeSector(this->_sector);
+                this->debug_n = 0;
                 if (Options.log.fdc) {
-                    printf("CMD write sector, m:%d\n", multiple);
+                    printf("CMD write sector m:%d p:%02x sector:%d "
+                            "status:%02x\n", multiple, param, this->_sector,
+                            this->_status);
+                }
+                this->_lingertime = this->LINGER_BEFORE;
                 }
                 break;
             case 0x0C: // read address
                 this->_commandtr = CMD_READADDR;
                 this->_status |= ST_BUSY;
-                this->_dsk.readAddress();
+                this->dsk().readAddress();
                 this->_lingertime = this->LINGER_BEFORE;
                 if (Options.log.fdc) {
                     printf("CMD read address m:%d p:%02x status:%02x",
@@ -556,13 +804,14 @@ public:
                 }
                 this->_data = val;
                 this->_status &= ~ST_DRQ;
+                this->exec();
                 break;
 
             case 4: // param reg
                 this->_pr = val;
                 // Kishinev v06c 
                 // 0 0 1 1 x S A B
-                this->_dsk = this->_disks[val & 3];
+                this->_dsksel = val & 3;
                 this->_side = ((~val) >> 2) & 1; // invert side
                 if (Options.log.fdc) {
                     printf("set pr:%02x disk select: %d side: %d\n",
@@ -570,11 +819,11 @@ public:
                 }
 
                 // // SS,MON,DDEN,HLD,DS3,DS2,DS1,DS0
-                // if (val & 1) this->_dsk = this->_disks[0];
-                // else if (val & 2) this->_dsk = this->_disks[1];
-                // else if (val & 4) this->_dsk = this->_disks[2];
-                // else if (val & 8) this->_dsk = this->_disks[3];
-                // else this->_dsk = this->_disks[0];
+                // if (val & 1) this->dsk() = this->_disks[0];
+                // else if (val & 2) this->dsk() = this->_disks[1];
+                // else if (val & 4) this->dsk() = this->_disks[2];
+                // else if (val & 8) this->dsk() = this->_disks[3];
+                // else this->dsk() = this->_disks[0];
                 // this->_side = (this->_pr & 0x80) >>> 7;
                 break;
             default:

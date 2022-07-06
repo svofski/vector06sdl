@@ -9,10 +9,13 @@
 #include <streambuf>
 #include <fstream>
 #include <vector>
+#include <tuple>
 #include "util.h"
 
 #include <unistd.h>
 #include <fcntl.h>
+#include <sstream>
+#include <cstdio>
 
 namespace util {
 
@@ -39,6 +42,18 @@ size_t islength(std::ifstream & is)
     size_t result = is.tellg();
     is.seekg(0, is.beg);
     return result;
+}
+
+size_t filesize(const std::string & filename)
+{
+    try {
+        std::ifstream is(filename, std::ifstream::in);
+        is.seekg(0, is.end);
+        return is.tellg();
+    }
+    catch (...) {
+    }
+    return 0;
 }
 
 #if !defined(O_BINARY)
@@ -85,6 +100,64 @@ std::vector<uint8_t> load_binfile(const std::string path_)
         bin.resize(0);
     }
     return bin;
+}
+
+std::tuple<std::string,std::string,std::string> 
+split_path(const std::string & path)
+{
+    std::string dir, stem, ext;
+    std::string name;
+
+    name = path;
+    for (int i = path.size() - 1; i >= 0; --i) {
+        if (path[i] == '/' || path[i] == '\\') {
+            name = path.substr(i + 1);
+            dir = path.substr(0, i + 1);
+            break;
+        }
+    }
+
+    size_t dot = name.rfind('.');
+    if (dot != std::string::npos) {
+        ext = name.substr(dot);
+        name = name.substr(0, dot);
+    }
+
+    return {dir, name, ext};
+}
+
+char printable_char(int c)
+{
+    return (c < 32 || c > 128) ? '.' : c;
+}
+
+static std::string rndchars(int len)
+{
+    std::stringstream ss;
+    for (int i = 0; i < len; ++i) {
+        ss.put('a' + (rand() % 26));
+    }
+    return ss.str();
+}
+
+std::string tmpname(const std::string & basename)
+{
+    for (int i = 0; i < 256; ++i) {
+        std::string name(basename + "$" + rndchars(6));
+        FILE * f = std::fopen(name.c_str(), "r");
+        if (f == nullptr) {
+            std::fclose(f);
+            return name;
+        }
+    }
+    return basename + "$$$";
+}
+
+void str_toupper(std::string & s)
+{
+    for (auto & c : s) {
+        c = std::toupper(c);
+    }
 }
 
 }

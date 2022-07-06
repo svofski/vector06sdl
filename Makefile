@@ -6,12 +6,13 @@ endif
 
 WINBUILD := build-i686-w64-mingw32
 WINDIST := $(WINBUILD)/v06x
+PACKAGEDIR := packages
 
 all:	build/v06x
 
 .PHONY:	native-tests wine-tests clean build/v06x stripped macos
 
-native-tests:	build/v06x 
+native-tests:	build/v06x
 	cd test && chmod +x runtests-native.sh && ./runtests-native.sh
 
 wine-tests:	$(WINBUILD)/v06x.exe $(WINBUILD)/tests.exe
@@ -30,7 +31,9 @@ $(WINBUILD)/v06x.exe:
 	make -f Makefile.cross-mingw
 
 clean:
-	make -f Makefile.$(UNAME) clean
+	make -f Makefile.cross-mingw clean
+	make -f Makefile.darwin clean
+	make -f Makefile.linux-x86_64 clean
 	rm -f test/testresult-*.txt test/testlog-*.txt
 
 install:	native-tests
@@ -38,6 +41,8 @@ install:	native-tests
 
 deb:
 	dpkg-buildpackage -rfakeroot -b
+	mkdir -p $(PACKAGEDIR)
+	mv ../*.deb $(PACKAGEDIR)
 
 stripped:
 	/usr/bin/strip build/v06x

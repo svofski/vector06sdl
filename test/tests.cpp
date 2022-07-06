@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include "8253.h"
 #include "SDL.h"
+#include "fsimage.h"
+#include "util.h"
+#include <iostream>
+
+using namespace std;
 
 class Test {
 private:
@@ -63,6 +68,18 @@ bool compare_bool(bool exp, bool act, const char * msg)
     }
     printf("\033[41;97m ERROR: \033[0m EXP=%s ACT=%s\n", 
             exp ? "true" : "false", act ? "true" : "false");
+    return false;
+}
+
+bool compare_str(string exp, string act, const char * msg)
+{
+    printf("\t%s: ", msg);
+    if (exp == act) {
+        printf("pass\n");
+        return true;
+    }
+    printf("\033[41;97m ERROR: \033[0m EXP=\"%s\" ACT=\"%s\"\n", 
+            exp.c_str(), act.c_str());
     return false;
 }
 
@@ -192,6 +209,203 @@ public:
     }
 };
 
+struct UtilTest
+{
+    bool test_split_path()
+    {
+        Test t("util::split_path");
+        {
+        auto [path, name, ext] = util::split_path("/path/to/stem.ext");
+        compare_str("/path/to/", path, "path");
+        compare_str("stem", name, "name");
+        compare_str(".ext", ext, "ext");
+        }
+
+        {
+        auto [path, name, ext] = util::split_path("/path/to/.ext");
+        printf("path: [%s] name: [%s] ext: [%s]\n",
+                path.c_str(), name.c_str(), ext.c_str());
+        compare_str("/path/to/", path, "path");
+        compare_str("", name, "name");
+        compare_str(".ext", ext, "ext");
+        }
+
+        {
+        auto [path, name, ext] = util::split_path(".ext");
+        printf("path: [%s] name: [%s] ext: [%s]\n",
+                path.c_str(), name.c_str(), ext.c_str());
+        compare_str("", path, "path");
+        compare_str("", name, "name");
+        compare_str(".ext", ext, "ext");
+        }
+
+        {
+        auto [path, name, ext] = util::split_path("stem");
+        printf("path: [%s] name: [%s] ext: [%s]\n",
+                path.c_str(), name.c_str(), ext.c_str());
+        compare_str("", path, "path");
+        compare_str("stem", name, "name");
+        compare_str("", ext, "ext");
+        }
+
+        {
+        auto [path, name, ext] = util::split_path("/path/to/");
+        printf("path: [%s] name: [%s] ext: [%s]\n",
+                path.c_str(), name.c_str(), ext.c_str());
+        compare_str("/path/to/", path, "path");
+        compare_str("", name, "name");
+        compare_str("", ext, "ext");
+        }
+
+        return true;
+    }
+
+    bool test()
+    {
+        bool res = test_split_path();
+        return res;
+    }
+};
+
+struct FilesystemTest
+{
+    bool test1()
+    {
+        vector<uint8_t> dummy(MDHeader::SIZE);
+        MDHeader hello(&dummy[0]);
+        hello.init_with_filename("hello", "com");
+        string name = string(hello.fields->Name, 8);
+        string ext = string(hello.fields->Ext, 3);
+        compare_str("HELLO   ", name, "hello.fields.Name");
+        compare_str("COM", ext, "hello.fields.Ext");
+
+        return true;
+    }
+
+    bool test2()
+    {
+        vector<uint8_t> data{0, 
+            'H','E','L','L','O',32,32,32, 
+            'J','P','G',
+            0, 0, 0, 0, 
+            1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+        MDHeader hello(&data[0]);
+
+        string name = string(hello.fields->Name, 8);
+        string ext = string(hello.fields->Ext, 3);
+        compare_str("HELLO   ", name, "hello.fields.Name");
+        compare_str("JPG", ext, "hello.fields.Ext");
+
+        return true;
+    }
+
+    vector<uint8_t> load_image()
+    {
+        vector<uint8_t> image;
+        for (auto pth : {"../testroms/test.fdd", "testroms/test.fdd"}) {
+            image = util::load_binfile(pth);
+            if (image.size() > 0) {
+                printf("Loaded %s\n", pth);
+                break;
+            }
+        }
+        if (image.size() == 0) {
+            compare_bool(true, false, "test.fdd not available");
+        }
+        return image;
+    }
+
+    bool test3()
+    {
+        auto image = load_image();
+        FilesystemImage fs(image);
+        for (auto it = fs.begin(); it != fs.end(); ++it) {
+            if ((*it).user() < 0x10 && (*it).fields->Extent == 0) {
+                string user;
+                user += '0' + (*it).user();
+                cout << user << " " <<
+                    (*it).name() << "." <<
+                    (*it).ext() << "\t";
+
+                Dirent de = fs.load_dirent(*it);
+                cout << de.size << endl;
+                auto contents = fs.read_bytes(de);
+                //for (int i = 0; i < contents.size(); ++i) {
+                //    printf("%02x ", contents[i]);
+                //}
+                //printf("\n");
+            }
+        }
+
+        return true;
+    }
+
+    bool test4()
+    {
+        std::vector<uint8_t> glob(100*1024);
+        for (size_t i = 0; i < glob.size(); ++i) {
+            glob[i] = 255 & rand();
+        }
+
+        auto image = load_image();
+        FilesystemImage fs(image);
+        fs.save_file("glob.dat", glob);
+
+        fs.listdir([](const Dirent & d) {
+            printf("%2d: %s.%s\t%d\n", d.user(), d.name().c_str(), 
+                    d.ext().c_str(), d.size);
+                });
+
+        auto readbakc = fs.read_file("glob.dat");
+        for (size_t i = 0; i < readbakc.size(); ++i) {
+            if (glob[i] != readbakc[i]) {
+                compare_bool(true, false, "content mismatch");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    bool test5()
+    {
+        FilesystemImage fs(840*1024);
+        fs.mount_local_dir("testroms");
+        fs.listdir([](const Dirent & d) {
+            printf("%2d: %s.%s\t%d\n", d.user(), d.name().c_str(), 
+                    d.ext().c_str(), d.size);
+                });
+        return true;
+    }
+
+    bool test6()
+    {
+        Test t("fsimage name overlap");
+        FilesystemImage fs(840*1024);
+        for (int i = 0; i < 32; ++i) {
+            fs.save_file("longlongname" + to_string(i) + ".txt", {1,2,3});
+        }
+
+        fs.listdir([](const Dirent & d) {
+            printf("%2d: %s.%s\t%d\n", d.user(), d.name().c_str(), 
+                    d.ext().c_str(), d.size);
+                });
+
+        return true;
+    }
+
+    bool test()
+    {
+        return 
+            test1() &
+            test2() &
+            test3() & 
+            test4() &
+            test5() &
+            test6();
+    }
+};
+
 int test_CounterUnit()
 {
     TestOfCounterUnit fuc;
@@ -204,11 +418,13 @@ int test_CounterUnit()
 
 int main(int argc, char ** argv)
 {
-    int result = 1;
+    std::ios::sync_with_stdio(true);
 
-    result &= test_tobcd();
-    result &= test_frombcd();
-    result &= test_CounterUnit();
+    test_tobcd();
+    test_frombcd();
+    test_CounterUnit();
+    UtilTest().test();
+    FilesystemTest().test();
 
-    return result ? 0 : 1;
+    return 0;
 }

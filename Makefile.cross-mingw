@@ -19,5 +19,6 @@ EXTRA_LIBS += -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive
 
 # statically link SDL libraries to avoid dll messups
 SDL_STATIC := 1
+BOOST_STATIC := 1
 
 include common.mk
