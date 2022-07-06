@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=2]
+[gd_scene load_steps=30 format=2]
 
 [ext_resource path="res://main.gd" type="Script" id=1]
 [ext_resource path="res://theme.theme" type="Theme" id=2]
@@ -15,6 +15,7 @@
 [ext_resource path="res://ScopePanel.tscn" type="PackedScene" id=13]
 [ext_resource path="res://MemoryView.tscn" type="PackedScene" id=14]
 [ext_resource path="res://assets/debugger-bowser.png" type="Texture" id=15]
+[ext_resource path="res://NiceTooltip.tscn" type="PackedScene" id=16]
 
 [sub_resource type="StyleBoxFlat" id=33]
 bg_color = Color( 0, 0, 0, 1 )
@@ -73,7 +74,7 @@ corner_radius_top_left = 10
 corner_radius_top_right = 10
 
 [sub_resource type="StyleBoxFlat" id=43]
-content_margin_left = 10.0
+content_margin_left = 0.0
 bg_color = Color( 0.0470588, 0.0470588, 0.0470588, 0.607843 )
 border_width_right = 1
 border_width_bottom = 1
@@ -214,9 +215,9 @@ custom_styles/panel = SubResource( 32 )
 texture = ExtResource( 10 )
 
 [node name="DebuggerButton" parent="HUD" instance=ExtResource( 9 )]
-margin_left = 14.0
+margin_left = 15.0
 margin_top = 143.0
-margin_right = 56.0
+margin_right = 57.0
 margin_bottom = 182.0
 hint_tooltip = "Базырь"
 custom_styles/panel = SubResource( 32 )
@@ -232,9 +233,9 @@ custom_styles/panel = SubResource( 32 )
 texture = ExtResource( 12 )
 
 [node name="GamepadLabel" parent="HUD" instance=ExtResource( 5 )]
-margin_left = 18.0
+margin_left = 17.0
 margin_top = 187.0
-margin_right = 56.0
+margin_right = 55.0
 margin_bottom = 219.0
 
 [node name="OnScreenKeyboard" parent="HUD" instance=ExtResource( 11 )]
@@ -262,6 +263,9 @@ visible = false
 margin_right = 393.0
 margin_bottom = 470.0
 size_flags_horizontal = 2
+
+[node name="NiceTooltip" parent="." instance=ExtResource( 16 )]
+visible = false
 
 [connection signal="gui_input" from="." to="." method="_on_main_gui_input"]
 [connection signal="file_selected" from="FileDialog" to="." method="_on_FileDialog_file_selected"]

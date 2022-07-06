@@ -374,7 +374,17 @@ godot_variant V06X_SetVolumes(godot_object* p_instance, void* p_method_data,
     double volCovox= api->godot_variant_as_real(p_args[3]);
     double volMaster= api->godot_variant_as_real(p_args[4]);
 
+    bool tch0 = api->godot_variant_as_bool(p_args[5]);
+    bool tch1 = api->godot_variant_as_bool(p_args[6]);
+    bool tch2 = api->godot_variant_as_bool(p_args[7]);
+
+    bool aych0 = api->godot_variant_as_bool(p_args[8]);
+    bool aych1 = api->godot_variant_as_bool(p_args[9]);
+    bool aych2 = api->godot_variant_as_bool(p_args[10]);
+
     lator.set_volumes(vol8253, volBeep, volAY, volCovox, volMaster);
+    lator.enable_timer_channels(tch0, tch1, tch2);
+    lator.enable_ay_channels(aych0, aych1, aych2);
 
     godot_variant ret;
     api->godot_variant_new_bool(&ret, 1);

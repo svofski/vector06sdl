@@ -77,7 +77,7 @@ public:
         return this->ay13 & 4 ? this->envx++ : 15 - this->envx++;
     }
 
-    float step() 
+    float step(int ena0, int ena1, int ena2) 
     {
         if (++this->envc >= (this->ayr[11] << 1 | this->ayr[12] << 9)) {
             this->envc = 0;
@@ -89,7 +89,8 @@ public:
             this->noiv = this->noir & 1;
             this->noir = (this->noir ^ (this->noiv * 0x24000)) >> 1;
         }
-        return 0.3333f * (this->cstep(0) + this->cstep(1) + this->cstep(2));
+        return /*0.3333f * */ (this->cstep(0) * ena0 + this->cstep(1) * ena1 +
+                this->cstep(2) * ena2);
     }
 
     void aymute()
@@ -178,13 +179,13 @@ public:
         this->last = 0;
     }
 
-    float step2(int instr_time) 
+    float step2(int instr_time, int ena0, int ena1, int ena2) 
     {
         this->ayAccu += 7 * instr_time;
         float aysamp = 0;
         int avg = 0;
         for (; this->ayAccu >= 96; this->ayAccu -= 96) {
-            aysamp += this->ay.step();
+            aysamp += this->ay.step(ena0, ena1, ena2);
             ++avg;
         }
         this->last = avg > 0 ? aysamp/avg : this->last;

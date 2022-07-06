@@ -134,11 +134,18 @@ namespace std {
 void Soundnik::soundSteps(int nclk1m5, int tapeout, int covox, int tapein)
 {
     covox = covox - 255;
+    int ech0 = Options.enable.timer_ch0,
+        ech1 = Options.enable.timer_ch1, 
+        ech2 = Options.enable.timer_ch2,
+        aych0 = Options.enable.ay_ch0,
+        aych1 = Options.enable.ay_ch1,
+        aych2 = Options.enable.ay_ch2;
+
     for (int clk = 0; clk < nclk1m5; ++clk) {
-        float ay = this->aywrapper.step2(2);
+        float ay = this->aywrapper.step2(2, aych0, aych1, aych2);
 
         /* timerwrapper does the stepping of 8253, it must always be called */
-        float soundf = (this->timerwrapper.step(1)) * Options.volume.timer
+        float soundf = (this->timerwrapper.singlestep(ech0, ech1, ech2)) * Options.volume.timer
             + (tapeout + tapein) * Options.volume.beeper
             + Options.volume.covox * (covox/256.0f)
             + Options.volume.ay * ay;

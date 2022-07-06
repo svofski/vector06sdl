@@ -21,7 +21,6 @@ custom_constants/separation = 4
 [node name="Knob8253" parent="VBoxContainer" instance=ExtResource( 2 )]
 margin_right = 80.0
 rect_min_size = Vector2( 80, 32 )
-hint_tooltip = "Таймер ВИ53"
 size_flags_horizontal = 3
 size_flags_vertical = 3
 max_value = 11.0
@@ -32,12 +31,12 @@ round_precision = 10
 caption = "8253"
 center_led = true
 stops = [ 10 ]
+chan_led_visible = PoolByteArray( 1, 1, 1 )
 
 [node name="KnobBeep" parent="VBoxContainer" instance=ExtResource( 2 )]
 margin_top = 36.0
 margin_right = 80.0
 margin_bottom = 68.0
-hint_tooltip = "Бипер и лента"
 size_flags_horizontal = 3
 size_flags_vertical = 3
 max_value = 11.0
@@ -53,10 +52,9 @@ stops = [ 10 ]
 margin_top = 72.0
 margin_right = 80.0
 margin_bottom = 104.0
-hint_tooltip = "AY-3-8912"
 size_flags_horizontal = 3
 size_flags_vertical = 3
-max_value = 110.0
+max_value = 11.0
 value = 10.0
 speed = 0.15
 rounded = true
@@ -64,12 +62,12 @@ round_precision = 10
 caption = "AY"
 center_led = true
 stops = [ 10 ]
+chan_led_visible = PoolByteArray( 1, 1, 1 )
 
 [node name="KnobCovox" parent="VBoxContainer" instance=ExtResource( 2 )]
 margin_top = 108.0
 margin_right = 80.0
 margin_bottom = 140.0
-hint_tooltip = "ЦАП на ПУ"
 size_flags_horizontal = 3
 size_flags_vertical = 3
 max_value = 11.0

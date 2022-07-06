@@ -26,6 +26,16 @@ struct _options
         float covox;
         float global;
     } volume;
+
+    struct _enables {
+        bool timer_ch0;
+        bool timer_ch1;
+        bool timer_ch2;
+        bool ay_ch0;
+        bool ay_ch1;
+        bool ay_ch2;
+    } enable;
+
     bool nofilter;      /* bypass audio filter */
 
     bool nosound;

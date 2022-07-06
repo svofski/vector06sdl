@@ -16,9 +16,12 @@ export var stops = [0]
 export var color_ledhole: Color = Color.black.lightened(0.1)
 export var color_ledlight: Color = Color.orangered.lightened(0.4)
 
+export var chan_led_visible: PoolByteArray = [false, false, false] setget _set_chan_led_visible
+export var chan_led_state: PoolByteArray = [false, false, false] setget _set_chan_led_state
 
 signal value_changed(value)
 signal pressed(tag)
+signal chan_pressed(n)
 
 # Declare member variables here. Examples:
 # var a = 2
@@ -33,20 +36,20 @@ var base_scale = Vector2(1, 1)
 var pointer_angle = 230
 var hover: bool = false
 
-var pit: float = 0
-var grace: float = 0
 
 const CLICK_DISTANCE_THRESHOLD : float = 10.0
 
-onready var label = $Label
+onready var label = find_node("Label")
+onready var top = find_node("Sprite")
+onready var bevel = find_node("Bevel")
+onready var led = find_node("Led")
+onready var pointer = find_node("Pointer")
 
-onready var top = $Sprite
-onready var bevel = $Bevel
-onready var led = $Led
-onready var pointer = $Pointer
+var chan_led = []
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	chan_led = [find_node("ChanLed1"), find_node("ChanLed2"), find_node("ChanLed3")]
 	label.text = caption
 		
 	update_sizes()	
@@ -115,18 +118,19 @@ func update_visuals():
 	bevel.frame = frame
 	led.frame = 1 - int(center_led)
 	pointer_angle = -230 + 280 * scaled
-	#print(pointer_angle)
 	update()
 	pointer.update()
 	
-	#$Text.text = "%+3.1fdB" % value
+	for i in range(len(chan_led)):
+		chan_led[i].visible = chan_led_visible[i]
+		chan_led[i].frame = 1 - int(chan_led_state[i])
 
 func update_sizes():
 	if label == null:
 		return
 	if top == null:
-		return		
-		
+		return
+
 	$bg.rect_size = rect_size
 	label.visible = len(label.text) > 0
 	var label_height = 0
@@ -141,12 +145,11 @@ func update_sizes():
 	else:
 		sz = min(rect_size.x - label_width, rect_size.y)
 	
-	var w = $Sprite.texture.get_size()[0] / $Sprite.hframes
-	var h = $Sprite.texture.get_size()[1] / $Sprite.vframes
-	#print("sprite tex size=", w, " ", h, " rect_size=", rect_size, " scale=", sz/w)
-
+	var w = top.texture.get_size()[0] / top.hframes
+	var h = top.texture.get_size()[1] / top.vframes
 
 	base_scale = Vector2(sz / w, sz / h)
+	var chan_margin_x = 40 * base_scale.x
 	top.scale = base_scale
 	bevel.scale = base_scale
 	led.scale = base_scale
@@ -154,28 +157,33 @@ func update_sizes():
 	if label.visible:
 		match caption_side:
 			0: # buttom
-				label.rect_position.x = rect_size.x / 2 - label.rect_size.x / 2
+				label.rect_position.x = chan_margin_x + rect_size.x / 2 - label.rect_size.x / 2
 				label.rect_position.y = sz
-				led.position = Vector2(rect_size.x / 2, sz / 2)
+				led.position = Vector2(chan_margin_x + rect_size.x / 2, sz / 2)
 			2: # top
-				label.rect_position.x = rect_size.x / 2 - label.rect_size.x / 2
+				label.rect_position.x = chan_margin_x+ rect_size.x / 2 - label.rect_size.x / 2
 				label.rect_position.y = 0
-				led.position = Vector2(rect_size.x / 2, rect_size.y - sz / 2)
+				led.position = Vector2(chan_margin_x + rect_size.x / 2, rect_size.y - sz / 2)
 			1: # right
-				led.position = Vector2(sz / 2, rect_size.y / 2)
-				label.rect_position.x = sz
+				led.position = Vector2(chan_margin_x + sz / 2, rect_size.y / 2)
+				label.rect_position.x = chan_margin_x + sz
 				label.rect_position.y = led.position.y - label.rect_size.y / 2
 			3: # left
-				led.position = Vector2(label.rect_size.x + sz / 2, rect_size.y / 2)
-				label.rect_position.x = 0
+				led.position = Vector2(chan_margin_x + label.rect_size.x + sz / 2, rect_size.y / 2)
+				label.rect_position.x = chan_margin_x
 				label.rect_position.y = rect_size.y / 2 - label.rect_size.y / 2
 		#print(caption, " label@=", label.rect_position)
 	top.position = led.position
 	bevel.position = led.position
 	pointer.position = led.position
+
+	for k in len(chan_led):
+		chan_led[k].position.x = 16 * base_scale.x
+	chan_led[1].position.y = led.position.y
+	chan_led[0].position.y = led.position.y - 32 * base_scale.y
+	chan_led[2].position.y = led.position.y + 32 * base_scale.y
 	
 	update() # redraw background
-	
 	
 func _notification(what):
 	if what == NOTIFICATION_MOUSE_ENTER:
@@ -198,52 +206,61 @@ func _gui_input(event):
 	if event is InputEventMouseButton:
 		if event.pressed:
 			if event.button_index == BUTTON_LEFT:
-				#print("Click at ", event.position)
 				start_pos = event.position
 				start_val = value
 				total_distance = 0
 				engaged = true
 			elif event.button_index == BUTTON_WHEEL_UP:
-				#_set_value(float_value - speed * 2)
 				move_knob(-speed * 2)
 			elif event.button_index == BUTTON_WHEEL_DOWN:
-				#_set_value(float_value + speed * 2) 
 				move_knob(speed * 2)
 		else:
 			engaged = false
 			if event.button_index == BUTTON_LEFT and total_distance < CLICK_DISTANCE_THRESHOLD:
-				emit_signal("pressed", tag)
+				var done = false
+				for k in range(len(chan_led)):
+					var r: Rect2 = chan_led[k].get_rect()
+					r.grow(-5)
+					var loc: Vector2 = chan_led[k].to_local(event.global_position)
+					#print("kth: ", k, " loc=", loc, "  has=", r.has_point(loc))
+					if r.has_point(loc):
+						emit_signal("chan_pressed", k)
+						done = true
+						break
+				if not done:
+					emit_signal("pressed", tag)
 	if engaged and event is InputEventMouseMotion:
-		#print("Motion to ", event.position)
-		#var diff = (event.position.y - start_pos.y) * speed
 		move_knob(-event.relative.y * speed)
 		total_distance += event.relative.length()
-		#_set_value(start_val - diff)
+
+var depth: float = 0
 
 func move_knob(diff):
-	if rounded:
-		var rval = round(value * round_precision) / round_precision
-		var falling = false
+	if depth > 0:
+		depth = clamp(depth - abs(diff), 0, 10)
+		if depth > 0:
+			return
+		depth = -1
+		
+	var next: float = value + diff
+	if depth > -1:
 		for s in stops:
-			if (float_value <= s && float_value + diff >= s) ||\
-				(float_value >=s && float_value + diff <= s):
-				falling = true
-				float_value = s
+			if (value <= s and next >= s) or (value >= s and next <= s):
+				next = s
+				depth = 5
 				break
-				
-		if pit == 0 and grace <= 0 and falling:
-			pit = 5
+	if depth == -1:
+		depth = 0
+
+	_set_value(next)
+
+func _set_chan_led_visible(v):
+	for l in range(min(len(chan_led_visible), len(v))):
+		chan_led_visible[l] = int(v[l])
+	update_visuals()
+	
+func _set_chan_led_state(v):
+	for l in range(min(len(chan_led), len(v))):
+		chan_led_state[l] = int(v[l])
+	update_visuals()
 		
-		if pit > 0:
-			pit = pit - abs(diff)
-			diff = 0
-			if pit <= 0:
-				pit = 0
-				grace = 2
-		elif grace > 0:
-			grace = grace - abs(diff)
-			if grace < 0:
-				grace = 0
-		
-	_set_value(value + diff)
-			

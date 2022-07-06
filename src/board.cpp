@@ -102,8 +102,8 @@ void Board::reset(Board::ResetMode mode)
             break;
     }
 
+    this->interrupt(false);
     last_opcode = 0;
-    irq = false;
     i8080_init();
 }
 

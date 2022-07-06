@@ -356,10 +356,18 @@ public:
         }
     }
 
-    int Count(int cycles) {
+    int Count(int cycles)
+    {
         return this->counters[0].Count(cycles) +
             this->counters[1].Count(cycles) +
             this->counters[2].Count(cycles);
+    }
+
+    void Count(int cycles, int & c0, int & c1, int & c2)
+    {
+        c0 = this->counters[0].Count(cycles);
+        c1 = this->counters[1].Count(cycles);
+        c2 = this->counters[2].Count(cycles);
     }
 };
 
@@ -376,16 +384,19 @@ public:
     {
     }
 
+    // step with enable per chan?
+    //
     int step(int cycles)
     {
         this->last_sound = this->timer.Count(cycles) / cycles;
         return this->last_sound;
     }
 
-    int unload() 
+    int singlestep(int ena_ch0, int ena_ch1, int ena_ch2)
     {
-        float result = this->sound / this->average_count;
-        this->sound = this->average_count = 0;
-        return result - 1.5;
+        int ch0, ch1, ch2;
+        this->timer.Count(1, ch0, ch1, ch2);
+        this->last_sound = ch0 * ena_ch0 + ch1 * ena_ch1 + ch2 * ena_ch2;
+        return this->last_sound;
     }
 };

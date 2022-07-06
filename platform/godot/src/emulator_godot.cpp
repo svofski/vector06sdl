@@ -81,6 +81,21 @@ void Emulator::set_volumes(float timer, float beeper, float ay, float covox,
     Options.volume.global = master;
 }
 
+void Emulator::enable_timer_channels(bool ech0, bool ech1, bool ech2)
+{
+    Options.enable.timer_ch0 = ech0;
+    Options.enable.timer_ch1 = ech1;
+    Options.enable.timer_ch2 = ech2;
+}
+
+void Emulator::enable_ay_channels(bool ech0, bool ech1, bool ech2)
+{
+    Options.enable.ay_ch0 = ech0;
+    Options.enable.ay_ch1 = ech1;
+    Options.enable.ay_ch2 = ech2;
+}
+
+
 void Emulator::start_emulator_thread()
 {
 }

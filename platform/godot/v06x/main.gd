@@ -26,6 +26,7 @@ onready var sound_panel = find_node("SoundPanel")
 onready var osk_panel = find_node("OnScreenKeyboard")
 onready var scope_panel = find_node("ScopePanel")
 onready var debug_panel = find_node("MemoryView")
+onready var nice_tooltip = find_node("NiceTooltip")
 onready var default_scope_panel_pos = scope_panel.rect_position
 
 var shader_index = 0
@@ -62,7 +63,7 @@ func _ready():
 	var cmdline_asset: String = ""
 	for arg in OS.get_cmdline_args():
 		#print("arg: ", arg)
-		if not arg.begins_swith("--"):
+		if not arg.begins_with("--"):
 			cmdline_asset = arg
 			print("Will try to load asset: ", cmdline_asset)
 	
@@ -89,8 +90,6 @@ func _ready():
 		panel2.set_shader_list(shaders)
 
 	load_state()
-	if len(cmdline_asset) > 0:
-		v06x.LoadAsset(cmdline_asset)
 
 	# this timer is to resume audio after toggle fullscreen (avoid hiccups)
 	resume_timer.one_shot = true
@@ -109,6 +108,12 @@ func _ready():
 	panel2.connect("visibility_changed", self, "shader_panel_visibility_changed")
 	panel2.connect("resized", self, "place_shader_panel_please")
 
+	get_tree().connect("files_dropped", self, "_on_files_dropped")
+
+	if len(cmdline_asset) > 0:
+		call_deferred("_on_FileDialog_file_selected", cmdline_asset)
+		
+	nice_tooltip.enabled = true
 
 func _notification(what):
 	#print("notification: ", what)
@@ -159,6 +164,11 @@ func _physics_process(delta):
 		debug_panel.ram = v06x.GetMem(0, 65536*5)
 		debug_panel.heatmap = v06x.GetHeatmap(0, 65536*5)
 		debug_panel.emit_signal("visibility_changed")
+
+func _on_files_dropped(files: PoolStringArray, screen: int):
+	print(files)
+	if files.size() > 0:
+		_on_FileDialog_file_selected(files[0])
 
 func _on_load_asset_pressed():
 	$FileDialog.popup()
@@ -424,7 +434,14 @@ func _on_SoundPanel_volumes_changed():
 		sound_panel.get_volume(1),
 		sound_panel.get_volume(2),
 		sound_panel.get_volume(3),
-		1.5)
+		1.5,
+		sound_panel.get_timer_chan_enable(0),
+		sound_panel.get_timer_chan_enable(1),
+		sound_panel.get_timer_chan_enable(2),
+		sound_panel.get_ay_chan_enable(0),
+		sound_panel.get_ay_chan_enable(1),
+		sound_panel.get_ay_chan_enable(2)
+		)
 	$AudioStreamPlayer.volume_db = sound_panel.get_volume(4)
 
 func _on_shaderselect_pressed():

@@ -1,0 +1,24 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://NiceTooltip.gd" type="Script" id=1]
+
+[node name="Control" type="PanelContainer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_right = -714.0
+margin_bottom = -595.0
+size_flags_horizontal = 4
+size_flags_vertical = 4
+script = ExtResource( 1 )
+
+[node name="Label" type="Label" parent="."]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 79.0
+margin_bottom = 38.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+text = "Tooltip
+Schmooltip"
+
+[node name="Timer" type="Timer" parent="."]

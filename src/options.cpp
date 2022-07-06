@@ -34,6 +34,8 @@ _options Options =
 
     // timer, beeper, ay, covox, global
     .volume = {0.1f, 0.1f, 0.1f, 0.1f, 1.5f},
+    .enable = {/* timer ch0..2 */ true, true, true,
+               /* ay ch0..2 */    true, true, true},
     .nofilter = false,
 };
 

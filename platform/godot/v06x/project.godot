@@ -16,7 +16,7 @@ _global_script_class_icons={
 
 config/name="v06x"
 run/main_scene="res://main.tscn"
-config/icon="res://icon.png"
+config/icon="res://assets/icon64.png"
 name="v06x"
 main_scene="res://main.tscn"
 icon="res://icon.png"

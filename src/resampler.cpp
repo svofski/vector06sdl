@@ -1,4 +1,6 @@
 #include <cmath>
+#include <array>
+#include <algorithm>
 #include "resampler.h"
 
 #if defined(_MSC_VER)
@@ -41,9 +43,47 @@ using namespace std;
 
 #include "../filters/interp.h"
 
-#if !defined(WITHOUT_COREDSP)
 static constexpr int NTAPS = (ALLTAPS+Resampler::UP)/Resampler::UP;
+
+#if !defined(WITHOUT_COREDSP)
 typedef coredsp::FIR<NTAPS, coreutil::simd_t<float>> fir_t;
+#else
+template <int ntaps>
+class FIR
+{
+private:
+    std::array<float, ntaps> coef;
+    std::array<float, ntaps * 2> taps;
+    unsigned index;
+public:
+    FIR() : coef{}, taps{}, index(0) {}
+
+    void coefs(const float * _coefs)
+    {
+        std::copy_n(_coefs, ntaps, coef.data());
+    }
+
+    void in(float x)
+    {
+        unsigned i = index - 1;  
+        if (i >= ntaps) {
+            i = ntaps - 1;
+        }
+        index = i;
+        taps[index] = taps[index + ntaps] = x;
+    }
+
+    float out() const
+    {
+        float result = 0;
+        for (unsigned k = 0; k < ntaps; ++k) {
+            result += taps[index + k] * coef[k];
+        }
+        return result;
+    }
+};
+
+typedef FIR<NTAPS> fir_t;
 #endif
 
 Resampler::Resampler() 
@@ -60,7 +100,7 @@ Resampler::Resampler()
 
 void Resampler::create_filter()
 {
-#if !defined(WITHOUT_COREDSP)
+//#if !defined(WITHOUT_COREDSP)
     float padded[ALLTAPS + UP];
     float n[NTAPS];
 
@@ -80,7 +120,7 @@ void Resampler::create_filter()
         fir->coefs(n);
         this->filterbank[phase] = fir;
     }
-#endif
+//#endif
 
     dcm_ctr = 0;
 }
@@ -95,7 +135,7 @@ float Resampler::sample(float s)
     }
 #endif
 
-#if !defined(WITHOUT_COREDSP)
+//#if !defined(WITHOUT_COREDSP)
     if (!this->thru) {
         /* Rational resampler as described in 
          * "Introduction to Digital Resampling" by Dr. Mike Porteous
@@ -148,7 +188,7 @@ float Resampler::sample(float s)
 #endif
     }
     else 
-#endif // !defined(WITHOUT_COREDSP)
+//#endif // !defined(WITHOUT_COREDSP)
     {
         dcm_ctr += UP;
         if (dcm_ctr >= DOWN) {

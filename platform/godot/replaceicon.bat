@@ -1,0 +1,1 @@
+C:\Users\svofs\bin\Godot\Godot_v3.5-rc5_win64.exe -s ReplaceIcon.gd v06x\icon64.ico exports\v06x.exe

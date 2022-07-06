@@ -1,10 +1,11 @@
-[gd_scene load_steps=8 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://Knob.gd" type="Script" id=1]
 [ext_resource path="res://assets/unipo-orange-128px-bevel.png" type="Texture" id=2]
 [ext_resource path="res://assets/Dual_LED.png" type="Texture" id=3]
 [ext_resource path="res://assets/Rubik-Regular.ttf" type="DynamicFontData" id=4]
 [ext_resource path="res://assets/unipo-orange-128px-texture.png" type="Texture" id=5]
+[ext_resource path="res://assets/Dual_LED_Green.png" type="Texture" id=6]
 
 [sub_resource type="StyleBoxFlat" id=1]
 bg_color = Color( 0.25098, 0.25098, 0.25098, 0.407843 )
@@ -43,20 +44,20 @@ size_flags_vertical = 2
 custom_styles/panel = SubResource( 1 )
 
 [node name="Bevel" type="Sprite" parent="."]
-position = Vector2( 16, 16 )
+position = Vector2( 26, 16 )
 scale = Vector2( 0.25, 0.25 )
 texture = ExtResource( 2 )
 vframes = 101
 
 [node name="Sprite" type="Sprite" parent="."]
-position = Vector2( 16, 16 )
+position = Vector2( 26, 16 )
 scale = Vector2( 0.25, 0.25 )
 texture = ExtResource( 5 )
 
 [node name="Label" type="Label" parent="."]
-margin_left = 32.0
+margin_left = 42.0
 margin_top = 9.0
-margin_right = 72.0
+margin_right = 82.0
 margin_bottom = 23.0
 custom_colors/font_color = Color( 0.513726, 0.513726, 0.513726, 1 )
 custom_fonts/font = SubResource( 2 )
@@ -64,12 +65,36 @@ text = "Babor"
 align = 1
 
 [node name="Led" type="Sprite" parent="."]
-position = Vector2( 16, 16 )
+position = Vector2( 26, 16 )
 scale = Vector2( 0.25, 0.25 )
 texture = ExtResource( 3 )
 vframes = 2
 frame = 1
 
+[node name="ChanLed1" type="Sprite" parent="."]
+visible = false
+position = Vector2( 4, 8 )
+scale = Vector2( 0.2, 0.2 )
+texture = ExtResource( 6 )
+vframes = 2
+frame = 1
+
+[node name="ChanLed2" type="Sprite" parent="."]
+visible = false
+position = Vector2( 4, 16 )
+scale = Vector2( 0.2, 0.2 )
+texture = ExtResource( 6 )
+vframes = 2
+frame = 1
+
+[node name="ChanLed3" type="Sprite" parent="."]
+visible = false
+position = Vector2( 4, 24 )
+scale = Vector2( 0.2, 0.2 )
+texture = ExtResource( 6 )
+vframes = 2
+frame = 1
+
 [node name="Pointer" type="Sprite" parent="."]
-position = Vector2( 16, 16 )
+position = Vector2( 26, 16 )
 scale = Vector2( 0.25, 0.25 )
