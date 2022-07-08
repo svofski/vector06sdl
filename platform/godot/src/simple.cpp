@@ -27,6 +27,7 @@ V06X_DECL(V06X_GetSound);
 V06X_DECL(V06X_KeyDown);
 V06X_DECL(V06X_KeyUp);
 V06X_DECL(V06X_LoadAsset);
+V06X_DECL(V06X_Mount);
 V06X_DECL(V06X_Reset);
 V06X_DECL(V06X_ExportState);
 V06X_DECL(V06X_RestoreState);
@@ -88,6 +89,7 @@ extern "C" void GDN_EXPORT godot_nativescript_init(void* p_handle)
     V06X_METHOD("KeyDown", V06X_KeyDown);
     V06X_METHOD("KeyUp", V06X_KeyUp);
     V06X_METHOD("LoadAsset", V06X_LoadAsset);
+    V06X_METHOD("Mount", V06X_Mount);
     V06X_METHOD("Reset", V06X_Reset);
     V06X_METHOD("ExportState", V06X_ExportState);
     V06X_METHOD("RestoreState", V06X_RestoreState);

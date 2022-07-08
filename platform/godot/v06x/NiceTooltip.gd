@@ -29,6 +29,7 @@ func update_sizes():
 	if label != null:
 		rect_size = label.rect_size
 
+## drink, feck, arse, girls
 func showTooltip(pos: Vector2, txt: String):
 	_set_text(txt)
 	pos.y -= label.rect_size.y * 1.25

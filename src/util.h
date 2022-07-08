@@ -67,4 +67,6 @@ char printable_char(int c);
 
 std::string tmpname(const std::string & basename);
 
+int careful_rename(std::string const& from, std::string const& to);
+
 }

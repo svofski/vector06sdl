@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=2]
+[gd_scene load_steps=32 format=2]
 
 [ext_resource path="res://main.gd" type="Script" id=1]
 [ext_resource path="res://theme.theme" type="Theme" id=2]
@@ -16,6 +16,7 @@
 [ext_resource path="res://MemoryView.tscn" type="PackedScene" id=14]
 [ext_resource path="res://assets/debugger-bowser.png" type="Texture" id=15]
 [ext_resource path="res://NiceTooltip.tscn" type="PackedScene" id=16]
+[ext_resource path="res://assets/floppy-icon.png" type="Texture" id=17]
 
 [sub_resource type="StyleBoxFlat" id=33]
 bg_color = Color( 0, 0, 0, 1 )
@@ -50,6 +51,17 @@ use_filter = true
 font_data = ExtResource( 7 )
 
 [sub_resource type="DynamicFont" id=40]
+
+[sub_resource type="StyleBoxFlat" id=45]
+content_margin_left = 0.0
+bg_color = Color( 0.0470588, 0.0470588, 0.0470588, 0.607843 )
+border_width_right = 1
+border_width_bottom = 1
+border_blend = true
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
 
 [sub_resource type="StyleBoxFlat" id=32]
 draw_center = false
@@ -139,7 +151,7 @@ rect_min_size = Vector2( 250, 87.5 )
 window_title = "Открыть файл"
 resizable = true
 mode_overrides_title = false
-mode = 0
+mode = 3
 access = 2
 filters = PoolStringArray( "*.rom,*.r0m,*.vec,*.bin,*.fdd,*.wav" )
 __meta__ = {
@@ -168,13 +180,14 @@ margin_bottom = 250.0
 custom_styles/panel = SubResource( 37 )
 
 [node name="HomeLabel" type="Label" parent="HUD"]
-margin_left = 7.0
+margin_left = 170.0
 margin_top = 231.0
-margin_right = 619.0
+margin_right = 782.0
 margin_bottom = 244.0
 custom_colors/font_color = Color( 0, 0, 0, 1 )
 custom_fonts/font = SubResource( 38 )
 text = "v06x by svofski https://github.com/svofski/v06x"
+align = 2
 
 [node name="ScopePanel" parent="HUD" instance=ExtResource( 13 )]
 anchor_right = 0.0
@@ -187,9 +200,9 @@ rect_min_size = Vector2( 607, 32 )
 
 [node name="RusLabel" type="Label" parent="HUD"]
 margin_left = 24.0
-margin_top = 11.0
+margin_top = 5.0
 margin_right = 62.0
-margin_bottom = 27.0
+margin_bottom = 21.0
 custom_colors/font_color = Color( 0, 0, 0, 0.247059 )
 custom_colors/font_outline_modulate = Color( 0, 0, 0, 0.223529 )
 custom_constants/shadow_offset_x = 13
@@ -199,44 +212,62 @@ text = "РУС"
 
 [node name="RusLat" parent="HUD" instance=ExtResource( 3 )]
 margin_left = 19.0
-margin_top = 19.0
+margin_top = 13.0
 margin_right = 51.0
-margin_bottom = 51.0
+margin_bottom = 45.0
 mouse_filter = 1
 size_flags_horizontal = 0
 custom_fonts/font = SubResource( 40 )
 
+[node name="ButtonsPanel" type="Panel" parent="HUD"]
+margin_left = 6.0
+margin_top = 45.0
+margin_right = 67.0
+margin_bottom = 226.0
+custom_styles/panel = SubResource( 45 )
+
 [node name="ShaderSelectButton" parent="HUD" instance=ExtResource( 9 )]
-margin_left = 19.0
-margin_top = 98.0
-margin_right = 51.0
-margin_bottom = 130.0
+margin_left = 21.0
+margin_top = 137.0
+margin_right = 49.0
+margin_bottom = 165.0
+rect_min_size = Vector2( 28, 28 )
 custom_styles/panel = SubResource( 32 )
 texture = ExtResource( 10 )
 
-[node name="DebuggerButton" parent="HUD" instance=ExtResource( 9 )]
-margin_left = 15.0
-margin_top = 143.0
-margin_right = 57.0
-margin_bottom = 182.0
+[node name="BowserButton" parent="HUD" instance=ExtResource( 9 )]
+margin_left = 16.0
+margin_top = 175.0
+margin_right = 58.0
+margin_bottom = 214.0
 hint_tooltip = "Базырь"
 custom_styles/panel = SubResource( 32 )
 texture = SubResource( 41 )
 
 [node name="LoadAss2" parent="HUD" instance=ExtResource( 9 )]
 margin_left = 11.0
-margin_top = 54.0
+margin_top = 52.0
 margin_right = 59.0
-margin_bottom = 86.0
-hint_tooltip = "Загрузка"
+margin_bottom = 84.0
+hint_tooltip = "ROM/WAV/FDD A:"
 custom_styles/panel = SubResource( 32 )
 texture = ExtResource( 12 )
 
+[node name="LoadAss3" parent="HUD" instance=ExtResource( 9 )]
+margin_left = 19.0
+margin_top = 93.0
+margin_right = 51.0
+margin_bottom = 125.0
+hint_tooltip = "FDD B:"
+custom_styles/panel = SubResource( 32 )
+texture = ExtResource( 17 )
+
 [node name="GamepadLabel" parent="HUD" instance=ExtResource( 5 )]
-margin_left = 17.0
-margin_top = 187.0
-margin_right = 55.0
-margin_bottom = 219.0
+margin_left = 20.0
+margin_top = 226.0
+margin_right = 48.0
+margin_bottom = 248.0
+rect_min_size = Vector2( 28, 22 )
 
 [node name="OnScreenKeyboard" parent="HUD" instance=ExtResource( 11 )]
 margin_left = 73.0
@@ -267,12 +298,18 @@ size_flags_horizontal = 2
 [node name="NiceTooltip" parent="." instance=ExtResource( 16 )]
 visible = false
 
+[node name="RageTimer" type="Timer" parent="."]
+
 [connection signal="gui_input" from="." to="." method="_on_main_gui_input"]
+[connection signal="dir_selected" from="FileDialog" to="." method="_on_FileDialog_dir_selected"]
 [connection signal="file_selected" from="FileDialog" to="." method="_on_FileDialog_file_selected"]
 [connection signal="selected" from="Panel2" to="." method="_on_shader_selected"]
 [connection signal="long_hover" from="HUD/ScopePanel" to="." method="_on_ScopePanel_long_hover"]
 [connection signal="pressed" from="HUD/ScopePanel" to="." method="_on_ScopePanel_pressed"]
 [connection signal="pressed" from="HUD/ShaderSelectButton" to="." method="_on_shaderselect_pressed"]
-[connection signal="pressed" from="HUD/DebuggerButton" to="." method="_on_DebuggerButton_pressed"]
-[connection signal="pressed" from="HUD/LoadAss2" to="." method="_on_load_asset_pressed"]
+[connection signal="mouse_entered" from="HUD/BowserButton" to="." method="_on_BowserButton_mouse_entered" binds= [ 0 ]]
+[connection signal="mouse_exited" from="HUD/BowserButton" to="." method="_on_BowserButton_mouse_entered" binds= [ 1 ]]
+[connection signal="pressed" from="HUD/BowserButton" to="." method="_on_BowserButton_pressed"]
+[connection signal="pressed" from="HUD/LoadAss2" to="." method="_on_load_asset_pressed" binds= [ 0 ]]
+[connection signal="pressed" from="HUD/LoadAss3" to="." method="_on_load_asset_pressed" binds= [ 1 ]]
 [connection signal="volumes_changed" from="HUD/SoundPanel" to="." method="_on_SoundPanel_volumes_changed"]

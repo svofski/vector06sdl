@@ -299,7 +299,7 @@ std::tuple<bool,std::string>
             }
             int tocopy = std::min(SECTOR_SIZE, remaining);
             std::copy(srcptr, srcptr + tocopy, sector_data);
-            std::fill(sector_data + tocopy, sector_data + SECTOR_SIZE, 0xe5);
+            std::fill(sector_data + tocopy, sector_data + SECTOR_SIZE, 0x1a);
             srcptr += tocopy;
             remaining -= tocopy;
         }

@@ -5,6 +5,7 @@ const COM : int = 1
 const FDD : int = 2
 const EDD : int = 3
 const WAV : int = 4
+const DIR : int = 5
 
 const MIX_SAMPLERATE : int = 48000
 
@@ -27,6 +28,13 @@ onready var osk_panel = find_node("OnScreenKeyboard")
 onready var scope_panel = find_node("ScopePanel")
 onready var debug_panel = find_node("MemoryView")
 onready var nice_tooltip = find_node("NiceTooltip")
+onready var loadass = [find_node("LoadAss2"), find_node("LoadAss3")]
+
+onready var tape_texture = loadass[0].texture
+onready var floppy_texture = loadass[1].texture
+onready var tape_size = loadass[0].rect_size
+onready var floppy_size = loadass[1].rect_size
+
 onready var default_scope_panel_pos = scope_panel.rect_position
 
 var shader_index = 0
@@ -36,14 +44,16 @@ onready var resume_timer: Timer = $ResumeTimer
 onready var click_timer: Timer = $ClickTimer
 
 # for saving / restoring config
-var file_path: String = ""
-var file_kind = [ROM, 256, false]
+var file_path = ["", ""]
+var file_kind = [[ROM, 256, false], [ROM, 256, false]]
 
 const DYNAMIC_SHADER_LIST = false
 
 const SCOPE_SMALL: int = 0
 const SCOPE_BIG: int = 1
 var scope_state: int = SCOPE_SMALL
+
+var dialog_device: int = 0 # A: or B: for file dialog
 
 func updateTexture(buttmap : PoolByteArray):
 	if textureImage == null:
@@ -60,12 +70,14 @@ func updateTexture(buttmap : PoolByteArray):
 	texture.set_data(textureImage)
 
 func _ready():
-	var cmdline_asset: String = ""
+	var cmdline_assets = ["", ""]
+	var i: int = 0
 	for arg in OS.get_cmdline_args():
 		#print("arg: ", arg)
-		if not arg.begins_with("--"):
-			cmdline_asset = arg
-			print("Will try to load asset: ", cmdline_asset)
+		if i < len(cmdline_assets) and not arg.begins_with("--"):
+			cmdline_assets[i] = arg
+			print("Will try to load asset: ", cmdline_assets[i])
+			i = i + 1
 	
 	Engine.target_fps = 50
 	Engine.iterations_per_second = 50
@@ -110,13 +122,21 @@ func _ready():
 
 	get_tree().connect("files_dropped", self, "_on_files_dropped")
 
-	if len(cmdline_asset) > 0:
-		call_deferred("_on_FileDialog_file_selected", cmdline_asset)
+	var should_reset: bool = false
+	for k in range(len(cmdline_assets)):
+		if cmdline_assets[k] == "":
+			continue
+		var rom_like = load_file(k, cmdline_assets[k])
+		print("cmdline_assets[%d]=%s, rom_like=%s" % [k, cmdline_assets[k], str(rom_like)])
+		if k == 0 and rom_like: should_reset = true
+	if should_reset:
+		call_deferred("_on_blksbr_pressed")
+		
+	update_load_asses()
 		
 	nice_tooltip.enabled = true
 
 func _notification(what):
-	#print("notification: ", what)
 	if what == MainLoop.NOTIFICATION_WM_QUIT_REQUEST:
 		set_process(false)
 		$AudioStreamPlayer.stop()
@@ -144,7 +164,6 @@ func poll_joy(cur_joy):
 		| (int(Input.is_joy_button_pressed(cur_joy, JOY_XBOX_A)) << 6) \
 		| (int(Input.is_joy_button_pressed(cur_joy, JOY_XBOX_B)) << 7))
 		
-#func _process(delta):
 func _physics_process(delta):
 	v06x.SetJoysticks(poll_joy(0), poll_joy(1))
 	
@@ -165,12 +184,18 @@ func _physics_process(delta):
 		debug_panel.heatmap = v06x.GetHeatmap(0, 65536*5)
 		debug_panel.emit_signal("visibility_changed")
 
+# it's impossible to tell where exactly the drop happens,
+# mouse coordinates are all over the place
 func _on_files_dropped(files: PoolStringArray, screen: int):
-	print(files)
 	if files.size() > 0:
+		dialog_device = 0
 		_on_FileDialog_file_selected(files[0])
 
-func _on_load_asset_pressed():
+func _on_load_asset_pressed(which: int):
+	dialog_device = which
+	$FileDialog.filters = ["*.rom,*.r0m,*.vec,*.bin,*.fdd,*.wav"]
+	if which > 0:
+		$FileDialog.filters = ["*.fdd"]
 	$FileDialog.popup()
 
 func update_debugger_size():
@@ -255,22 +280,62 @@ func show_shader_panel():
 func hide_shader_panel():
 	panel2.visible = false
 
+func make_load_hint(dev: int) -> String:
+	match dev:
+		0:	return "WAV/ROM/A: (%s)" % file_path[dev].get_file()
+		1:  return "B: (%s)" % file_path[dev].get_file()
+	return ""
+	
+func update_load_asses() -> void:
+	var middle_x = rus_lat.rect_position.x + rus_lat.rect_size.x / 2
+	loadass[0].hint_tooltip = make_load_hint(0)
+	if file_kind[0][0] in [DIR, FDD]:
+		loadass[0].texture = floppy_texture
+		loadass[0].rect_size = floppy_size
+		loadass[0].rect_position.x = middle_x - floppy_size.x / 2
+	else:
+		loadass[0].texture = tape_texture
+		loadass[0].rect_size = tape_size
+		loadass[0].rect_position.x = middle_x - tape_size.x / 2
+	loadass[1].hint_tooltip = make_load_hint(1)
+
 # return true if should autostart
-func load_file(path):
+func load_file(dev: int, path: String) -> bool:
 	var file = File.new()
 	if file.open(path, File.READ) == OK:
 		var content = file.get_buffer(min(file.get_len(), 1024*1024))
 		var korg = getKind(path)
-		file_kind = korg
-		file_path = path
-		v06x.LoadAsset(content, korg[0], korg[1])
+		file_kind[dev] = korg
+		file_path[dev] = path
+		
+		if file_kind[0][0] == FDD:
+			v06x.Mount(dev, path)
+		else:
+			v06x.LoadAsset(content, korg[0], korg[1])
+		update_load_asses()
 		return korg[2]
+	else:
+		var dir = Directory.new()
+		if dir.dir_exists(path):
+			file_path[dev] = path
+			file_kind[dev] = [DIR, 0, false]
+			v06x.Mount(dev, path)	
+			update_load_asses()
 	return false
 
-func _on_FileDialog_file_selected(path):
+func _on_FileDialog_file_selected(path: String):
 	print("File selected: ", path)
-	if load_file(path):
+	if load_file(dialog_device, path):
 		v06x.Reset(false)
+	
+	nice_tooltip.showTooltip(loadass[dialog_device].rect_global_position, 
+		path.get_file())
+
+func _on_FileDialog_dir_selected(dir):
+	print("Directory selected: ", dir)
+	load_file(dialog_device, dir)
+	nice_tooltip.showTooltip(loadass[dialog_device].rect_global_position,
+		dir.get_file())
 
 func getKind(path : String):
 	var ret = [ROM, 256, true]
@@ -368,10 +433,16 @@ func save_config():
 	cfg.load("user://v06x.settings")
 	cfg.set_value("FileDialog", "current_dir", $FileDialog.current_dir)
 	cfg.set_value("FileDialog", "current_path", $FileDialog.current_path)
-	cfg.set_value("asset0", "file", file_path)
-	cfg.set_value("asset0", "kind", file_kind[0])
-	cfg.set_value("asset0", "org", file_kind[1])
-	cfg.set_value("asset0", "autostart", file_kind[2])
+	cfg.set_value("asset0", "file", file_path[0])
+	cfg.set_value("asset0", "kind", file_kind[0][0])
+	cfg.set_value("asset0", "org", file_kind[0][1])
+	cfg.set_value("asset0", "autostart", file_kind[0][2])
+
+	cfg.set_value("asset1", "file", file_path[1])
+	cfg.set_value("asset1", "kind", file_kind[1][0])
+	cfg.set_value("asset1", "org", file_kind[1][1])
+	cfg.set_value("asset1", "autostart", file_kind[1][2])
+
 	cfg.set_value("sound", "volume_8253", sound_panel.get_volume(0))
 	cfg.set_value("sound", "volume_beep", sound_panel.get_volume(1))
 	cfg.set_value("sound", "volume_ay", sound_panel.get_volume(2))
@@ -401,14 +472,20 @@ func load_config():
 		sound_panel.set_volume(4, cfg.get_value("sound", "volume_db", 0))
 		_on_SoundPanel_volumes_changed()
 
-		file_path = cfg.get_value("asset0", "file", "")
-		file_kind[0] = cfg.get_value("asset0", "kind", ROM)
-		file_kind[1] = cfg.get_value("asset0", "org", 256)
-		file_kind[2] = cfg.get_value("asset0", "autostart", false)
+		file_path[0] = cfg.get_value("asset0", "file", "")
+		file_kind[0][0] = cfg.get_value("asset0", "kind", ROM)
+		file_kind[0][1] = cfg.get_value("asset0", "org", 256)
+		file_kind[0][2] = cfg.get_value("asset0", "autostart", false)
 		
-		if file_kind[0] in [FDD]:
-			load_file(file_path) # load but no restart
+		if file_kind[0][0] in [FDD, DIR]:
+			load_file(0, file_path[0]) # load but no restart
 
+		file_path[1] = cfg.get_value("asset1", "file", "")
+		file_kind[1][0] = cfg.get_value("asset1", "kind", FDD)
+		file_kind[1][1] = cfg.get_value("asset1", "org", 256)
+		file_kind[1][2] = cfg.get_value("asset1", "autostart", false)
+		if file_kind[1][0] in [FDD, DIR]:
+			load_file(1, file_path[1])
 
 func create_shader_list():
 	var dir = Directory.new()
@@ -455,7 +532,6 @@ func _timer_resume():
 
 func toggle_fullscreen():
 	$AudioStreamPlayer.stream_paused = true
-	#set_process(false)
 	OS.window_fullscreen = not OS.window_fullscreen
 	resume_timer.wait_time = 0.1
 	resume_timer.start()
@@ -465,12 +541,6 @@ func make_scope_big():
 	scope_panel.get_parent().remove_child(scope_panel)
 	add_child(scope_panel)
 	call_deferred("_on_size_changed")
-	#var r = hud_panel.rect_size
-	#r.y = 0.5 * r.y
-	#scope_panel.rect_size = r
-	#var p = hud_panel.rect_position
-	#p.y -= scope_panel.rect_size.y
-	#scope_panel.rect_position = p
 	scope_state = SCOPE_BIG
 
 func make_scope_small():
@@ -493,7 +563,29 @@ func _on_ScopePanel_pressed():
 	else:
 		make_scope_small()
 
-func _on_DebuggerButton_pressed():
+func _on_BowserButton_pressed():
 	debug_panel.visible = not debug_panel.visible
 	call_deferred("_on_size_changed")
 
+onready var rage_timer: Timer = find_node("RageTimer")
+onready var bowser_button: Control = find_node("BowserButton")
+onready var bowser_centre: Vector2 = bowser_button.rect_position + bowser_button.rect_size * 0.5
+
+func _on_BowserButton_mouse_entered(enter0exit1: int):
+	match enter0exit1:
+		0: 	
+			rage_timer.connect("timeout", self, "_bowser_rage")
+			rage_timer.start(0.02)
+		1:
+			rage_timer.stop()
+			rage_timer.disconnect("timeout", self, "_bowser_rage")
+			_bowser_calm()
+			
+func _bowser_rage():
+	bowser_button.rect_scale = Vector2(0.9 + randf() * 0.2, 0.9 + randf() * 0.2)
+	bowser_button.rect_position = bowser_centre - bowser_button.rect_size * bowser_button.rect_scale / 2
+
+func _bowser_calm():
+	bowser_button.rect_scale = Vector2(1, 1)
+	bowser_button.rect_position = bowser_centre - bowser_button.rect_size * bowser_button.rect_scale / 2
+	

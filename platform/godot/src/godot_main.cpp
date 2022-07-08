@@ -25,8 +25,7 @@
 extern const godot_gdnative_core_api_struct* api;
 
 Memory memory;
-FD1793_Real fdc;
-FD1793 fdc_dummy;
+FD1793 fdc;
 Wav wav;
 WavPlayer tape_player(wav);
 Keyboard keyboard;
@@ -129,8 +128,8 @@ void load_rom(const uint8_t * bytes, size_t size, int org)
 
 void load_fdd(const uint8_t * bytes, size_t size, int drive)
 {
-    std::vector<uint8_t> fdd(bytes, bytes + size);
-    fdc.loadDsk(drive, "", fdd);
+    std::vector<uint8_t> fdd_image(bytes, bytes + size);
+    fdc.disk(drive).attach(fdd_image);
 }
 
 void load_edd(const uint8_t * bytes, size_t size, int slot)
@@ -299,6 +298,32 @@ godot_variant V06X_LoadAsset(godot_object* p_instance, void* p_method_data,
     }
 
     api->godot_pool_byte_array_read_access_destroy(ra);
+
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
+}
+
+// dir or fdd
+godot_variant V06X_Mount(godot_object* p_instance, void* p_method_data, 
+        void* p_user_data, int p_num_args, godot_variant** p_args)
+{
+    godot_int device = api->godot_variant_as_int(p_args[0]);
+    godot_string wpath = api->godot_variant_as_string(p_args[1]);
+    godot_char_string cpath = api->godot_string_ascii(&wpath);
+    
+    const char * path = api->godot_char_string_get_data(&cpath);
+
+    try
+    {
+        fdc.disk(device).attach(path);
+    }
+    catch(...)
+    {
+        printf("Mount: dev=%d path=%s failed\n", device, path);
+    }
+
+    api->godot_char_string_destroy(&cpath);
 
     godot_variant ret;
     api->godot_variant_new_bool(&ret, 1);

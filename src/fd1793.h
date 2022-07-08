@@ -115,15 +115,16 @@ public:
     void flush() override
     {
         if (dirty) {
-            std::string tmp = util::tmpname(filename).c_str();
+            std::string tmp = util::tmpname(filename);
             FILE * copy = fopen(tmp.c_str(), "wb");
             if (copy) {
                 fwrite(&_data[0], 1, _data.size(), copy);
             }
             fclose(copy);
-            rename(tmp.c_str(), filename.c_str());
 
-            dirty = false;
+            if (0 == util::careful_rename(tmp, filename)) {
+                dirty = false;
+            }
         }
     }
 
@@ -191,15 +192,16 @@ public:
     void flush() override
     {
         if (dirty) {
-            std::string tmp = util::tmpname(dirimage).c_str();
+            std::string tmp = util::tmpname(dirimage);
             FILE * copy = fopen(tmp.c_str(), "wb");
             if (copy) {
                 fwrite(&dir.data()[0], 1, dir.data().size(), copy);
             }
             fclose(copy);
-            rename(tmp.c_str(), dirimage.c_str());
 
-            dirty = false;
+            if (0 == util::careful_rename(tmp, dirimage)) {
+                dirty = false;
+            }
         }
     }
 };

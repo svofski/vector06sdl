@@ -160,5 +160,35 @@ void str_toupper(std::string & s)
     }
 }
 
+int careful_rename(std::string const& from, std::string const& to)
+{
+    int res = rename(from.c_str(), to.c_str()); 
+    if (res != 0) {
+        // windows can't rename if file exists, no atomic replace
+        //printf("%s: cannot rename %s to %s (code %d)\n",
+        //        __FUNCTION__, from.c_str(), to.c_str(), errno);
+
+        std::string bak = util::tmpname(to);
+        do {
+            res = rename(to.c_str(), bak.c_str());
+            if (0 != res) {
+                //printf("%s: cannot rename %s to %s, giving up\n",
+                //        __PRETTY_FUNCTION__, to.c_str(), bak.c_str());
+                break;
+            }
+            res = rename(from.c_str(), to.c_str());
+            if (0 != res) {
+                //printf("%s: failed to rename %s to %s by all means\n",
+                //        __PRETTY_FUNCTION__, from.c_str(), to.c_str());
+            }
+        } while  (0);
+
+        unlink(bak.c_str());
+    }
+
+    return res;
+}
+
+
 }
 #endif
