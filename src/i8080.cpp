@@ -259,7 +259,7 @@ struct i8080 {
 #define CALL \
 {                                               \
     PUSH(PC + 2);                               \
-    PC = RD_STACK(PC);                           \
+    PC = RD_WORD(PC);                           \
 }
 
 #define RST(addr) \
