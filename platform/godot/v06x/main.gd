@@ -253,7 +253,7 @@ func _on_size_changed():
 		if debug_panel.visible:
 			pos.x = debug_panel.rect_size.x
 		update_scope_size(pos, sz)
-	
+
 	if debug_panel.visible:
 		$VectorScreen.rect_position.x = debug_panel.rect_size.x
 
@@ -271,7 +271,7 @@ func shader_panel_visibility_changed():
 	else:
 		if DYNAMIC_SHADER_LIST:
 			panel2.set_shader_list([])
-		
+
 func show_shader_panel():
 	if DYNAMIC_SHADER_LIST:
 		panel2.set_shader_list(shaders)
@@ -282,10 +282,10 @@ func hide_shader_panel():
 
 func make_load_hint(dev: int) -> String:
 	match dev:
-		0:	return "WAV/ROM/A: (%s)" % file_path[dev].get_file()
+		0:  return "WAV/ROM/A: (%s)" % file_path[dev].get_file()
 		1:  return "B: (%s)" % file_path[dev].get_file()
 	return ""
-	
+
 func update_load_asses() -> void:
 	var middle_x = rus_lat.rect_position.x + rus_lat.rect_size.x / 2
 	loadass[0].hint_tooltip = make_load_hint(0)
@@ -388,12 +388,8 @@ func _on_click_timer():
 		hud_panel.rect_position.y = get_viewport_rect().size.y
 		call_deferred("_on_size_changed")
 	else:
-		hud_panel.rect_position.y = get_viewport_rect().size.y
 		hud_panel.visible = true
-		var anim = $AnimationPlayer.get_animation("hud_slide_in")
-		anim.track_set_key_value(0, 0, Vector2(0, hud_panel.rect_position.y))
-		anim.track_set_key_value(0, 1, Vector2(0, get_viewport_rect().size.y - hud_panel.rect_size.y))
-		$AnimationPlayer.play("hud_slide_in")
+		call_deferred("_on_size_changed")
 
 func _on_main_gui_input(event):
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:

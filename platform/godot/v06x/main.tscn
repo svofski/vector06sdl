@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=2]
+[gd_scene load_steps=31 format=2]
 
 [ext_resource path="res://main.gd" type="Script" id=1]
 [ext_resource path="res://theme.theme" type="Theme" id=2]
@@ -98,28 +98,6 @@ corner_radius_bottom_left = 5
 expand_margin_left = 5.0
 expand_margin_top = 5.0
 expand_margin_bottom = 5.0
-
-[sub_resource type="Animation" id=44]
-resource_name = "hud_slide_in"
-length = 0.101
-step = 0.01
-tracks/0/type = "method"
-tracks/0/path = NodePath(".")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/keys = {
-"times": PoolRealArray( 0.05, 0.1 ),
-"transitions": PoolRealArray( 1, 1 ),
-"values": [ {
-"args": [  ],
-"method": "_on_size_changed"
-}, {
-"args": [  ],
-"method": "_on_size_changed"
-} ]
-}
 
 [node name="main" type="Panel"]
 margin_right = 800.0
@@ -285,9 +263,6 @@ margin_right = 786.0
 margin_bottom = 221.0
 rect_min_size = Vector2( 80, 204 )
 custom_styles/panel = SubResource( 43 )
-
-[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
-anims/hud_slide_in = SubResource( 44 )
 
 [node name="MemoryView" parent="." instance=ExtResource( 14 )]
 visible = false
