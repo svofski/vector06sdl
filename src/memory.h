@@ -16,13 +16,16 @@ public:
 private:
     uint8_t bytes[TOTAL_MEMORY];
     bool mode_stack;
-    bool mode_map;
+    uint8_t mode_map;
     uint32_t page_map;
     uint32_t page_stack;
 
     std::vector<uint8_t> bootbytes;
 
     heatmap_t heatmap;
+
+    uint32_t bigram_select(uint32_t addr, bool stackrq) const;
+    uint32_t tobank(uint32_t a) const;
 
 public:
     /* virtual addr, physical addr, stackrq, value */
@@ -32,8 +35,6 @@ public:
 public:
     Memory();
     void control_write(uint8_t w8);
-    uint32_t bigram_select(uint32_t addr, bool stackrq) const;
-    uint32_t tobank(uint32_t a) const;
     uint8_t read(uint32_t addr, bool stackrq) const;
     void write(uint32_t addr, uint8_t w8, bool stackrq);
     void init_from_vector(const std::vector<uint8_t> & from, uint32_t start_addr);

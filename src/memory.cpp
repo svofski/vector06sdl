@@ -7,21 +7,33 @@
 
 using namespace std;
 
-Memory::Memory() : mode_stack(false), mode_map(false), page_map(0), page_stack(0)
+Memory::Memory() : mode_stack(false), mode_map(false), page_map(0),
+    page_stack(0)
 {
     memset(bytes, 0, sizeof(bytes));
+    printf("memory init\n");
 }
 
+// Barkar extensions:
+//
+// 1 = enable
+//
+// 7              screen 0    0xe000-0xffff  8k
+//  6             screen 3    0x8000-0x9fff  8k
+//   5            screen 1-2  0xa000-0xdfff  16k  default Kishinev version
+//    4           stack
+//     32         stack page
+//       10       screen page
 void Memory::control_write(uint8_t w8)
 {
     this->mode_stack = (w8 & 0x10) != 0;
-    this->mode_map = (w8 & 0x20) != 0;
+    this->mode_map = w8 & 0xe0;
 
     this->page_map = ((w8 & 3) + 1) << 16;
     this->page_stack = (((w8 & 0xc) >> 2) + 1) << 16;
 
-    //printf("memory: mode_stack=%x mode_map=%x page_map=%x page_stack=%x\n",
-    //        this->mode_stack, this->mode_map, this->page_map, this->page_stack);
+    //printf("memory: raw=%02x mode_stack=%x mode_map=%02x page_map=%x page_stack=%x\n",
+    //        w8, this->mode_stack, this->mode_map, this->page_map, this->page_stack);
 }
 
 uint32_t Memory::bigram_select(uint32_t addr, bool stackrq) const
@@ -30,7 +42,11 @@ uint32_t Memory::bigram_select(uint32_t addr, bool stackrq) const
         return addr;
     } else if (this->mode_stack && stackrq) {
         return addr + this->page_stack;
-    } else if (this->mode_map && (addr >= 0xa000) && (addr < 0xe000)) {
+    } else if ((this->mode_map & 0x20) && (addr >= 0xa000) && (addr <= 0xdfff)) {
+        return addr + this->page_map;
+    } else if ((this->mode_map & 0x40) && (addr >= 0x8000) && (addr <= 0x9fff)) {
+        return addr + this->page_map;
+    } else if ((this->mode_map & 0x80) && (addr >= 0xe000) && (addr <= 0xffff)) {
         return addr + this->page_map;
     }
     return addr;
