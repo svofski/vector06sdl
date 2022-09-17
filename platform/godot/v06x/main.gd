@@ -303,7 +303,7 @@ func update_load_asses() -> void:
 func load_file(dev: int, path: String) -> bool:
 	var file = File.new()
 	if file.open(path, File.READ) == OK:
-		var content = file.get_buffer(min(file.get_len(), 1024*1024))
+		var content = file.get_buffer(file.get_len())
 		var korg = getKind(path)
 		file_kind[dev] = korg
 		file_path[dev] = path
