@@ -122,15 +122,15 @@ func _ready():
 
 	get_tree().connect("files_dropped", self, "_on_files_dropped")
 
-	var should_reset: bool = false
+	#var should_reset: bool = false
 	for k in range(len(cmdline_assets)):
 		if cmdline_assets[k] == "":
 			continue
 		var rom_like = load_file(k, cmdline_assets[k])
 		print("cmdline_assets[%d]=%s, rom_like=%s" % [k, cmdline_assets[k], str(rom_like)])
-		if k == 0 and rom_like: should_reset = true
-	if should_reset:
-		call_deferred("_on_blksbr_pressed")
+		#if k == 0 and rom_like: should_reset = true
+	#if should_reset:
+	#	call_deferred("_on_blksbr_pressed")
 		
 	update_load_asses()
 		
