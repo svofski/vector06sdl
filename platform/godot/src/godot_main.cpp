@@ -16,6 +16,9 @@
 #include "ay.h"
 #include "wav.h"
 #include "util.h"
+
+#include "debug.h"
+
 #if 0
 #include "scriptnik.h"
 #endif
@@ -443,6 +446,7 @@ godot_variant V06X_GetMem(godot_object* p_instance, void* p_method_data,
     api->godot_pool_byte_array_write_access_destroy(wraccess);
 
     api->godot_variant_new_pool_byte_array(&ret, &v->memory);
+    
     return ret;
 }
 
@@ -478,3 +482,31 @@ godot_variant V06X_GetHeatmap(godot_object* p_instance, void* p_method_data,
     return ret;
 }
 
+// Debug(cmd) -> PoolBoolArray
+godot_variant V06X_Debug(godot_object* p_instance, void* p_method_data, 
+        void* p_user_data, int p_num_args, godot_variant** p_args)
+{
+    v06x_user_data* userDataP = static_cast<v06x_user_data*>(p_user_data);
+
+    if (!userDataP->initialized) {
+        godot_variant ret;
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
+
+    godot_string cmdGDStr = api->godot_variant_as_string(p_args[0]);
+    godot_char_string cmdGDCharStr = api->godot_string_ascii(&cmdGDStr);
+    const char* cmd = api->godot_char_string_get_data(&cmdGDCharStr);
+    api->godot_char_string_destroy(&cmdGDCharStr);
+
+    const std::string response = debug::evaluate(board, cmd);
+
+    godot_variant ret;
+    godot_string outGDStr;
+    api->godot_string_new(&outGDStr);
+    api->godot_string_parse_utf8(&outGDStr, response.c_str());
+    api->godot_variant_new_string(&ret, &outGDStr);
+    api->godot_string_destroy(&outGDStr);
+
+    return ret;
+}

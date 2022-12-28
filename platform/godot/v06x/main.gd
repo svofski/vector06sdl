@@ -26,9 +26,10 @@ onready var panel2 = find_node("Panel2")
 onready var sound_panel = find_node("SoundPanel")
 onready var osk_panel = find_node("OnScreenKeyboard")
 onready var scope_panel = find_node("ScopePanel")
-onready var debug_panel = find_node("MemoryView")
+onready var mem_panel = find_node("MemoryView")
 onready var nice_tooltip = find_node("NiceTooltip")
 onready var loadass = [find_node("LoadAss2"), find_node("LoadAss3")]
+onready var debugPanel = find_node("DebugPanel")
 
 onready var tape_texture = loadass[0].texture
 onready var floppy_texture = loadass[1].texture
@@ -70,6 +71,8 @@ func updateTexture(buttmap : PoolByteArray):
 	texture.set_data(textureImage)
 
 func _ready():
+	debugPanel.SetEmuCmdHandler(self, "DebugCmdHandler")
+	
 	var cmdline_assets = ["", ""]
 	var i: int = 0
 	for arg in OS.get_cmdline_args():
@@ -179,10 +182,10 @@ func _physics_process(delta):
 	if hud_panel.visible || scope_panel.get_parent() == self:
 		scope_panel.update_texture(sound)
 
-	if debug_panel.visible:
-		debug_panel.ram = v06x.GetMem(0, 65536*5)
-		debug_panel.heatmap = v06x.GetHeatmap(0, 65536*5)
-		debug_panel.emit_signal("visibility_changed")
+	if mem_panel.visible:
+		mem_panel.ram = v06x.GetMem(0, 65536*5)
+		mem_panel.heatmap = v06x.GetHeatmap(0, 65536*5)
+		mem_panel.emit_signal("visibility_changed")
 
 # it's impossible to tell where exactly the drop happens,
 # mouse coordinates are all over the place
@@ -202,11 +205,12 @@ func update_debugger_size():
 	var vert_available_size = hud_panel.rect_position.y
 	if not hud_panel.visible:
 		vert_available_size = get_viewport_rect().size.y
-	if debug_panel.visible:
-		debug_panel.rect_position = Vector2(0, 0)
-		debug_panel.rect_size.y = vert_available_size
-		debug_panel.rect_size.x = debug_panel.dump._get_minimum_size().x
-		#print("update_debugger_size: debug_panel.rect_size is set to ", debug_panel.rect_size, " debug_panel.dump wants ", debug_panel.dump._get_minimum_size().x)
+	if mem_panel.visible:
+		mem_panel.rect_position = Vector2(0, 0)
+		mem_panel.rect_size.y = vert_available_size
+		debugPanel.call_deferred("DebugPanelSizeUpdate")
+		#mem_panel.rect_size.x = mem_panel.dump._get_minimum_size().x
+		#print("update_debugger_size: mem_panel.rect_size is set to ", mem_panel.rect_size, " mem_panel.dump wants ", mem_panel.dump._get_minimum_size().x)
 
 func update_crt_size(fit_to: Rect2):
 	var sz = Vector2(fit_to.size.x, fit_to.size.x / maintained_aspect)
@@ -236,26 +240,26 @@ func _on_size_changed():
 	update_debugger_size()
 
 	var crt_rect = Rect2(Vector2(0, 0), sz)
-	if debug_panel.visible:
-		crt_rect = crt_rect.grow_individual(-debug_panel.rect_size.x, 0, 0, 0) 
+	if mem_panel.visible:
+		crt_rect = crt_rect.grow_individual(-mem_panel.rect_size.x, 0, 0, 0) 
 	update_crt_size(crt_rect)
 
 	if panel2.visible:
 		shader_panel_visibility_changed()
 		
 	sz = get_viewport_rect().size
-	if debug_panel.visible:
-		sz.x = sz.x - debug_panel.rect_size.x
+	if mem_panel.visible:
+		sz.x = sz.x - mem_panel.rect_size.x
 	if hud_panel.visible:
 		sz.y = hud_panel.rect_position.y
 	if scope_panel.visible:
 		var pos = Vector2(0, 0)
-		if debug_panel.visible:
-			pos.x = debug_panel.rect_size.x
+		if mem_panel.visible:
+			pos.x = mem_panel.rect_size.x
 		update_scope_size(pos, sz)
 
-	if debug_panel.visible:
-		$VectorScreen.rect_position.x = debug_panel.rect_size.x
+	if mem_panel.visible:
+		$VectorScreen.rect_position.x = mem_panel.rect_size.x
 
 func place_shader_panel_please():
 	if hud_panel.visible:
@@ -560,7 +564,7 @@ func _on_ScopePanel_pressed():
 		make_scope_small()
 
 func _on_BowserButton_pressed():
-	debug_panel.visible = not debug_panel.visible
+	mem_panel.visible = not mem_panel.visible
 	call_deferred("_on_size_changed")
 
 onready var rage_timer: Timer = find_node("RageTimer")
@@ -585,3 +589,7 @@ func _bowser_calm():
 	bowser_button.rect_scale = Vector2(1, 1)
 	bowser_button.rect_position = bowser_centre - bowser_button.rect_size * bowser_button.rect_scale / 2
 	
+func DebugCmdHandler(cmd):
+	print(cmd)
+	var out = v06x.Debug(cmd)
+	print(out)

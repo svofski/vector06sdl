@@ -36,6 +36,7 @@ V06X_DECL(V06X_SetJoysticks);
 V06X_DECL(V06X_SetVolumes);
 V06X_DECL(V06X_GetMem);
 V06X_DECL(V06X_GetHeatmap);
+V06X_DECL(V06X_Debug);
 
 #undef V06X_DECL
 
@@ -98,6 +99,7 @@ extern "C" void GDN_EXPORT godot_nativescript_init(void* p_handle)
     V06X_METHOD("SetVolumes", V06X_SetVolumes);
     V06X_METHOD("GetMem", V06X_GetMem);
     V06X_METHOD("GetHeatmap", V06X_GetHeatmap);
+    V06X_METHOD("Debug", V06X_Debug);
 #undef V06X_METHOD
 }
 

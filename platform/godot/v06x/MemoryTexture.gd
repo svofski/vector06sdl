@@ -40,7 +40,8 @@ func _get_minimum_size():
 	if parent != null:
 		vsb_width = parent.get_v_scrollbar().rect_size.x
 
-	return pixel_size + Vector2(vsb_width, 0)
+	#return pixel_size + Vector2(vsb_width, 0)
+	return Vector2(0, 0)
 	
 func update_sizes():
 	if texture_rect == null: return

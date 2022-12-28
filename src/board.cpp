@@ -357,7 +357,7 @@ void Board::dump_memory(int start, int count)
     }
 }
 
-std::string Board::read_memory(int start, int count)
+const std::string Board::read_memory(const int start, const int count)
 {
     // VLA: char buf[count * 2 + 1];
     std::string buf;
@@ -365,7 +365,7 @@ std::string Board::read_memory(int start, int count)
     for (int i = start, k = 0; i < start + count; ++i, k+=2) {
         sprintf(&buf[k], "%02x", this->memory.read(i, false));
     }
-    return std::string(buf);
+    return buf;
 }
 
 void Board::write_memory_byte(int addr, int value)
@@ -406,6 +406,11 @@ void Board::write_registers(uint8_t * regs)
     i8080_setreg_h(regs[7]);
     i8080_setreg_sp(regs[12] | (regs[13] << 8));
     i8080_jump(regs[24] | (regs[25] << 8));
+}
+
+int Board::is_break()
+{
+    return debugger_interrupt;
 }
 
 void Board::debugger_attached()
