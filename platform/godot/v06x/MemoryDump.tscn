@@ -5,7 +5,7 @@
 [node name="Panel" type="Control"]
 margin_right = 710.0
 margin_bottom = 40960.0
-rect_min_size = Vector2( 100, 4000 )
+rect_min_size = Vector2( 0, 4000 )
 mouse_filter = 1
 size_flags_horizontal = 0
 size_flags_vertical = 0

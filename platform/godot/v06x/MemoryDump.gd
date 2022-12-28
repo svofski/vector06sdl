@@ -144,8 +144,10 @@ func _get_minimum_size():
 	if parent != null:
 		vsb_width = parent.get_v_scrollbar().rect_size.x
 	if font != null:
-		return font.get_string_size(dummy_string) * Vector2(1, NLINES) + Vector2(vsb_width, 0)
-	return Vector2(10 * len(dummy_string), 10 * NLINES)
+		#return font.get_string_size(dummy_string) * Vector2(1, NLINES) + Vector2(vsb_width, 0)
+		return font.get_string_size(dummy_string) * Vector2(0, NLINES)
+	#return Vector2(10 * len(dummy_string), 10 * NLINES)
+	return Vector2(0, 10 * NLINES)
 
 func _notification(what):
 	if what == NOTIFICATION_RESIZED:

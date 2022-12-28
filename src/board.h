@@ -106,12 +106,13 @@ public:
     Soundnik & get_soundnik() const { return soundnik; }
 
 public:
-    std::string read_memory(int start, int count);
+    const std::string read_memory(const int start, const int count);
     void write_memory_byte(int addr, int value);
     /* AA FF BB CC DD EE HH LL 00 00 00 00 SS PP 
      * 00 00 00 00 00 00 00 00 00 00 PP CC */
     std::string read_registers();
     void write_registers(uint8_t * regs);
+    int is_break();
     void debugger_attached();
     void debugger_detached();
     void debugger_break();
