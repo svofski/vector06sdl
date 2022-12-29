@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=2]
+[gd_scene load_steps=12 format=2]
 
 [ext_resource path="res://MemoryDump.tscn" type="PackedScene" id=1]
 [ext_resource path="res://MemoryView.gd" type="Script" id=2]
@@ -10,6 +10,7 @@
 [ext_resource path="res://assets/debug_step_over.png" type="Texture" id=8]
 [ext_resource path="res://assets/debug_step_into.png" type="Texture" id=9]
 [ext_resource path="res://assets/debug_restart.png" type="Texture" id=10]
+[ext_resource path="res://assets/debug_pause.png" type="Texture" id=11]
 
 [node name="PanelContainer" type="PanelContainer"]
 margin_right = 674.0
@@ -177,13 +178,13 @@ __meta__ = {
 margin_right = 104.0
 margin_bottom = 21.0
 
-[node name="Pause" type="Button" parent="HSplitContainer/DebugPanel/CommandPanel"]
+[node name="BreakCont" type="Button" parent="HSplitContainer/DebugPanel/CommandPanel"]
 margin_left = 1.0
 margin_top = 2.0
 margin_right = 35.0
 margin_bottom = 36.0
 rect_scale = Vector2( 0.5, 0.5 )
-icon = ExtResource( 5 )
+icon = ExtResource( 11 )
 flat = true
 icon_align = 1
 expand_icon = true
@@ -316,7 +317,7 @@ text = "Helpful hints"
 [connection signal="gui_input" from="." to="." method="_on_gui_input"]
 [connection signal="visibility_changed" from="." to="." method="_on_PanelContainer_visibility_changed"]
 [connection signal="focus_exited" from="HSplitContainer/DebugPanel" to="HSplitContainer/DebugPanel" method="_on_DebugPanel_focus_exited"]
-[connection signal="gui_input" from="HSplitContainer/DebugPanel" to="HSplitContainer/DebugPanel" method="_on_DebugPanel_gui_input"]
 [connection signal="item_rect_changed" from="HSplitContainer/DebugPanel" to="HSplitContainer/DebugPanel" method="_on_DebugPanel_item_rect_changed"]
 [connection signal="resized" from="HSplitContainer/DebugPanel" to="HSplitContainer/DebugPanel" method="_on_DebugPanel_resized"]
-[connection signal="pressed" from="HSplitContainer/DebugPanel/CommandPanel/Pause" to="HSplitContainer/DebugPanel" method="_on_Pause_pressed"]
+[connection signal="pressed" from="HSplitContainer/DebugPanel/CommandPanel/BreakCont" to="HSplitContainer/DebugPanel" method="_on_Pause_pressed"]
+[connection signal="pressed" from="HSplitContainer/DebugPanel/CommandPanel/Restart" to="HSplitContainer/DebugPanel" method="_on_Restart_pressed"]

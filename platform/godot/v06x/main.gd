@@ -47,6 +47,7 @@ onready var click_timer: Timer = $ClickTimer
 # for saving / restoring config
 var file_path = ["", ""]
 var file_kind = [[ROM, 256, false], [ROM, 256, false]]
+var loadedFilePath = ""
 
 const DYNAMIC_SHADER_LIST = false
 
@@ -329,14 +330,19 @@ func load_file(dev: int, path: String) -> bool:
 
 func _on_FileDialog_file_selected(path: String):
 	print("File selected: ", path)
+	loadedFilePath = path
 	if load_file(dialog_device, path):
 		v06x.Reset(false)
 	
 	nice_tooltip.showTooltip(loadass[dialog_device].rect_global_position, 
 		path.get_file())
 
+func ReloadFile():
+	load_file(dialog_device, loadedFilePath)
+	
 func _on_FileDialog_dir_selected(dir):
 	print("Directory selected: ", dir)
+	loadedFilePath = dir
 	load_file(dialog_device, dir)
 	nice_tooltip.showTooltip(loadass[dialog_device].rect_global_position,
 		dir.get_file())
@@ -459,9 +465,11 @@ func load_config():
 		var dir = cfg.get_value("FileDialog", "current_dir")
 		if dir != null:
 			$FileDialog.current_dir = dir
+			loadedFilePath = dir
 		var path = cfg.get_value("FileDialog", "current_path")
 		if path != null:
 			$FileDialog.current_path = path
+			loadedFilePath = path
 		shader_index = cfg.get_value("shader", "index", 0)
 		_on_shader_selected(shader_index)
 		

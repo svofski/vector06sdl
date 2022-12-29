@@ -3,6 +3,9 @@ extends Panel
 var debugCmdHandlerFuncName : String
 var mainControl : Control
 
+var breakIconTex = preload("res://assets/debug_pause.png")
+var contIconTex = preload("res://assets/debug_pause_cont.png")
+
 onready var codePanel = find_node("CodePanel")
 
 onready var stackPanel = find_node("StackPanel")
@@ -26,6 +29,10 @@ onready var breakPointsLabel = find_node("BreakPointsLabel")
 onready var breakPointsTextPanel = find_node("BreakPointsTextPanel")
 onready var breakPointsListPanel = find_node("BreakPointsListPanel")
 
+onready var breakCont = find_node("BreakCont")
+
+var debugging = false
+var breakState = false
 
 var stackText = """B021
 				B16D
@@ -91,13 +98,22 @@ func _on_DebugPanel_resized():
 	DebugPanelSizeUpdate()
 func _on_DebugPanel_focus_exited():
 	DebugPanelSizeUpdate()
-	
-func _on_DebugPanel_gui_input(event):
-	if event is InputEventMouseButton:
-		if event.button_index == BUTTON_LEFT and event.pressed:
-			print("test")
 
 func _on_Pause_pressed():
-	mainControl.call(debugCmdHandlerFuncName, "$?#00")
-	
-	
+	if not debugging:
+		debugging = true
+		
+	breakState = not breakState
+		
+	if breakState:
+		breakCont.icon = contIconTex
+		
+		var ctrlC = PoolByteArray([3])
+		var ctrlCStr = ctrlC.get_string_from_ascii()
+		mainControl.call(debugCmdHandlerFuncName, "$" + ctrlCStr +"#00")
+	else:
+		breakCont.icon = breakIconTex
+		mainControl.call(debugCmdHandlerFuncName, "$c#00")
+
+func _on_Restart_pressed():
+	mainControl.ReloadFile()

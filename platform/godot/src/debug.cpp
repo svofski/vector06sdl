@@ -9,21 +9,20 @@ const std::string debug::evaluate(Board& board, const std::string packetStr)
     
     switch(packet.get_command()) {
         case '\0':
-            reply = "";
             break;
-        case 3: // ‘vCtrlC’
+        case CMD_BREAK:
             board.debugger_attached();
             reply = REPLY_OK;
             break;
         case 'c': // continue
             board.debugger_continue();
             reply = REPLY_SIGNAL + SIGCONT;
-            break; 
+            break;
         case 'q':
             reply = general_response(packet);
             break;
         case 'Q':
-            reply = general_response(packet);            
+            reply = general_response(packet);
             break;
         case '?':   // indicate reason for stopping
             reply = board.is_break() ? REPLY_SIGNAL + SIGTRAP : REPLY_SIGNAL + SIGCONT;
@@ -41,7 +40,7 @@ const std::string debug::evaluate(Board& board, const std::string packetStr)
             reply = write_memory(board, packet);
             break;
         case 'Z':   // insert breakpoint: type,addr,kind -> OK/E NN/''
-            reply = insert_breakpoint(board, packet); 
+            reply = insert_breakpoint(board, packet);
             break;
         case 'z':   // remove breakpoint
             reply = remove_breakpoint(board, packet);
@@ -57,7 +56,6 @@ const std::string debug::evaluate(Board& board, const std::string packetStr)
     }
 
     const std::string response = GdbPacket::get_response(reply);
-    
     printf("debug::evaluate response: [%s]\n", response.c_str());
 
     return response;
@@ -70,14 +68,14 @@ const std::string debug::general_response(const GdbPacket& packet)
     }
     else if (packet.get_params() == "C") {
         // return thread id
-        return "";
+        return "QC0";
     }
     else if (packet.get_params() == "Attached") {
         // server attached to an existing process
         return "1"; 
     }
     else if (packet.get_params() == "TStatus") {
-        return "";
+        return "tnotrun:0";
     }
     return REPLY_OK;
 }
