@@ -44,7 +44,7 @@ private:
     bool inte;          /* CPU INTE pin */
     bool irq_carry;     /* imitates cpu waiting after T2 when INTE */
 
-    Memory & memory;
+    Memory& memory;
     IO & io;
     PixelFiller & filler;
     Soundnik & soundnik;
@@ -97,7 +97,7 @@ public:
     void set_joysticks(int joy_0e, int joy_0f);
 
     void toggle_fullscreen() { tv.toggle_fullscreen(); }
-    void render_frame(int frame, bool executed); 
+    void render_frame(const int frame, const bool executed); 
     void pause_sound(bool topause) { soundnik.pause((int)topause); }
     int execute_frame_with_cadence(bool update_screen, bool use_cadence);
     void single_step(bool update_screen);
@@ -132,7 +132,7 @@ private:
     bool check_interrupt();
     int execute_frame(bool update_screen);
     bool cadence_allows();
-    void dump_memory(int start, int count);
+    void dump_memory(const int start, const int count);
 };
 
 
