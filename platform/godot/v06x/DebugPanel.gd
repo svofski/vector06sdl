@@ -1,7 +1,6 @@
 extends Panel
 
-var debugCmdHandlerFuncName : String
-var mainControl : Control
+var main : Control
 
 var breakIconTex = preload("res://assets/debug_pause.png")
 var contIconTex = preload("res://assets/debug_pause_cont.png")
@@ -74,10 +73,6 @@ func _ready():
 	breakPointsListPanel.add_item("FFFF")
 	breakPointsListPanel.add_item("8000")
 
-func SetEmuCmdHandler(_mainControl, _debugCmdHandlerFuncName):
-	mainControl = _mainControl
-	debugCmdHandlerFuncName = _debugCmdHandlerFuncName
-
 func DebugPanelSizeUpdate():
 	#var windowSize = get_tree().get_root().size
 	#print("windowSize=", windowSize)
@@ -107,13 +102,21 @@ func _on_Pause_pressed():
 		
 	if breakState:
 		breakCont.icon = contIconTex
-		
-		var ctrlC = PoolByteArray([3])
-		var ctrlCStr = ctrlC.get_string_from_ascii()
-		mainControl.call(debugCmdHandlerFuncName, "$" + ctrlCStr +"#00")
+		main.debug_break()
+		regTextPanel_update()
 	else:
 		breakCont.icon = breakIconTex
-		mainControl.call(debugCmdHandlerFuncName, "$c#00")
+		main.debug_continue()
 
 func _on_Restart_pressed():
-	mainControl.ReloadFile()
+	main.ReloadFile()
+
+func _on_StepInto_pressed():
+	main.debug_step_into()
+	regTextPanel_update()
+
+func regTextPanel_update():
+	var regs = main.debug_read_registers()
+	regTextPanel.text = "AF %04X\nBC %04X\nDE %04X\nHL %04X\nSP %04X\nPC %04X" % [regs[0], regs[1], regs[2], regs[3],regs[4],regs[5]]
+	var a = regTextPanel.text
+	var i = 0

@@ -111,6 +111,7 @@ public:
     /* AA FF BB CC DD EE HH LL 00 00 00 00 SS PP 
      * 00 00 00 00 00 00 00 00 00 00 PP CC */
     std::string read_registers();
+    auto read_registers_b() -> const std::vector<int>;
     void write_registers(uint8_t * regs);
     int is_break();
     void debugger_attached();

@@ -320,4 +320,5 @@ text = "Helpful hints"
 [connection signal="item_rect_changed" from="HSplitContainer/DebugPanel" to="HSplitContainer/DebugPanel" method="_on_DebugPanel_item_rect_changed"]
 [connection signal="resized" from="HSplitContainer/DebugPanel" to="HSplitContainer/DebugPanel" method="_on_DebugPanel_resized"]
 [connection signal="pressed" from="HSplitContainer/DebugPanel/CommandPanel/BreakCont" to="HSplitContainer/DebugPanel" method="_on_Pause_pressed"]
+[connection signal="pressed" from="HSplitContainer/DebugPanel/CommandPanel/StepInto" to="HSplitContainer/DebugPanel" method="_on_StepInto_pressed"]
 [connection signal="pressed" from="HSplitContainer/DebugPanel/CommandPanel/Restart" to="HSplitContainer/DebugPanel" method="_on_Restart_pressed"]

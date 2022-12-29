@@ -72,7 +72,7 @@ func updateTexture(buttmap : PoolByteArray):
 	texture.set_data(textureImage)
 
 func _ready():
-	debugPanel.SetEmuCmdHandler(self, "DebugCmdHandler")
+	debugPanel.main = self
 	
 	var cmdline_assets = ["", ""]
 	var i: int = 0
@@ -597,7 +597,15 @@ func _bowser_calm():
 	bowser_button.rect_scale = Vector2(1, 1)
 	bowser_button.rect_position = bowser_centre - bowser_button.rect_size * bowser_button.rect_scale / 2
 	
-func DebugCmdHandler(cmd):
-	print(cmd)
-	var out = v06x.Debug(cmd)
-	print(out)
+func debug_break():
+	return v06x.debug_break()
+	
+func debug_continue():
+	return v06x.debug_continue()
+	
+func debug_step_into():
+	return v06x.debug_step_into()
+	
+func debug_read_registers():
+	return v06x.debug_read_registers()
+	
