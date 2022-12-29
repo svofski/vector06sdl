@@ -5,6 +5,8 @@
 
 namespace debug
 {
+    #define CMD_BREAK 0x03
+
     const std::string REPLY_OK("OK");
     const std::string REPLY_SIGNAL("S");
     const std::string REPLY_ERROR("E00");

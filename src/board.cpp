@@ -335,7 +335,7 @@ void Board::handle_window_event(SDL_Event & event)
 }
 
 /* ui thread: can't use this->frame_no */
-void Board::render_frame(int frame, bool executed)
+void Board::render_frame(const int frame, const bool executed)
 {
     tv.render(executed);
     if (Options.save_frames.size() && frame == Options.save_frames[0])
@@ -347,10 +347,10 @@ void Board::render_frame(int frame, bool executed)
     }
 }
 
-void Board::dump_memory(int start, int count)
+void Board::dump_memory(const int start, const int count)
 {
     for (int i = start; i < start + count; ++i) {
-        printf("%02x ", this->memory.read(i, false));
+        printf("%02x ", memory.read(i, false));
         if ((i + 1) % 16 == 0) {
             printf("\n");
         }
@@ -363,7 +363,7 @@ const std::string Board::read_memory(const int start, const int count)
     std::string buf;
     buf.reserve(count * 2 + 1);
     for (int i = start, k = 0; i < start + count; ++i, k+=2) {
-        sprintf(&buf[k], "%02x", this->memory.read(i, false));
+        sprintf(&buf[k], "%02x", memory.read(i, false));
     }
     return buf;
 }
