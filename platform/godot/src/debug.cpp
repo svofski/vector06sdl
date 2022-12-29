@@ -1,7 +1,7 @@
 #include "debug.h"
 #include "utils_string.h"
 #include <string>
-
+/*
 const std::string debug::evaluate(Board& board, const std::string packetStr)
 {
     const GdbPacket& packet(packetStr);
@@ -170,3 +170,4 @@ const std::string debug::remove_breakpoint(Board& board, const GdbPacket& packet
         return REPLY_ERROR;
     }
 }
+*/

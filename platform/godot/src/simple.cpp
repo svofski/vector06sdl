@@ -36,7 +36,10 @@ V06X_DECL(V06X_SetJoysticks);
 V06X_DECL(V06X_SetVolumes);
 V06X_DECL(V06X_GetMem);
 V06X_DECL(V06X_GetHeatmap);
-V06X_DECL(V06X_Debug);
+V06X_DECL(debug_break);
+V06X_DECL(debug_continue);
+V06X_DECL(debug_read_registers);
+V06X_DECL(debug_step_into);
 
 #undef V06X_DECL
 
@@ -99,7 +102,10 @@ extern "C" void GDN_EXPORT godot_nativescript_init(void* p_handle)
     V06X_METHOD("SetVolumes", V06X_SetVolumes);
     V06X_METHOD("GetMem", V06X_GetMem);
     V06X_METHOD("GetHeatmap", V06X_GetHeatmap);
-    V06X_METHOD("Debug", V06X_Debug);
+    V06X_METHOD("debug_break", debug_break);
+    V06X_METHOD("debug_continue", debug_continue);
+    V06X_METHOD("debug_read_registers", debug_read_registers);
+    V06X_METHOD("debug_step_into", debug_step_into);
 #undef V06X_METHOD
 }
 

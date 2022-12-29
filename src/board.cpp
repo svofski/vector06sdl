@@ -394,6 +394,20 @@ std::string Board::read_registers()
     return std::string(buf);
 }
 
+auto Board::read_registers_b()
+->const std::vector<int>
+{
+    std::vector<int> out;
+    out.push_back(i8080_regs_a()<<8 | i8080_regs_f());
+    out.push_back(i8080_regs_bc());
+    out.push_back(i8080_regs_de());
+    out.push_back(i8080_regs_hl());
+    out.push_back(i8080_regs_sp());
+    out.push_back(i8080_pc());
+
+    return out;
+}
+
 void Board::write_registers(uint8_t * regs)
 {
     i8080_setreg_a(regs[0]);
