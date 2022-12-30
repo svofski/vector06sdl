@@ -253,6 +253,13 @@ void Board::single_step(bool update_screen)
     this->between += this->instr_time;
     this->instr_time = afterbrk12 >> 2;
     this->between -= this->instr_time;
+
+    if (debug_on_single_step) 
+    {
+        auto addr = i8080cpu::i8080_pc();
+        auto bigaddr = memory.bigram_select(addr & 0xffff, false);
+        debug_on_single_step(bigaddr);
+    }
 }
 
 #if 0

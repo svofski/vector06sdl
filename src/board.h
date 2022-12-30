@@ -105,6 +105,9 @@ public:
     TV & get_tv() const { return tv; }
     Soundnik & get_soundnik() const { return soundnik; }
 
+    /* bigaddr */
+    std::function<void(uint32_t)> debug_on_single_step;
+
 public:
     const std::string read_memory(const int start, const int count);
     void write_memory_byte(int addr, int value);

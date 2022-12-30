@@ -56,6 +56,7 @@ const SCOPE_BIG: int = 1
 var scope_state: int = SCOPE_SMALL
 
 var dialog_device: int = 0 # A: or B: for file dialog
+var debug_break_enabled = false
 
 func updateTexture(buttmap : PoolByteArray):
 	if textureImage == null:
@@ -169,6 +170,9 @@ func poll_joy(cur_joy):
 		| (int(Input.is_joy_button_pressed(cur_joy, JOY_XBOX_B)) << 7))
 		
 func _physics_process(delta):
+	if debug_break_enabled:
+		return
+	
 	v06x.SetJoysticks(poll_joy(0), poll_joy(1))
 	
 	var buttmap = v06x.ExecuteFrame()  # buttmap is 576x288, 32bpp
@@ -209,7 +213,7 @@ func update_debugger_size():
 	if mem_panel.visible:
 		mem_panel.rect_position = Vector2(0, 0)
 		mem_panel.rect_size.y = vert_available_size
-		debugPanel.call_deferred("DebugPanelSizeUpdate")
+		debugPanel.debug_panel_size_update()
 		#mem_panel.rect_size.x = mem_panel.dump._get_minimum_size().x
 		#print("update_debugger_size: mem_panel.rect_size is set to ", mem_panel.rect_size, " mem_panel.dump wants ", mem_panel.dump._get_minimum_size().x)
 
@@ -596,7 +600,17 @@ func _bowser_rage():
 func _bowser_calm():
 	bowser_button.rect_scale = Vector2(1, 1)
 	bowser_button.rect_position = bowser_centre - bowser_button.rect_size * bowser_button.rect_scale / 2
-	
+
+func debug_break_cont():
+	debug_break_enabled = not debug_break_enabled
+	if debug_break_enabled:
+		debug_break()
+	else:
+		debug_continue()
+
+func is_debug_break():
+	return debug_break_enabled
+
 func debug_break():
 	return v06x.debug_break()
 	
@@ -608,4 +622,19 @@ func debug_step_into():
 	
 func debug_read_registers():
 	return v06x.debug_read_registers()
-	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

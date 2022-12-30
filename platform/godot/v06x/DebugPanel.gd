@@ -31,7 +31,6 @@ onready var breakPointsListPanel = find_node("BreakPointsListPanel")
 onready var breakCont = find_node("BreakCont")
 
 var debugging = false
-var breakState = false
 
 var stackText = """B021
 				B16D
@@ -42,18 +41,18 @@ var stackText = """B021
 				0000 
 				0000"""
 				
-var regText = """AF 1542
-				BC 150B
-				DE 020C
-				HL A6D7
-				SP 8000
-				PC 0100"""
+var regText_disabled = """AF
+				BC
+				DE
+				HL
+				SP
+				PC"""
 				
-var flagText = """  C 0
-			  Z 0
-			  P 0
-			  S 0
-			 AC 0"""
+var flagText_disabled = """ C
+			 Z
+			 P
+			 S
+			AC"""
 
 var otherText = """CPU 1234560
 			CRT l/p 260, 160
@@ -65,15 +64,15 @@ var otherText = """CPU 1234560
 func _ready():
 	#var v06x = find_node("main").v06x
 	stackTextPanel.text = stackText
-	regTextPanel.text = regText
-	flagTextPanel.text = flagText
+	regTextPanel_update(false)
+	flagTextPanel_update(false)
 	otherTextPanel.text = otherText
 			
 	breakPointsListPanel.add_item("0000")
 	breakPointsListPanel.add_item("FFFF")
 	breakPointsListPanel.add_item("8000")
 
-func DebugPanelSizeUpdate():
+func debug_panel_size_update():
 	#var windowSize = get_tree().get_root().size
 	#print("windowSize=", windowSize)
 	#var scale = widthDefault / windowSize.x	
@@ -88,35 +87,54 @@ func DebugPanelSizeUpdate():
 	codePanel.rect_size.y = (self.rect_size.y - codePanel.rect_position.y) / codePanel.rect_scale.y
 	
 func _on_DebugPanel_item_rect_changed():
-	DebugPanelSizeUpdate()
+	debug_panel_size_update()
 func _on_DebugPanel_resized():
-	DebugPanelSizeUpdate()
+	debug_panel_size_update()
 func _on_DebugPanel_focus_exited():
-	DebugPanelSizeUpdate()
+	debug_panel_size_update()
 
 func _on_Pause_pressed():
 	if not debugging:
 		debugging = true
 		
-	breakState = not breakState
+	main.debug_break_cont()
 		
-	if breakState:
+	if main.is_debug_break():
 		breakCont.icon = contIconTex
-		main.debug_break()
-		regTextPanel_update()
+		regTextPanel_update(true)
+		flagTextPanel_update(true)
 	else:
 		breakCont.icon = breakIconTex
-		main.debug_continue()
+		regTextPanel_update(false)
+		flagTextPanel_update(false)
 
 func _on_Restart_pressed():
 	main.ReloadFile()
-
+var step_into_pressed = 0
 func _on_StepInto_pressed():
+	print("%s gd: stepInto processing started." % Time.get_time_string_from_system())
 	main.debug_step_into()
-	regTextPanel_update()
+	regTextPanel_update(true)
+	flagTextPanel_update(true)
+	step_into_pressed=step_into_pressed+1
+	print("%s gd: stepInto done. pressed=%d" % [Time.get_time_string_from_system(), step_into_pressed])
 
-func regTextPanel_update():
-	var regs = main.debug_read_registers()
-	regTextPanel.text = "AF %04X\nBC %04X\nDE %04X\nHL %04X\nSP %04X\nPC %04X" % [regs[0], regs[1], regs[2], regs[3],regs[4],regs[5]]
-	var a = regTextPanel.text
-	var i = 0
+func regTextPanel_update(enabled):
+	if enabled:
+		var regs = main.debug_read_registers()
+		regTextPanel.text = "AF %04X\nBC %04X\nDE %04X\nHL %04X\nSP %04X\nPC %04X" % [regs[0], regs[1], regs[2], regs[3],regs[4],regs[5]]
+	else:
+		regTextPanel.text = regText_disabled
+
+func flagTextPanel_update(enabled):
+	if enabled:
+		var regs = main.debug_read_registers()
+		var flags = regs[0] & 0xff
+		var c = 1 if flags & 0x01 else 0
+		var z = 1 if flags & 0x40 else 0
+		var p = 1 if flags & 0x04 else 0
+		var s = 1 if flags & 0x80 else 0
+		var ac = 1 if flags & 0x10 else 0
+		flagTextPanel.text = " C %01d\n Z %01d\n P %01d\n S %01d\nAC %01d" % [c, z, p, s, ac]
+	else:
+		flagTextPanel.text = flagText_disabled

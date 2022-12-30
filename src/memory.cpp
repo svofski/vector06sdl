@@ -73,6 +73,8 @@ uint8_t Memory::read(uint32_t addr, bool stackrq) const
 
     if (this->onread) this->onread(addr, phys, stackrq, value);
 
+    if (debug_onread) debug_onread(bigaddr);
+
     return value;
 }
 
@@ -89,6 +91,9 @@ void Memory::write(uint32_t addr, uint8_t w8, bool stackrq)
         //this->heatmap[phys] = std::clamp(this->heatmap[phys] + 64, 0, 255);
         this->heatmap[bigaddr] = 255;
     }
+    
+    if (debug_onwrite) debug_onwrite(bigaddr);
+
 }
 
 void Memory::init_from_vector(const vector<uint8_t> & from, uint32_t start_addr)
