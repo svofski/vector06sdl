@@ -24,13 +24,18 @@ private:
 
     heatmap_t heatmap;
 
-    uint32_t bigram_select(uint32_t addr, bool stackrq) const;
     uint32_t tobank(uint32_t a) const;
 
 public:
+    uint32_t bigram_select(uint32_t addr, bool stackrq) const;
+    
     /* virtual addr, physical addr, stackrq, value */
     std::function<void(uint32_t,uint32_t,bool,uint8_t)> onwrite;
     std::function<void(uint32_t,uint32_t,bool,uint8_t)> onread;
+
+    /* bigaddr */
+    std::function<void(uint32_t)> debug_onwrite;
+    std::function<void(uint32_t)> debug_onread;
 
 public:
     Memory();

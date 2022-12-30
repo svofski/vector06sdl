@@ -42,6 +42,7 @@ TV tv;
 PixelFiller filler(memory, io, tv);
 Board board(memory, io, filler, soundnik, tv, tape_player);
 Emulator lator(board);
+Debug debug(&board, &memory);
 #if 0
 Scriptnik scriptnik;
 #endif
