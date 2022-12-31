@@ -78,6 +78,24 @@ uint8_t Memory::read(uint32_t addr, bool stackrq) const
     return value;
 }
 
+
+uint8_t Memory::get_byte(uint32_t addr, bool stackrq) const
+{
+    uint8_t value;
+    uint32_t phys = addr;
+
+    uint32_t bigaddr = this->bigram_select(addr & 0xffff, stackrq);
+    if (this->bootbytes.size() && bigaddr < this->bootbytes.size()) {
+        value = this->bootbytes[bigaddr];
+    } 
+    else {
+        phys = this->tobank(bigaddr);
+        value = this->bytes[phys];
+    }
+
+    return value;
+}
+
 void Memory::write(uint32_t addr, uint8_t w8, bool stackrq)
 {
     uint32_t bigaddr = this->bigram_select(addr & 0xffff, stackrq);

@@ -623,7 +623,8 @@ func debug_step_into():
 func debug_read_registers():
 	return v06x.debug_read_registers()
 
-
+func debug_disasm(addr, lines, lines_before_addr):
+	return v06x.debug_disasm(addr, lines, lines_before_addr)
 
 
 
