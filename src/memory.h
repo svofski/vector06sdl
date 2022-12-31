@@ -28,7 +28,7 @@ private:
 
 public:
     uint32_t bigram_select(uint32_t addr, bool stackrq) const;
-    
+    uint8_t get_byte(uint32_t addr, bool stackrq) const;
     /* virtual addr, physical addr, stackrq, value */
     std::function<void(uint32_t,uint32_t,bool,uint8_t)> onwrite;
     std::function<void(uint32_t,uint32_t,bool,uint8_t)> onread;

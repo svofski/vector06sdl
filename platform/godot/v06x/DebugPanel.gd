@@ -29,6 +29,9 @@ onready var breakPointsTextPanel = find_node("BreakPointsTextPanel")
 onready var breakPointsListPanel = find_node("BreakPointsListPanel")
 
 onready var breakCont = find_node("BreakCont")
+onready var stepOver = find_node("StepOver")
+onready var stepInto = find_node("StepInto")
+onready var stepOut = find_node("StepOut")
 
 var debugging = false
 
@@ -40,19 +43,6 @@ var stackText = """B021
 				0000
 				0000 
 				0000"""
-				
-var regText_disabled = """AF
-				BC
-				DE
-				HL
-				SP
-				PC"""
-				
-var flagText_disabled = """ C
-			 Z
-			 P
-			 S
-			AC"""
 
 var otherText = """CPU 1234560
 			CRT l/p 260, 160
@@ -62,7 +52,6 @@ var otherText = """CPU 1234560
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	#var v06x = find_node("main").v06x
 	stackTextPanel.text = stackText
 	regTextPanel_update(false)
 	flagTextPanel_update(false)
@@ -73,10 +62,6 @@ func _ready():
 	breakPointsListPanel.add_item("8000")
 
 func debug_panel_size_update():
-	#var windowSize = get_tree().get_root().size
-	#print("windowSize=", windowSize)
-	#var scale = widthDefault / windowSize.x	
-
 	stackPanel.rect_size.y = codePanel.rect_position.y - 1
 	regPanel.rect_size.y = codePanel.rect_position.y - 1
 	flagPanel.rect_size.y = codePanel.rect_position.y - 1
@@ -103,28 +88,45 @@ func _on_Pause_pressed():
 		breakCont.icon = contIconTex
 		regTextPanel_update(true)
 		flagTextPanel_update(true)
+		codePanel_update()
+		stepOver.disabled = false;
+		stepInto.disabled = false;
+		stepOut.disabled = false;
 	else:
 		breakCont.icon = breakIconTex
 		regTextPanel_update(false)
 		flagTextPanel_update(false)
+		stepOver.disabled = true;
+		stepInto.disabled = true;
+		stepOut.disabled = true;
 
 func _on_Restart_pressed():
 	main.ReloadFile()
+	
 var step_into_pressed = 0
+
 func _on_StepInto_pressed():
-	print("%s gd: stepInto processing started." % Time.get_time_string_from_system())
+	print("TEST PRINT: %s gd: stepInto processing started." % Time.get_time_string_from_system())
 	main.debug_step_into()
 	regTextPanel_update(true)
 	flagTextPanel_update(true)
+	codePanel_update()
 	step_into_pressed=step_into_pressed+1
-	print("%s gd: stepInto done. pressed=%d" % [Time.get_time_string_from_system(), step_into_pressed])
+	print("TEST PRINT: %s gd: stepInto done. pressed=%d" % [Time.get_time_string_from_system(), step_into_pressed])
 
+func codePanel_update():
+	var regs = main.debug_read_registers();
+	var pc = regs[5]
+	codePanel.text = main.debug_disasm(pc, 40, 6)
+	codePanel.cursor_set_line(6)
+	
 func regTextPanel_update(enabled):
 	if enabled:
 		var regs = main.debug_read_registers()
 		regTextPanel.text = "AF %04X\nBC %04X\nDE %04X\nHL %04X\nSP %04X\nPC %04X" % [regs[0], regs[1], regs[2], regs[3],regs[4],regs[5]]
+		regTextPanel.add_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
 	else:
-		regTextPanel.text = regText_disabled
+		regTextPanel.add_color_override("font_color", Color(1.0, 1.0, 1.0, 0.5))
 
 func flagTextPanel_update(enabled):
 	if enabled:
@@ -136,5 +138,6 @@ func flagTextPanel_update(enabled):
 		var s = 1 if flags & 0x80 else 0
 		var ac = 1 if flags & 0x10 else 0
 		flagTextPanel.text = " C %01d\n Z %01d\n P %01d\n S %01d\nAC %01d" % [c, z, p, s, ac]
+		flagTextPanel.add_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
 	else:
-		flagTextPanel.text = flagText_disabled
+		flagTextPanel.add_color_override("font_color", Color(1.0, 1.0, 1.0, 0.5))

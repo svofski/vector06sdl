@@ -562,3 +562,29 @@ godot_variant debug_step_into(godot_object* p_instance, void* p_method_data,
 	api->godot_variant_new_bool(&ret, 1);
 	return ret;
 }
+
+godot_variant debug_disasm(godot_object* p_instance, void* p_method_data, 
+		void* p_user_data, int p_num_args, godot_variant** p_args)
+{
+	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+	if (!user_data_p->initialized) {
+		godot_variant ret;
+		api->godot_variant_new_bool(&ret, 0);
+		return ret;
+	}
+
+	godot_int addr = api->godot_variant_as_int(p_args[0]);
+	godot_int lines = api->godot_variant_as_int(p_args[1]);
+	godot_int lines_before_addr = api->godot_variant_as_int(p_args[2]);
+
+	auto out = debug.disasm(addr, lines, lines_before_addr); 
+
+
+    godot_variant ret;
+    godot_string ret_gd_str;
+    api->godot_string_new(&ret_gd_str);
+    api->godot_string_parse_utf8(&ret_gd_str, out.c_str());
+    api->godot_variant_new_string(&ret, &ret_gd_str);
+    api->godot_string_destroy(&ret_gd_str);
+	return ret;
+}
