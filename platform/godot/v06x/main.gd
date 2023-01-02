@@ -214,8 +214,8 @@ func update_debugger_size():
 		mem_panel.rect_position = Vector2(0, 0)
 		mem_panel.rect_size.y = vert_available_size
 		debugPanel.debug_panel_size_update()
-		#mem_panel.rect_size.x = mem_panel.dump._get_minimum_size().x
-		#print("update_debugger_size: mem_panel.rect_size is set to ", mem_panel.rect_size, " mem_panel.dump wants ", mem_panel.dump._get_minimum_size().x)
+		#mem_panel.rect_size.x = 1000
+		#print("update_debugger_size: mem_panel.rect_size is set to ", mem_panel.rect_size)
 
 func update_crt_size(fit_to: Rect2):
 	var sz = Vector2(fit_to.size.x, fit_to.size.x / maintained_aspect)
@@ -626,9 +626,17 @@ func debug_read_registers():
 func debug_disasm(addr, lines, lines_before_addr):
 	return v06x.debug_disasm(addr, lines, lines_before_addr)
 
+func debug_read_stack(lenght):
+	return v06x.debug_read_stack(lenght)
+	
+func debug_insert_breakpoint(addr):
+	return v06x.debug_insert_breakpoint(0, addr, 1)
+	
+func debug_remove_breakpoint(addr):
+	return v06x.debug_remove_breakpoint(0, addr, 1)
 
-
-
+func debug_is_break():
+	return v06x.debug_is_break()
 
 
 

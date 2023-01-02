@@ -39,8 +39,12 @@ V06X_DECL(V06X_GetHeatmap);
 V06X_DECL(debug_break);
 V06X_DECL(debug_continue);
 V06X_DECL(debug_read_registers);
+V06X_DECL(debug_read_stack);
 V06X_DECL(debug_step_into);
 V06X_DECL(debug_disasm);
+V06X_DECL(debug_insert_breakpoint);
+V06X_DECL(debug_remove_breakpoint);
+V06X_DECL(debug_is_break);
 
 #undef V06X_DECL
 
@@ -106,8 +110,12 @@ extern "C" void GDN_EXPORT godot_nativescript_init(void* p_handle)
     V06X_METHOD("debug_break", debug_break);
     V06X_METHOD("debug_continue", debug_continue);
     V06X_METHOD("debug_read_registers", debug_read_registers);
+    V06X_METHOD("debug_read_stack", debug_read_stack);
     V06X_METHOD("debug_step_into", debug_step_into);
     V06X_METHOD("debug_disasm", debug_disasm);
+    V06X_METHOD("debug_insert_breakpoint", debug_insert_breakpoint);
+    V06X_METHOD("debug_remove_breakpoint", debug_remove_breakpoint);
+    V06X_METHOD("debug_is_break", debug_is_break);
 #undef V06X_METHOD
 }
 

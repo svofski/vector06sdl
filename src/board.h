@@ -109,6 +109,7 @@ public:
     std::function<void(uint32_t)> debug_on_single_step;
 
 public:
+    auto read_stack(const size_t _len) const -> std::vector<uint8_t>;
     const std::string read_memory(const int start, const int count);
     void write_memory_byte(int addr, int value);
     /* AA FF BB CC DD EE HH LL 00 00 00 00 SS PP 
