@@ -152,6 +152,10 @@ int Board::execute_frame(bool update_screen)
         //DBG_FRM(F1,F2,printf("%05d %04x: ", this->between + this->instr_time, i8080_pc()));
         if (this->debugging && this->check_breakpoint()) {
             this->debugger_interrupt = true;
+            
+            printf("read_registers: %s\n", read_registers().c_str());
+            printf("Board::execute_frame: this->debugger_interrupt = true;\n");
+
             if (this->onbreakpoint) this->onbreakpoint();
             if (this->debugger_interrupt) {
                 break;
@@ -352,6 +356,20 @@ void Board::render_frame(const int frame, const bool executed)
         tv.save_frame(Options.path_for_frame(frame));
         Options.save_frames.erase(Options.save_frames.begin());
     }
+}
+
+auto Board::read_stack(const size_t _len) const
+->std::vector<uint8_t>
+{
+	auto sp = i8080_regs_sp();
+	auto sp_end = sp + _len;
+	std::vector<uint8_t> out;
+
+	for (; sp < sp_end; sp++)
+	{
+		out.push_back(memory.get_byte(sp, true));
+	}
+	return out;
 }
 
 void Board::dump_memory(const int start, const int count)
@@ -565,14 +583,14 @@ std::string Board::remove_breakpoint(int type, int addr, int kind)
     {
         auto & v = this->memory_watchpoints;
         v.erase(std::remove(v.begin(), v.end(), w), v.end());
-	this->refresh_watchpoint_listeners();
+	    this->refresh_watchpoint_listeners();
     };
 
-    Breakpoint needle(addr, kind);
     switch (type) {
         case 0:
         case 1:
             {
+            Breakpoint needle(addr, kind);
             auto & v = this->breakpoints;
             v.erase(std::remove(v.begin(), v.end(), needle), v.end());
             printf("deleted breakpoint @%04x, kind=%d\n", addr, kind);

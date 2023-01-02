@@ -52,7 +52,6 @@ void Debug::write(const size_t _addr)
  *  Emu80 v. 4.x
  *  © Viktor Pykhonin <pyk@mail.ru>, 2017
  */
-#define MAX_CMD_LEN 11
 static const char* mnemonics[0x100] =
 {
 	"NOP",    "LXI B,",  "STAX B", "INX B",  "INR B", "DCR B", "MVI B,", "RLC", "DB 08H", "DAD B",  "LDAX B", "DCX B",  "INR C", "DCR C", "MVI C,", "RRC",
@@ -108,7 +107,8 @@ static size_t cmd[3];
 #define CMD_OPCODE cmd[0]
 #define CMD_OP_L cmd[1]
 #define CMD_OP_H cmd[2]
-#define MAX_DATA_CHR_LEN 12
+#define MAX_DATA_CHR_LEN 11
+#define MAX_CMD_LEN 13
 
 const std::string Debug::get_mnemonic(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const
 {
@@ -149,11 +149,11 @@ const std::string Debug::get_disasm_line(const size_t _addr, const uint8_t _opco
 	auto cmd_len = cmd_lens[_opcode];
 	std::stringstream out;
 
+	out << "0x";
 	out << std::setw(sizeof(uint16_t)*2) << std::setfill('0');
-	out << std::uppercase << std::hex << static_cast<int>(_addr);
+	out << std::uppercase << std::hex << static_cast<int>(_addr) << ":";
 
 	// print data in a format " %02X %02X %02X "
-	out << " ";
 	int i = 0;
 	for(; i < cmd_len; i++)
 	{
@@ -188,7 +188,6 @@ size_t Debug::get_addr(const size_t _end_addr, const size_t _before_addr_lines) 
 
 	for(int attempt = MAX_ATTEMPTS; attempt > 0 && lines != _before_addr_lines; attempt--)
 	{
-
 		addr = start_addr & 0xffff;
 		int addr_diff = addr_diff_max;
 		lines = 0;
@@ -221,8 +220,19 @@ auto Debug::disasm(const size_t _addr, const size_t _lines, const size_t _before
 
 	size_t addr = get_addr(_addr & 0xffff, _before_addr_lines) & 0xffff;
 
+	auto pc = i8080cpu::i8080_pc();
+
 	for (int i=0; i < _lines; i++)
 	{
+		if (addr == pc) 
+		{
+			out += ">";
+		}
+		else
+		{
+			out += " ";
+		}
+
 		auto opcode = memoryP->get_byte(addr, false);
 		auto data_l = memoryP->get_byte((addr+1) & 0xffff, false);
 		auto data_h = memoryP->get_byte((addr+2) & 0xffff, false);
@@ -233,14 +243,11 @@ auto Debug::disasm(const size_t _addr, const size_t _lines, const size_t _before
 		std::string readsS = std::to_string(mem_reads[bigaddr]);
 		std::string writesS = std::to_string(mem_writes[bigaddr]);
 
-		std::string runsS_readsS_writesS = " " + runsS + "/" + readsS + "/" + writesS;
+		std::string runsS_readsS_writesS = "(" + runsS + "," + readsS + "," + writesS + ")";
 
 		out += get_disasm_line(addr, opcode, data_l, data_h);
 		out += runsS_readsS_writesS + "\n";
 		addr = (addr + get_cmd_len(opcode)) & 0xffff;
 	}
-
-
-
 	return out;
 }

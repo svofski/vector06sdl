@@ -2059,6 +2059,7 @@ int i8080_regs_l(void) {
 }
 
 int i8080_regs_f(void) {
+    i8080_store_flags();
     return F;
 }
 
