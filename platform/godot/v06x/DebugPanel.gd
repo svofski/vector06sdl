@@ -34,7 +34,7 @@ const CODE_PANEL_LINES_AHEAD = 6
 var code_panel_cursor_line_last = 0
 
 var hardware_text = """CPU 1234560
-			CRT l/p 260, 160
+			CRT l/p 260, 160 
 			RAM-DSK S 1
 			RAM-DSK M 2-8ACE
 			IFF 0"""
