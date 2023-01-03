@@ -359,15 +359,18 @@ void Board::render_frame(const int frame, const bool executed)
 }
 
 auto Board::read_stack(const size_t _len) const
-->std::vector<uint8_t>
+->std::vector<uint16_t>
 {
 	auto sp = i8080_regs_sp();
-	auto sp_end = sp + _len;
-	std::vector<uint8_t> out;
+	std::vector<uint16_t> out;
 
-	for (; sp < sp_end; sp++)
+	for (int i = 0; i < _len; i++)
 	{
-		out.push_back(memory.get_byte(sp, true));
+		uint16_t db_l = memory.get_byte(sp, true);
+        sp = (sp + 1) & 0xffff;
+        uint16_t db_h = memory.get_byte(sp, true);
+        sp = (sp + 1) & 0xffff;
+        out.push_back(db_h<<8 | db_l);
 	}
 	return out;
 }
