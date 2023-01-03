@@ -16,11 +16,21 @@ public:
 	void write(const size_t _addr);
 	auto disasm(const size_t _addr, const size_t _lines, const size_t _before_addr_lines) const
 	->std::string;
+	void reset();
 
 private:
-    const std::string get_mnemonic(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const;
-	const std::string get_disasm_line(const size_t _addr, const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const;
-	auto get_cmd_len(const uint8_t _addr) const -> const size_t;
+    auto get_mnemonic(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const
+	-> const std::string;
+	
+	auto get_disasm_line(const size_t _addr, const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const
+	->const std::string ;
+	
+	auto get_disasm_db_line(const size_t _addr, const uint8_t _data) const
+	->const std::string;
+
+	auto get_cmd_len(const uint8_t _addr) const 
+	-> const size_t;
+	
 	size_t get_addr(const size_t _end_addr, const size_t _before_addr_lines) const;
 	uint64_t mem_runs[MEMORY_SIZE];
 	uint64_t mem_reads[MEMORY_SIZE];

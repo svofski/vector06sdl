@@ -22,14 +22,14 @@ onready var hud_panel = find_node("HUD")
 onready var gamepad_label = find_node("GamepadLabel")
 onready var rus_lat = find_node("RusLat")
 onready var shader_sel = find_node("ShaderSelectButton")
-onready var panel2 = find_node("Panel2")
+onready var shader_select_panel = find_node("shader_select_panel")
 onready var sound_panel = find_node("SoundPanel")
 onready var osk_panel = find_node("OnScreenKeyboard")
 onready var scope_panel = find_node("ScopePanel")
 onready var mem_panel = find_node("MemoryView")
 onready var nice_tooltip = find_node("NiceTooltip")
 onready var loadass = [find_node("LoadAss2"), find_node("LoadAss3")]
-onready var debugPanel = find_node("DebugPanel")
+onready var debug_panel = find_node("debug_panel")
 
 onready var tape_texture = loadass[0].texture
 onready var floppy_texture = loadass[1].texture
@@ -67,13 +67,13 @@ func updateTexture(buttmap : PoolByteArray):
 		texture = ImageTexture.new()
 		texture.create(576, 288, Image.FORMAT_RGBA8, Texture.FLAG_VIDEO_SURFACE) # no filtering
 		$VectorScreen.texture = texture
-		panel2.set_texture(texture)
+		shader_select_panel.set_texture(texture)
 
 	textureImage.data.data = buttmap
 	texture.set_data(textureImage)
 
 func _ready():
-	debugPanel.main = self
+	debug_panel.main = self
 	
 	var cmdline_assets = ["", ""]
 	var i: int = 0
@@ -87,7 +87,6 @@ func _ready():
 	Engine.target_fps = 50
 	Engine.iterations_per_second = 50
 	OS.set_use_vsync(false)
-	#set_process(true)
 	set_physics_process(true)
 	var beef = v06x.Init()
 	print("beef: %08x" % beef)
@@ -104,7 +103,7 @@ func _ready():
 	_on_joy_connection_changed(1, Input.get_joy_name(1) != "")
 	create_shader_list()
 	if not DYNAMIC_SHADER_LIST:
-		panel2.set_shader_list(shaders)
+		shader_select_panel.set_shader_list(shaders)
 
 	load_state()
 
@@ -121,9 +120,9 @@ func _ready():
 
 	# the absolutely bloody insane dance to make sure
 	# that grid cell sizes are updated at the time 
-	# we attach panel2 on top of the main hud	
-	panel2.connect("visibility_changed", self, "shader_panel_visibility_changed")
-	panel2.connect("resized", self, "place_shader_panel_please")
+	# we attach shader_select_panel on top of the main hud	
+	shader_select_panel.connect("visibility_changed", self, "shader_panel_visibility_changed")
+	shader_select_panel.connect("resized", self, "place_shader_panel_please")
 
 	get_tree().connect("files_dropped", self, "_on_files_dropped")
 
@@ -213,7 +212,7 @@ func update_debugger_size():
 	if mem_panel.visible:
 		mem_panel.rect_position = Vector2(0, 0)
 		mem_panel.rect_size.y = vert_available_size
-		debugPanel.debug_panel_size_update()
+		debug_panel.debug_panel_size_update()
 		#mem_panel.rect_size.x = 1000
 		#print("update_debugger_size: mem_panel.rect_size is set to ", mem_panel.rect_size)
 
@@ -249,7 +248,7 @@ func _on_size_changed():
 		crt_rect = crt_rect.grow_individual(-mem_panel.rect_size.x, 0, 0, 0) 
 	update_crt_size(crt_rect)
 
-	if panel2.visible:
+	if shader_select_panel.visible:
 		shader_panel_visibility_changed()
 		
 	sz = get_viewport_rect().size
@@ -268,26 +267,26 @@ func _on_size_changed():
 
 func place_shader_panel_please():
 	if hud_panel.visible:
-		panel2.rect_position.y = hud_panel.rect_position.y - panel2.rect_size.y
+		shader_select_panel.rect_position.y = hud_panel.rect_position.y - shader_select_panel.rect_size.y
 	else:
-		panel2.rect_position.y = get_viewport_rect().size.y - panel2.rect_size.y
+		shader_select_panel.rect_position.y = get_viewport_rect().size.y - shader_select_panel.rect_size.y
 
 func shader_panel_visibility_changed():
-	if panel2.visible:
-		panel2.rect_position = $VectorScreen.rect_position
-		panel2.rect_size = $VectorScreen.rect_size
-		panel2.rect_size.y = 0
+	if shader_select_panel.visible:
+		shader_select_panel.rect_position = $VectorScreen.rect_position
+		shader_select_panel.rect_size = $VectorScreen.rect_size
+		shader_select_panel.rect_size.y = 0
 	else:
 		if DYNAMIC_SHADER_LIST:
-			panel2.set_shader_list([])
+			shader_select_panel.set_shader_list([])
 
 func show_shader_panel():
 	if DYNAMIC_SHADER_LIST:
-		panel2.set_shader_list(shaders)
-	panel2.visible = true
+		shader_select_panel.set_shader_list(shaders)
+	shader_select_panel.visible = true
 
 func hide_shader_panel():
-	panel2.visible = false
+	shader_select_panel.visible = false
 
 func make_load_hint(dev: int) -> String:
 	match dev:
@@ -389,15 +388,18 @@ func _input(event: InputEvent):
 				if event.scancode == KEY_ENTER and event.alt:
 					toggle_fullscreen()
 				else:
-					osk_panel._on_key_make(event.scancode, true)
-			get_tree().set_input_as_handled()
+					if not debug_break_enabled:
+						osk_panel._on_key_make(event.scancode, true)
+			if not debug_break_enabled:
+				get_tree().set_input_as_handled()
 		elif not event.pressed:
-			osk_panel._on_key_break(event.scancode)
-			get_tree().set_input_as_handled()
+			if not debug_break_enabled:
+				osk_panel._on_key_break(event.scancode)
+				get_tree().set_input_as_handled()
 
 func _on_click_timer():
 	if hud_panel.visible:
-		panel2.visible = false
+		shader_select_panel.visible = false
 		hud_panel.visible = false
 		hud_panel.rect_position.y = get_viewport_rect().size.y
 		call_deferred("_on_size_changed")
@@ -516,7 +518,7 @@ func _on_shader_selected(num):
 	var shader_name = shaders[num]
 	var mat:ShaderMaterial = $VectorScreen.material
 	mat.shader = load("res://shaders/%s.shader" % shader_name)
-	panel2.visible = false
+	shader_select_panel.visible = false
 
 func _on_SoundPanel_volumes_changed():
 	v06x.SetVolumes(sound_panel.get_volume(0),
@@ -534,8 +536,8 @@ func _on_SoundPanel_volumes_changed():
 	$AudioStreamPlayer.volume_db = sound_panel.get_volume(4)
 
 func _on_shaderselect_pressed():
-	if panel2.visible:
-		panel2.visible = false
+	if shader_select_panel.visible:
+		shader_select_panel.visible = false
 	else:
 		show_shader_panel()
 
@@ -612,9 +614,11 @@ func is_debug_break():
 	return debug_break_enabled
 
 func debug_break():
+	debug_break_enabled = true
 	return v06x.debug_break()
 	
 func debug_continue():
+	debug_break_enabled = false
 	return v06x.debug_continue()
 	
 func debug_step_into():

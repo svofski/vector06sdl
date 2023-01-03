@@ -342,6 +342,7 @@ godot_variant V06X_Reset(godot_object* p_instance, void* p_method_data,
 	godot_bool blkvvod = api->godot_variant_as_bool(p_args[0]);
 	board.reset(blkvvod ?
 				Board::ResetMode::BLKVVOD : Board::ResetMode::BLKSBR);
+	debug.reset();
 
 	auto v = static_cast<v06x_user_data *>(p_user_data);
 	v->autostart_armed = blkvvod && Options.autostart;
@@ -633,7 +634,7 @@ godot_variant debug_insert_breakpoint(godot_object* p_instance, void* p_method_d
 
 	auto out = board.insert_breakpoint(type, addr, kind);
 
-	printf("debug_insert_breakpoint: addr: %02x, out: %s\n", addr, out.c_str());
+	//printf("debug_insert_breakpoint: addr: %02x, out: %s\n", addr, out.c_str());
 
     godot_variant ret;
     godot_string ret_gd_str;
@@ -660,7 +661,7 @@ godot_variant debug_remove_breakpoint(godot_object* p_instance, void* p_method_d
 
 	auto out = board.remove_breakpoint(type, addr, kind);
 
-	printf("debug_remove_breakpoint: addr: %02x, out: %s\n", addr, out.c_str());
+	//printf("debug_remove_breakpoint: addr: %02x, out: %s\n", addr, out.c_str());
 
     godot_variant ret;
     godot_string ret_gd_str;

@@ -143,7 +143,7 @@ stream = SubResource( 35 )
 
 [node name="ClickTimer" type="Timer" parent="."]
 
-[node name="Panel2" parent="." instance=ExtResource( 8 )]
+[node name="shader_select_panel" parent="." instance=ExtResource( 8 )]
 visible = false
 margin_left = 200.0
 margin_top = 10.0
@@ -277,7 +277,7 @@ visible = false
 [connection signal="gui_input" from="." to="." method="_on_main_gui_input"]
 [connection signal="dir_selected" from="FileDialog" to="." method="_on_FileDialog_dir_selected"]
 [connection signal="file_selected" from="FileDialog" to="." method="_on_FileDialog_file_selected"]
-[connection signal="selected" from="Panel2" to="." method="_on_shader_selected"]
+[connection signal="selected" from="shader_select_panel" to="." method="_on_shader_selected"]
 [connection signal="long_hover" from="HUD/ScopePanel" to="." method="_on_ScopePanel_long_hover"]
 [connection signal="pressed" from="HUD/ScopePanel" to="." method="_on_ScopePanel_pressed"]
 [connection signal="pressed" from="HUD/ShaderSelectButton" to="." method="_on_shaderselect_pressed"]

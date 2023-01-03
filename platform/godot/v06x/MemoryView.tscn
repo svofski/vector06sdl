@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=2]
+[gd_scene load_steps=18 format=2]
 
 [ext_resource path="res://MemoryDump.tscn" type="PackedScene" id=1]
 [ext_resource path="res://MemoryView.gd" type="Script" id=2]
@@ -13,10 +13,16 @@
 [ext_resource path="res://assets/debug_pause.png" type="Texture" id=11]
 [ext_resource path="res://assets/fonts/Roboto_Mono/static/RobotoMono-Regular.ttf" type="DynamicFontData" id=12]
 [ext_resource path="res://CodePanel.gd" type="Script" id=13]
+[ext_resource path="res://assets/fonts/Roboto_Mono/static/RobotoMono-Bold.ttf" type="DynamicFontData" id=14]
 
 [sub_resource type="DynamicFont" id=1]
 size = 8
 font_data = ExtResource( 12 )
+
+[sub_resource type="Theme" id=3]
+
+[sub_resource type="DynamicFont" id=4]
+font_data = ExtResource( 14 )
 
 [node name="PanelContainer" type="PanelContainer"]
 margin_right = 800.0
@@ -33,20 +39,23 @@ margin_right = 793.0
 margin_bottom = 293.0
 rect_min_size = Vector2( 600, 100 )
 
-[node name="DebugPanel" type="Panel" parent="HSplitContainer"]
+[node name="debug_panel" type="Panel" parent="HSplitContainer"]
 self_modulate = Color( 1, 1, 1, 0 )
 margin_right = 400.0
 margin_bottom = 286.0
 rect_min_size = Vector2( 400, 0 )
 script = ExtResource( 6 )
 
-[node name="StackPanel" type="Panel" parent="HSplitContainer/DebugPanel"]
+[node name="stack_panel" type="Panel" parent="HSplitContainer/debug_panel"]
 margin_left = 74.0
 margin_top = 23.0
 margin_right = 104.0
-margin_bottom = 63.0
+margin_bottom = 103.0
+__meta__ = {
+"_edit_use_anchors_": true
+}
 
-[node name="StackLabel" type="Label" parent="HSplitContainer/DebugPanel/StackPanel"]
+[node name="stack_label" type="Label" parent="HSplitContainer/debug_panel/stack_panel"]
 margin_left = 3.0
 margin_right = 63.0
 margin_bottom = 45.0
@@ -58,22 +67,25 @@ custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
 text = "Stack:"
 
-[node name="StackTextPanel" type="Label" parent="HSplitContainer/DebugPanel/StackPanel"]
+[node name="stack_text_panel" type="Label" parent="HSplitContainer/debug_panel/stack_panel"]
 margin_left = 3.0
 margin_top = 8.0
 margin_right = 53.0
-margin_bottom = 53.0
+margin_bottom = 148.0
 rect_scale = Vector2( 0.5, 0.5 )
 rect_clip_content = true
 size_flags_vertical = 3
 
-[node name="RegPanel" type="Panel" parent="HSplitContainer/DebugPanel"]
+[node name="reg_panel" type="Panel" parent="HSplitContainer/debug_panel"]
 margin_left = 32.0
 margin_top = 23.0
 margin_right = 72.0
-margin_bottom = 63.0
+margin_bottom = 103.0
+__meta__ = {
+"_edit_use_anchors_": true
+}
 
-[node name="RegLabel" type="Label" parent="HSplitContainer/DebugPanel/RegPanel"]
+[node name="reg_label" type="Label" parent="HSplitContainer/debug_panel/reg_panel"]
 margin_left = 3.0
 margin_right = 66.0
 margin_bottom = 45.0
@@ -85,21 +97,30 @@ custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
 text = "Regs:"
 
-[node name="RegTextPanel" type="Label" parent="HSplitContainer/DebugPanel/RegPanel"]
+[node name="reg_text_panel" type="Label" parent="HSplitContainer/debug_panel/reg_panel"]
 margin_left = 3.0
 margin_top = 8.0
 margin_right = 73.0
-margin_bottom = 53.0
+margin_bottom = 130.0
 rect_scale = Vector2( 0.5, 0.5 )
 rect_clip_content = true
 size_flags_vertical = 3
+text = "1
+2
+3
+4
+5
+6"
 
-[node name="FlagPanel" type="Panel" parent="HSplitContainer/DebugPanel"]
+[node name="flag_panel" type="Panel" parent="HSplitContainer/debug_panel"]
 margin_top = 23.0
 margin_right = 30.0
-margin_bottom = 63.0
+margin_bottom = 103.0
+__meta__ = {
+"_edit_use_anchors_": true
+}
 
-[node name="FlagLabel" type="Label" parent="HSplitContainer/DebugPanel/FlagPanel"]
+[node name="flag_label" type="Label" parent="HSplitContainer/debug_panel/flag_panel"]
 margin_left = 3.0
 margin_right = 66.0
 margin_bottom = 45.0
@@ -111,21 +132,24 @@ custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
 text = "Flags:"
 
-[node name="FlagTextPanel" type="Label" parent="HSplitContainer/DebugPanel/FlagPanel"]
+[node name="flag_text_panel" type="Label" parent="HSplitContainer/debug_panel/flag_panel"]
 margin_left = 3.0
 margin_top = 8.0
 margin_right = 53.0
-margin_bottom = 53.0
+margin_bottom = 148.0
 rect_scale = Vector2( 0.5, 0.5 )
 rect_clip_content = true
 size_flags_vertical = 3
 
-[node name="OtherPanel" type="Panel" parent="HSplitContainer/DebugPanel"]
+[node name="hardware_panel" type="Panel" parent="HSplitContainer/debug_panel"]
 margin_left = 106.0
 margin_right = 191.0
-margin_bottom = 63.0
+margin_bottom = 103.0
+__meta__ = {
+"_edit_use_anchors_": true
+}
 
-[node name="OtherLabel" type="Label" parent="HSplitContainer/DebugPanel/OtherPanel"]
+[node name="hardware_label" type="Label" parent="HSplitContainer/debug_panel/hardware_panel"]
 margin_left = 3.0
 margin_right = 66.0
 margin_bottom = 45.0
@@ -137,21 +161,21 @@ custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
 text = "Other:"
 
-[node name="OtherTextPanel" type="Label" parent="HSplitContainer/DebugPanel/OtherPanel"]
+[node name="hardware_text_panel" type="Label" parent="HSplitContainer/debug_panel/hardware_panel"]
 margin_left = 3.0
 margin_top = 8.0
 margin_right = 163.0
-margin_bottom = 114.0
+margin_bottom = 194.0
 rect_scale = Vector2( 0.5, 0.5 )
 rect_clip_content = true
 size_flags_vertical = 3
 
-[node name="BreakPointsPanel" type="Panel" parent="HSplitContainer/DebugPanel"]
+[node name="breakpoints_panel" type="Panel" parent="HSplitContainer/debug_panel"]
 margin_left = 193.0
 margin_right = 300.0
-margin_bottom = 63.0
+margin_bottom = 103.0
 
-[node name="BreakPointsLabel" type="Label" parent="HSplitContainer/DebugPanel/BreakPointsPanel"]
+[node name="breakpoints_label" type="Label" parent="HSplitContainer/debug_panel/breakpoints_panel"]
 margin_left = 3.0
 margin_right = 71.0
 margin_bottom = 25.0
@@ -163,23 +187,23 @@ custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
 text = "Brks:"
 
-[node name="BreakPointsListPanel" type="ItemList" parent="HSplitContainer/DebugPanel/BreakPointsPanel"]
+[node name="breakpoints_list_panel" type="ItemList" parent="HSplitContainer/debug_panel/breakpoints_panel"]
 margin_left = 2.0
 margin_top = 8.0
 margin_right = 208.0
-margin_bottom = 114.0
+margin_bottom = 194.0
 rect_scale = Vector2( 0.5, 0.5 )
 size_flags_vertical = 3
 __meta__ = {
 "_editor_description_": ""
 }
 
-[node name="CallStackPanel" type="Panel" parent="HSplitContainer/DebugPanel"]
+[node name="callstack_panel" type="Panel" parent="HSplitContainer/debug_panel"]
 margin_left = 303.0
 margin_right = 400.0
 margin_bottom = 278.0
 
-[node name="CallStackLabel" type="Label" parent="HSplitContainer/DebugPanel/CallStackPanel"]
+[node name="callstack_label" type="Label" parent="HSplitContainer/debug_panel/callstack_panel"]
 margin_left = 3.0
 margin_right = 71.0
 margin_bottom = 25.0
@@ -191,7 +215,7 @@ custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
 text = "call/jmp stack:"
 
-[node name="CallStackListPanel" type="ItemList" parent="HSplitContainer/DebugPanel/CallStackPanel"]
+[node name="callstack_list_panel" type="ItemList" parent="HSplitContainer/debug_panel/callstack_panel"]
 margin_left = 2.0
 margin_top = 8.0
 margin_right = 188.0
@@ -199,17 +223,15 @@ margin_bottom = 544.0
 rect_scale = Vector2( 0.5, 0.5 )
 size_flags_horizontal = 3
 size_flags_vertical = 3
-max_text_lines = 5
-auto_height = true
 __meta__ = {
 "_editor_description_": ""
 }
 
-[node name="CommandPanel" type="Panel" parent="HSplitContainer/DebugPanel"]
+[node name="command_panel" type="Panel" parent="HSplitContainer/debug_panel"]
 margin_right = 104.0
 margin_bottom = 21.0
 
-[node name="BreakCont" type="Button" parent="HSplitContainer/DebugPanel/CommandPanel"]
+[node name="break_cont" type="Button" parent="HSplitContainer/debug_panel/command_panel"]
 margin_left = 1.0
 margin_top = 2.0
 margin_right = 35.0
@@ -220,7 +242,7 @@ flat = true
 icon_align = 1
 expand_icon = true
 
-[node name="StepOver" type="Button" parent="HSplitContainer/DebugPanel/CommandPanel"]
+[node name="step_over" type="Button" parent="HSplitContainer/debug_panel/command_panel"]
 margin_left = 18.0
 margin_top = 2.0
 margin_right = 52.0
@@ -232,7 +254,7 @@ flat = true
 icon_align = 1
 expand_icon = true
 
-[node name="StepInto" type="Button" parent="HSplitContainer/DebugPanel/CommandPanel"]
+[node name="step_into" type="Button" parent="HSplitContainer/debug_panel/command_panel"]
 margin_left = 35.0
 margin_top = 2.0
 margin_right = 69.0
@@ -244,7 +266,7 @@ flat = true
 icon_align = 1
 expand_icon = true
 
-[node name="StepOut" type="Button" parent="HSplitContainer/DebugPanel/CommandPanel"]
+[node name="step_out" type="Button" parent="HSplitContainer/debug_panel/command_panel"]
 margin_left = 52.0
 margin_top = 2.0
 margin_right = 86.0
@@ -256,7 +278,7 @@ flat = true
 icon_align = 1
 expand_icon = true
 
-[node name="Restart" type="Button" parent="HSplitContainer/DebugPanel/CommandPanel"]
+[node name="restart" type="Button" parent="HSplitContainer/debug_panel/command_panel"]
 margin_left = 69.0
 margin_top = 2.0
 margin_right = 103.0
@@ -267,7 +289,7 @@ flat = true
 icon_align = 1
 expand_icon = true
 
-[node name="Stop" type="Button" parent="HSplitContainer/DebugPanel/CommandPanel"]
+[node name="Stop" type="Button" parent="HSplitContainer/debug_panel/command_panel"]
 margin_left = 86.0
 margin_top = 2.0
 margin_right = 120.0
@@ -278,8 +300,8 @@ flat = true
 icon_align = 1
 expand_icon = true
 
-[node name="CodePanel" type="TextEdit" parent="HSplitContainer/DebugPanel"]
-margin_top = 100.0
+[node name="code_panel" type="TextEdit" parent="HSplitContainer/debug_panel"]
+margin_top = 131.0
 margin_right = 300.0
 margin_bottom = 279.0
 rect_min_size = Vector2( 200, 100 )
@@ -295,6 +317,23 @@ highlight_current_line = true
 breakpoint_gutter = true
 highlight_all_occurrences = true
 script = ExtResource( 13 )
+
+[node name="main_bar" type="Panel" parent="HSplitContainer/debug_panel"]
+margin_top = 104.0
+margin_right = 300.0
+margin_bottom = 129.0
+
+[node name="search_panel" type="LineEdit" parent="HSplitContainer/debug_panel/main_bar"]
+margin_left = 2.0
+margin_top = 2.0
+margin_right = 204.0
+margin_bottom = 42.0
+rect_scale = Vector2( 0.5, 0.5 )
+hint_tooltip = "ex. enter \"0x100\" to show the code at 0x100 addr."
+theme = SubResource( 3 )
+custom_fonts/font = SubResource( 4 )
+clear_button_enabled = true
+caret_blink = true
 
 [node name="VBoxContainer" type="VBoxContainer" parent="HSplitContainer"]
 margin_left = 412.0
@@ -349,12 +388,14 @@ text = "Helpful hints"
 
 [connection signal="gui_input" from="." to="." method="_on_gui_input"]
 [connection signal="visibility_changed" from="." to="." method="_on_PanelContainer_visibility_changed"]
-[connection signal="focus_exited" from="HSplitContainer/DebugPanel" to="HSplitContainer/DebugPanel" method="_on_DebugPanel_focus_exited"]
-[connection signal="item_rect_changed" from="HSplitContainer/DebugPanel" to="HSplitContainer/DebugPanel" method="_on_DebugPanel_item_rect_changed"]
-[connection signal="resized" from="HSplitContainer/DebugPanel" to="HSplitContainer/DebugPanel" method="_on_DebugPanel_resized"]
-[connection signal="item_activated" from="HSplitContainer/DebugPanel/BreakPointsPanel/BreakPointsListPanel" to="HSplitContainer/DebugPanel" method="_on_BreakPointsListPanel_item_selected"]
-[connection signal="item_selected" from="HSplitContainer/DebugPanel/BreakPointsPanel/BreakPointsListPanel" to="HSplitContainer/DebugPanel" method="_on_BreakPointsListPanel_item_selected"]
-[connection signal="pressed" from="HSplitContainer/DebugPanel/CommandPanel/BreakCont" to="HSplitContainer/DebugPanel" method="_on_Pause_pressed"]
-[connection signal="pressed" from="HSplitContainer/DebugPanel/CommandPanel/StepInto" to="HSplitContainer/DebugPanel" method="_on_StepInto_pressed"]
-[connection signal="pressed" from="HSplitContainer/DebugPanel/CommandPanel/Restart" to="HSplitContainer/DebugPanel" method="_on_Restart_pressed"]
-[connection signal="breakpoint_toggled" from="HSplitContainer/DebugPanel/CodePanel" to="HSplitContainer/DebugPanel" method="_on_CodePanel_breakpoint_toggled"]
+[connection signal="focus_exited" from="HSplitContainer/debug_panel" to="HSplitContainer/debug_panel" method="_on_debug_panel_focus_exited"]
+[connection signal="item_rect_changed" from="HSplitContainer/debug_panel" to="HSplitContainer/debug_panel" method="_on_debug_panel_item_rect_changed"]
+[connection signal="resized" from="HSplitContainer/debug_panel" to="HSplitContainer/debug_panel" method="_on_debug_panel_resized"]
+[connection signal="item_activated" from="HSplitContainer/debug_panel/breakpoints_panel/breakpoints_list_panel" to="HSplitContainer/debug_panel" method="_on_breakpoints_list_panel_item_selected"]
+[connection signal="item_selected" from="HSplitContainer/debug_panel/breakpoints_panel/breakpoints_list_panel" to="HSplitContainer/debug_panel" method="_on_breakpoints_list_panel_item_selected"]
+[connection signal="pressed" from="HSplitContainer/debug_panel/command_panel/break_cont" to="HSplitContainer/debug_panel" method="_on_break_cont_pressed"]
+[connection signal="pressed" from="HSplitContainer/debug_panel/command_panel/step_into" to="HSplitContainer/debug_panel" method="_on_step_into_pressed"]
+[connection signal="pressed" from="HSplitContainer/debug_panel/command_panel/restart" to="HSplitContainer/debug_panel" method="_on_restart_pressed"]
+[connection signal="breakpoint_toggled" from="HSplitContainer/debug_panel/code_panel" to="HSplitContainer/debug_panel" method="_on_code_panel_breakpoint_toggled"]
+[connection signal="gui_input" from="HSplitContainer/debug_panel/code_panel" to="HSplitContainer/debug_panel" method="_on_code_panel_gui_input"]
+[connection signal="text_entered" from="HSplitContainer/debug_panel/main_bar/search_panel" to="HSplitContainer/debug_panel" method="_on_search_panel_text_entered"]
