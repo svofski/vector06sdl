@@ -1,7 +1,5 @@
 extends PanelContainer
 
-#export var grid_size: Vector2 = Vector2(0,0)
-
 var shader_list = []
 var tr_list = []
 var texture: Texture = null

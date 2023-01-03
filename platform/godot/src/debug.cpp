@@ -110,7 +110,8 @@ static size_t cmd[3];
 #define MAX_DATA_CHR_LEN 11
 #define MAX_CMD_LEN 13
 
-const std::string Debug::get_mnemonic(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const
+auto Debug::get_mnemonic(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const
+->const std::string
 {
 	CMD_OPCODE = _opcode;
 	CMD_OP_L = _data_l;
@@ -140,7 +141,35 @@ const std::string Debug::get_mnemonic(const uint8_t _opcode, const uint8_t _data
 	return out.str();
 }
 
-const std::string Debug::get_disasm_line(const size_t _addr, const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const
+auto Debug::get_disasm_db_line(const size_t _addr, const uint8_t _data) const
+->const std::string
+{
+	std::stringstream out;
+
+	out << "0x";
+	out << std::setw(sizeof(uint16_t)*2) << std::setfill('0');
+	out << std::uppercase << std::hex << static_cast<int>(_addr) << ":";
+
+	// print data in a format " %02X"
+	out << " ";
+	out << std::setw(sizeof(uint8_t)*2) << std::setfill('0');
+	out << std::uppercase << std::hex << static_cast<int>(_data);
+
+	// add whitespaces at the end of data
+	for(int i = 3; i < MAX_DATA_CHR_LEN; i++)
+	{
+		out << " ";
+	}
+
+	out << "DB ";
+	out << std::setw(sizeof(uint8_t)*2) << std::setfill('0');
+	out << std::uppercase << std::hex << static_cast<int>(_data);
+
+	return out.str();
+}
+
+auto Debug::get_disasm_line(const size_t _addr, const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const
+->const std::string
 {
 	CMD_OPCODE = _opcode;
 	CMD_OP_L = _data_l;
@@ -169,8 +198,6 @@ const std::string Debug::get_disasm_line(const size_t _addr, const uint8_t _opco
 	}
 
 	out << get_mnemonic(_opcode, _data_l, _data_h);
-
-	//std::printf("%s", out.str().c_str());
 
 	return out.str();
 }
@@ -218,11 +245,45 @@ auto Debug::disasm(const size_t _addr, const size_t _lines, const size_t _before
 	std::string out;
 	if (_lines == 0) return out;
 
-	size_t addr = get_addr(_addr & 0xffff, _before_addr_lines) & 0xffff;
-
+	
+	size_t addr = _addr;
 	auto pc = i8080cpu::i8080_pc();
+	int lines = _lines;
 
-	for (int i=0; i < _lines; i++)
+	if (_before_addr_lines > 0)
+	{
+		addr = get_addr(_addr & 0xffff, _before_addr_lines) & 0xffff;
+
+		if (addr == _addr)
+		{
+			addr = (addr - _before_addr_lines) & 0xffff;
+
+			lines = _lines - _before_addr_lines;
+
+			for (int i=0; i < _before_addr_lines; i++)
+			{
+				if (addr == pc) 
+				{
+					out += ">";
+				}
+				else
+				{
+					out += " ";
+				}
+				auto db = memoryP->get_byte(addr, false);
+				out += get_disasm_db_line(addr, db);
+
+				if (lines > 0 || i != _before_addr_lines-1)
+				{
+					out += "\n";
+				}
+				
+				addr = (addr + 1) & 0xffff;
+			}
+		}
+	}
+
+	for (int i=0; i < lines; i++)
 	{
 		if (addr == pc) 
 		{
@@ -246,8 +307,20 @@ auto Debug::disasm(const size_t _addr, const size_t _lines, const size_t _before
 		std::string runsS_readsS_writesS = "(" + runsS + "," + readsS + "," + writesS + ")";
 
 		out += get_disasm_line(addr, opcode, data_l, data_h);
-		out += runsS_readsS_writesS + "\n";
+		out += runsS_readsS_writesS;
+		if (i != lines-1)
+		{
+			out += "\n";
+		}
+		
 		addr = (addr + get_cmd_len(opcode)) & 0xffff;
 	}
 	return out;
+}
+
+void Debug::reset()
+{
+    std::fill(mem_runs, mem_runs + MEMORY_SIZE, 0);
+	std::fill(mem_reads, mem_reads + MEMORY_SIZE, 0);
+	std::fill(mem_writes, mem_writes + MEMORY_SIZE, 0);
 }
