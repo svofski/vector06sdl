@@ -159,7 +159,7 @@ size_flags_vertical = 3
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
-text = "Other:"
+text = "Hardware:"
 
 [node name="hardware_text_panel" type="Label" parent="HSplitContainer/debug_panel/hardware_panel"]
 margin_left = 3.0

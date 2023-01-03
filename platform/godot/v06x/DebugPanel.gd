@@ -105,7 +105,7 @@ func _on_break_cont_pressed():
 		main.debug_break()
 
 func _on_restart_pressed():
-	main.ReloadFile()
+	main.reload_file()
 
 #var step_into_pressed = 0
 func _on_step_into_pressed():
@@ -117,13 +117,15 @@ func _on_step_into_pressed():
 
 func codePanel_update(enabled):
 	if enabled:
+		code_panel.syntax_highlighting = true
+		code_panel.add_color_override("current_line_color", Color(0.248718, 0.390625, 0.257319))
 		var regs = main.debug_read_registers();
 		var pc = regs[5]
 		codePanel_scroll_to_addr(pc)
 		code_panel.cursor_set_line(CODE_PANEL_LINES_AHEAD)
 	else:
 		code_panel.syntax_highlighting = false
-		code_panel.add_color_override("current_linde_color", Color(0.351563, 0.351563, 0.351563))
+		code_panel.add_color_override("current_line_color", Color(0.351563, 0.351563, 0.351563))
 		code_panel.remove_breakpoints()
 	
 func regTextPanel_update(enabled):
@@ -153,7 +155,7 @@ func stackTextPanel_update(enabled):
 		var stack = main.debug_read_stack(STACK_TEXT_LINES)
 		stack_text_panel.text  = ""
 		for stack_byte in stack:
-			stack_text_panel.text += "%02X\n" % stack_byte
+			stack_text_panel.text += "%04X\n" % stack_byte
 		stack_text_panel.add_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
 	else:
 		stack_text_panel.add_color_override("font_color", Color(1.0, 1.0, 1.0, 0.5))
@@ -208,8 +210,6 @@ func _on_code_panel_breakpoint_toggled(row):
 func codePanel_scroll_to_addr(addr, lines_before = CODE_PANEL_LINES_AHEAD):
 	var lines = code_panel.get_visible_rows()
 	code_panel.text = main.debug_disasm(addr, lines, lines_before)
-	code_panel.syntax_highlighting = true
-	code_panel.add_color_override("current_line_color", Color(0.248718, 0.390625, 0.257319))
 	code_panel.remove_breakpoints()
 	# restore breakpoint markers in the code panel
 	for brk_idx in range(breakpoints_list_panel.get_item_count()):

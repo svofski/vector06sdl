@@ -340,8 +340,9 @@ func _on_FileDialog_file_selected(path: String):
 	nice_tooltip.showTooltip(loadass[dialog_device].rect_global_position, 
 		path.get_file())
 
-func ReloadFile():
-	load_file(dialog_device, loadedFilePath)
+func reload_file():
+	if load_file(dialog_device, loadedFilePath):
+		v06x.Reset(false)
 	
 func _on_FileDialog_dir_selected(dir):
 	print("Directory selected: ", dir)
