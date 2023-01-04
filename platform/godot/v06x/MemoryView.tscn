@@ -384,7 +384,6 @@ caret_blink = true
 margin_left = 412.0
 margin_right = 786.0
 margin_bottom = 286.0
-hint_tooltip = "Memory Container"
 __meta__ = {
 "_editor_description_": ""
 }
@@ -401,9 +400,9 @@ __meta__ = {
 }
 
 [node name="Dump" parent="HSplitContainer/VBoxContainer/ScrollContainer" instance=ExtResource( 1 )]
-margin_right = 0.0
+margin_right = 368.0
 margin_bottom = 204800.0
-size_flags_horizontal = 1
+size_flags_horizontal = 3
 size_flags_vertical = 1
 
 [node name="ScrollContainer2" type="ScrollContainer" parent="HSplitContainer/VBoxContainer"]
@@ -445,3 +444,5 @@ text = "Helpful hints"
 [connection signal="breakpoint_toggled" from="HSplitContainer/debug_panel/code_panel" to="HSplitContainer/debug_panel" method="_on_code_panel_breakpoint_toggled"]
 [connection signal="gui_input" from="HSplitContainer/debug_panel/code_panel" to="HSplitContainer/debug_panel" method="_on_code_panel_gui_input"]
 [connection signal="text_entered" from="HSplitContainer/debug_panel/main_bar/search_panel" to="HSplitContainer/debug_panel" method="_on_search_panel_text_entered"]
+[connection signal="gui_input" from="HSplitContainer/VBoxContainer" to="." method="_on_gui_input"]
+[connection signal="gui_input" from="HSplitContainer/VBoxContainer/ScrollContainer/Dump" to="HSplitContainer/VBoxContainer/ScrollContainer/Dump" method="_on_gui_input"]
