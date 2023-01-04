@@ -375,6 +375,20 @@ auto Board::read_stack(const size_t _len) const
 	return out;
 }
 
+auto Board::debug_read_executed_memory(uint16_t _addr, const size_t _len) const 
+-> std::vector<uint8_t>
+{
+	std::vector<uint8_t> out;
+
+	for (int i = 0; i < _len; i++)
+	{
+        uint8_t db = memory.get_byte(_addr, false);
+        _addr = (_addr + 1) & 0xffff;
+        out.push_back(db);
+	}
+	return out;
+}
+
 void Board::dump_memory(const int start, const int count)
 {
     for (int i = start; i < start + count; ++i) {

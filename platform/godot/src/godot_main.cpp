@@ -572,7 +572,6 @@ godot_variant debug_read_stack(godot_object* p_instance, void* p_method_data,
 	api->godot_pool_int_array_write_access_destroy(int_array_gd_wa);
 	godot_variant ret;
 	api->godot_variant_new_pool_int_array(&ret, &int_array_gd);
-
 	return ret;
 }
 
@@ -686,5 +685,34 @@ godot_variant debug_is_break(godot_object* p_instance, void* p_method_data,
 
 	godot_variant ret;
 	api->godot_variant_new_bool(&ret, out);
+	return ret;
+}
+
+godot_variant debug_read_executed_memory(godot_object* p_instance, void* p_method_data, 
+		void* p_user_data, int p_num_args, godot_variant** p_args)
+{
+	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+	if (!user_data_p->initialized) {
+		godot_variant ret;
+		api->godot_variant_new_bool(&ret, 0);
+		return ret;
+	}
+	godot_int addr = api->godot_variant_as_int(p_args[0]);
+	godot_int len = api->godot_variant_as_int(p_args[1]);
+	auto outV = board.debug_read_executed_memory(addr, len);
+
+    godot_pool_int_array int_array_gd;
+    api->godot_pool_int_array_new(&int_array_gd);
+	api->godot_pool_int_array_resize(&int_array_gd, outV.size());
+
+	godot_pool_int_array_write_access * int_array_gd_wa = 
+		api->godot_pool_int_array_write(&int_array_gd);
+	godot_int* int_array_gd_waptr = api->godot_pool_int_array_write_access_ptr(int_array_gd_wa);
+
+	std::copy(outV.begin(), outV.end(), int_array_gd_waptr);
+
+	api->godot_pool_int_array_write_access_destroy(int_array_gd_wa);
+	godot_variant ret;
+	api->godot_variant_new_pool_int_array(&ret, &int_array_gd);
 	return ret;
 }

@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=2]
+[gd_scene load_steps=28 format=2]
 
 [ext_resource path="res://MemoryDump.tscn" type="PackedScene" id=1]
 [ext_resource path="res://MemoryView.gd" type="Script" id=2]
@@ -14,6 +14,40 @@
 [ext_resource path="res://assets/fonts/Roboto_Mono/static/RobotoMono-Regular.ttf" type="DynamicFontData" id=12]
 [ext_resource path="res://CodePanel.gd" type="Script" id=13]
 [ext_resource path="res://assets/fonts/Roboto_Mono/static/RobotoMono-Bold.ttf" type="DynamicFontData" id=14]
+
+[sub_resource type="InputEventKey" id=5]
+pressed = true
+scancode = 16777248
+
+[sub_resource type="ShortCut" id=6]
+shortcut = SubResource( 5 )
+
+[sub_resource type="InputEventKey" id=9]
+scancode = 16777253
+
+[sub_resource type="ShortCut" id=10]
+shortcut = SubResource( 9 )
+
+[sub_resource type="InputEventKey" id=7]
+scancode = 16777254
+
+[sub_resource type="ShortCut" id=8]
+resource_local_to_scene = true
+shortcut = SubResource( 7 )
+
+[sub_resource type="InputEventKey" id=11]
+shift = true
+scancode = 16777254
+
+[sub_resource type="ShortCut" id=12]
+shortcut = SubResource( 11 )
+
+[sub_resource type="InputEventKey" id=13]
+shift = true
+scancode = 16777248
+
+[sub_resource type="ShortCut" id=14]
+shortcut = SubResource( 13 )
 
 [sub_resource type="DynamicFont" id=1]
 size = 8
@@ -237,6 +271,8 @@ margin_top = 2.0
 margin_right = 35.0
 margin_bottom = 36.0
 rect_scale = Vector2( 0.5, 0.5 )
+hint_tooltip = "Break or continue the execution."
+shortcut = SubResource( 6 )
 icon = ExtResource( 11 )
 flat = true
 icon_align = 1
@@ -248,7 +284,9 @@ margin_top = 2.0
 margin_right = 52.0
 margin_bottom = 36.0
 rect_scale = Vector2( 0.5, 0.5 )
+hint_tooltip = "Execute the next command. If it is a call, step over it."
 disabled = true
+shortcut = SubResource( 10 )
 icon = ExtResource( 8 )
 flat = true
 icon_align = 1
@@ -260,7 +298,9 @@ margin_top = 2.0
 margin_right = 69.0
 margin_bottom = 36.0
 rect_scale = Vector2( 0.5, 0.5 )
+hint_tooltip = "Execute the next command."
 disabled = true
+shortcut = SubResource( 8 )
 icon = ExtResource( 9 )
 flat = true
 icon_align = 1
@@ -272,7 +312,9 @@ margin_top = 2.0
 margin_right = 86.0
 margin_bottom = 36.0
 rect_scale = Vector2( 0.5, 0.5 )
+hint_tooltip = "Execute until a return from a call."
 disabled = true
+shortcut = SubResource( 12 )
 icon = ExtResource( 5 )
 flat = true
 icon_align = 1
@@ -284,17 +326,20 @@ margin_top = 2.0
 margin_right = 103.0
 margin_bottom = 36.0
 rect_scale = Vector2( 0.5, 0.5 )
+hint_tooltip = "Restart the program."
+shortcut = SubResource( 14 )
 icon = ExtResource( 10 )
 flat = true
 icon_align = 1
 expand_icon = true
 
-[node name="Stop" type="Button" parent="HSplitContainer/debug_panel/command_panel"]
+[node name="stop" type="Button" parent="HSplitContainer/debug_panel/command_panel"]
 margin_left = 86.0
 margin_top = 2.0
 margin_right = 120.0
 margin_bottom = 36.0
 rect_scale = Vector2( 0.5, 0.5 )
+hint_tooltip = "Stop the program and clean the memory including the ram-disk."
 icon = ExtResource( 7 )
 flat = true
 icon_align = 1
@@ -329,7 +374,7 @@ margin_top = 2.0
 margin_right = 204.0
 margin_bottom = 42.0
 rect_scale = Vector2( 0.5, 0.5 )
-hint_tooltip = "ex. enter \"0x100\" to show the code at 0x100 addr."
+hint_tooltip = "Search panel. example:  enter \"0x100\" to show the code at the 0x100 addr."
 theme = SubResource( 3 )
 custom_fonts/font = SubResource( 4 )
 clear_button_enabled = true
@@ -394,6 +439,7 @@ text = "Helpful hints"
 [connection signal="item_activated" from="HSplitContainer/debug_panel/breakpoints_panel/breakpoints_list_panel" to="HSplitContainer/debug_panel" method="_on_breakpoints_list_panel_item_selected"]
 [connection signal="item_selected" from="HSplitContainer/debug_panel/breakpoints_panel/breakpoints_list_panel" to="HSplitContainer/debug_panel" method="_on_breakpoints_list_panel_item_selected"]
 [connection signal="pressed" from="HSplitContainer/debug_panel/command_panel/break_cont" to="HSplitContainer/debug_panel" method="_on_break_cont_pressed"]
+[connection signal="pressed" from="HSplitContainer/debug_panel/command_panel/step_over" to="HSplitContainer/debug_panel" method="_on_step_over_pressed"]
 [connection signal="pressed" from="HSplitContainer/debug_panel/command_panel/step_into" to="HSplitContainer/debug_panel" method="_on_step_into_pressed"]
 [connection signal="pressed" from="HSplitContainer/debug_panel/command_panel/restart" to="HSplitContainer/debug_panel" method="_on_restart_pressed"]
 [connection signal="breakpoint_toggled" from="HSplitContainer/debug_panel/code_panel" to="HSplitContainer/debug_panel" method="_on_code_panel_breakpoint_toggled"]
