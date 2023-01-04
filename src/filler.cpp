@@ -428,3 +428,11 @@ int PixelFiller::fill4(int clocks)
 }
 
 
+auto PixelFiller::get_raster_pixel() const -> const int
+{
+    return raster_pixel;
+}
+auto PixelFiller::get_raster_line() const -> const int
+{
+    return raster_line;
+}

@@ -645,6 +645,9 @@ func debug_is_break():
 	
 func debug_read_executed_memory(addr, length):
 	return v06x.debug_read_executed_memory(addr, length)
+	
+func debug_read_hw_info():
+	return v06x.debug_read_hw_info()
 
 
 

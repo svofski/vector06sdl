@@ -46,6 +46,7 @@ V06X_DECL(debug_insert_breakpoint);
 V06X_DECL(debug_remove_breakpoint);
 V06X_DECL(debug_is_break);
 V06X_DECL(debug_read_executed_memory);
+V06X_DECL(debug_read_hw_info);
 
 #undef V06X_DECL
 
@@ -118,6 +119,7 @@ extern "C" void GDN_EXPORT godot_nativescript_init(void* p_handle)
     V06X_METHOD("debug_remove_breakpoint", debug_remove_breakpoint);
     V06X_METHOD("debug_is_break", debug_is_break);
     V06X_METHOD("debug_read_executed_memory", debug_read_executed_memory);
+    V06X_METHOD("debug_read_hw_info", debug_read_hw_info);
 #undef V06X_METHOD
 }
 

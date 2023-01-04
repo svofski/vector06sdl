@@ -44,6 +44,8 @@ public:
     bool brk;
     bool irq;
     int irq_clk;
+    auto get_raster_pixel() const -> const int;
+    auto get_raster_line() const -> const int;
 
 public:
     PixelFiller(Memory & _mem, IO & _io, TV & _tv);

@@ -9,7 +9,7 @@ onready var code_panel = find_node("code_panel")
 onready var stack_text_panel = find_node("stack_text_panel")
 onready var reg_text_panel = find_node("reg_text_panel")
 onready var flag_text_panel = find_node("flag_text_panel")
-onready var hardware_text_panel = find_node("hardware_text_panel")
+onready var hw_text_panel = find_node("hw_text_panel")
 onready var breakpoints_list_panel = find_node("breakpoints_list_panel")
 
 onready var callstack_panel = find_node("callstack_panel")
@@ -87,6 +87,7 @@ func set_ui_on_break():
 		stackTextPanel_update(true)
 		codePanel_update(true)
 		breakpointsListPanel_update(true)
+		hw_text_panel_update(true)
 		step_over.disabled = false;
 		step_into.disabled = false;
 		step_out.disabled = false;
@@ -102,6 +103,7 @@ func set_ui_on_cont():
 		stackTextPanel_update(false)
 		codePanel_update(false)
 		breakpointsListPanel_update(false)
+		hw_text_panel_update(false)
 		step_over.disabled = true;
 		step_into.disabled = true;
 		step_out.disabled = true;
@@ -182,6 +184,24 @@ func breakpointsListPanel_update(enabled):
 	else:
 		breakpoints_list_panel.add_color_override("font_color", Color(1.0, 1.0, 1.0, 0.5))
 
+func hw_text_panel_update(enabled):
+	if enabled:
+		var hw_info = main.debug_read_hw_info()
+		var cycles = hw_info[0]
+		var iff = hw_info[1]
+		var raster_pixel = hw_info[2]
+		var raster_line = hw_info[3]
+		var mode_stack = hw_info[4]
+		var page_stack = hw_info[5] / 0xffff
+		var mode_map = hw_info[6]
+		var page_map = hw_info[7] / 0xffff
+		hw_text_panel.text  = "cycles %d\niff %d\ncrt (%d, %d)\nmode stack %d\npage stack %d\nmode ram %d\npage ram %d" % [cycles, iff, raster_pixel, raster_line, mode_stack, page_stack, mode_map, page_map]
+		
+		hw_text_panel.add_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
+	else:
+		hw_text_panel.add_color_override("font_color", Color(1.0, 1.0, 1.0, 0.5))
+
+	
 func is_breakpoint_auto(addrS):
 	var idx = breakpoint_list_find(addrS)
 	var postfix_idx = breakpoints_list_panel.get_item_text(idx).find(BREAKPOINT_AUTO_POSTFIX)
