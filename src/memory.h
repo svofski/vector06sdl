@@ -53,4 +53,9 @@ public:
 
     void serialize(std::vector<uint8_t> & to);
     void deserialize(std::vector<uint8_t>::iterator from, uint32_t size);
+    
+    auto get_mode_stack() const -> const bool;
+    auto get_mode_map() const -> const uint8_t;
+    auto get_page_map() const -> const uint32_t;
+    auto get_page_stack() const -> const uint32_t;
 };

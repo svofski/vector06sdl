@@ -200,3 +200,24 @@ void Memory::export_bytes(uint8_t * dst, uint32_t addr, uint32_t size) const
         dst[i] = this->bytes[this->tobank(addr + i)];
     }
 }
+
+
+auto Memory::get_mode_stack() const -> const bool
+{
+    return mode_stack;
+}
+
+auto Memory::get_mode_map() const -> const uint8_t
+{
+    return mode_map;
+}
+
+auto Memory::get_page_map() const -> const uint32_t
+{
+    return page_map;
+}
+
+auto Memory::get_page_stack() const -> const uint32_t
+{
+    return page_stack;
+}

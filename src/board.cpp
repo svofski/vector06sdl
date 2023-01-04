@@ -389,6 +389,23 @@ auto Board::debug_read_executed_memory(uint16_t _addr, const size_t _len) const
 	return out;
 }
 
+auto Board::debug_read_hw_info() const 
+-> std::vector<int>
+{
+	std::vector<int> out;
+
+    out.push_back(i8080_cycles());
+    out.push_back(i8080_iff());
+    out.push_back(filler.get_raster_pixel());
+    out.push_back(filler.get_raster_line());
+    out.push_back(memory.get_mode_stack());
+    out.push_back(memory.get_page_stack());
+    out.push_back(memory.get_mode_map());
+    out.push_back(memory.get_page_map());
+
+	return out;
+}
+
 void Board::dump_memory(const int start, const int count)
 {
     for (int i = start; i < start + count; ++i) {

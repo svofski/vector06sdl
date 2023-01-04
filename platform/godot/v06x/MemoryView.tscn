@@ -175,7 +175,7 @@ rect_scale = Vector2( 0.5, 0.5 )
 rect_clip_content = true
 size_flags_vertical = 3
 
-[node name="hardware_panel" type="Panel" parent="HSplitContainer/debug_panel"]
+[node name="hw_panel" type="Panel" parent="HSplitContainer/debug_panel"]
 margin_left = 106.0
 margin_right = 191.0
 margin_bottom = 103.0
@@ -183,7 +183,7 @@ __meta__ = {
 "_edit_use_anchors_": true
 }
 
-[node name="hardware_label" type="Label" parent="HSplitContainer/debug_panel/hardware_panel"]
+[node name="hw_label" type="Label" parent="HSplitContainer/debug_panel/hw_panel"]
 margin_left = 3.0
 margin_right = 66.0
 margin_bottom = 45.0
@@ -193,9 +193,9 @@ size_flags_vertical = 3
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
-text = "Hardware:"
+text = "HW metrics:"
 
-[node name="hardware_text_panel" type="Label" parent="HSplitContainer/debug_panel/hardware_panel"]
+[node name="hw_text_panel" type="Label" parent="HSplitContainer/debug_panel/hw_panel"]
 margin_left = 3.0
 margin_top = 8.0
 margin_right = 163.0

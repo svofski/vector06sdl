@@ -111,7 +111,8 @@ public:
 public:
     auto read_stack(const size_t _len) const -> std::vector<uint16_t>;
     auto debug_read_executed_memory(uint16_t _addr, const size_t _len) const -> std::vector<uint8_t>;
-    const std::string read_memory(const int start, const int count);
+    auto debug_read_hw_info() const -> std::vector<int>;
+    auto read_memory(const int start, const int count) -> const std::string;
     void write_memory_byte(int addr, int value);
     /* AA FF BB CC DD EE HH LL 00 00 00 00 SS PP 
      * 00 00 00 00 00 00 00 00 00 00 PP CC */
