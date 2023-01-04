@@ -46,6 +46,8 @@ singletons=[  ]
 
 vsy=false
 vsync=false
+short=false
+shortcut=false
 
 [memory]
 

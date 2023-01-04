@@ -389,12 +389,12 @@ func _input(event: InputEvent):
 				if event.scancode == KEY_ENTER and event.alt:
 					toggle_fullscreen()
 				else:
-					if not debug_break_enabled:
+					if not debug_break_enabled and (not mem_panel.visible or event.scancode != KEY_F5):
 						osk_panel._on_key_make(event.scancode, true)
-			if not debug_break_enabled:
+			if not debug_break_enabled and (not mem_panel.visible or event.scancode != KEY_F5):
 				get_tree().set_input_as_handled()
 		elif not event.pressed:
-			if not debug_break_enabled:
+			if not debug_break_enabled and (not mem_panel.visible or event.scancode != KEY_F5):
 				osk_panel._on_key_break(event.scancode)
 				get_tree().set_input_as_handled()
 
@@ -642,6 +642,9 @@ func debug_remove_breakpoint(addr):
 
 func debug_is_break():
 	return v06x.debug_is_break()
+	
+func debug_read_executed_memory(addr, length):
+	return v06x.debug_read_executed_memory(addr, length)
 
 
 

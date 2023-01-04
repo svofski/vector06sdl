@@ -30,8 +30,21 @@ onready var code_panel_menu = code_panel.get_menu()
 
 const STACK_TEXT_LINES = 6
 const CODE_PANEL_LINES_AHEAD = 6
+const BREAKPOINT_AUTO_POSTFIX = ":A"
 
 var code_panel_cursor_line_last = 0
+
+const OPCODE_CALL_LEN = 3
+const OPCODE_CNZ	= 0xC4
+const OPCODE_CZ		= 0xCC
+const OPCODE_CALL	= 0xCD
+const OPCODE_CNC	= 0xD4
+const OPCODE_CC		= 0xDC
+const OPCODE_CPO	= 0xE4
+const OPCODE_CPE	= 0xEC
+const OPCODE_CP		= 0xF4
+const OPCODE_CM		= 0xFC
+const step_over_cmds = [OPCODE_CNZ, OPCODE_CZ, OPCODE_CALL, OPCODE_CNC, OPCODE_CC, OPCODE_CPO, OPCODE_CPE, OPCODE_CP, OPCODE_CM]
 
 var hardware_text = """CPU 1234560
 			CRT l/p 260, 160 
@@ -119,8 +132,7 @@ func codePanel_update(enabled):
 	if enabled:
 		code_panel.syntax_highlighting = true
 		code_panel.add_color_override("current_line_color", Color(0.248718, 0.390625, 0.257319))
-		var regs = main.debug_read_registers();
-		var pc = regs[5]
+		var pc = get_reg_pc()
 		codePanel_scroll_to_addr(pc)
 		code_panel.cursor_set_line(CODE_PANEL_LINES_AHEAD)
 	else:
@@ -128,6 +140,9 @@ func codePanel_update(enabled):
 		code_panel.add_color_override("current_line_color", Color(0.351563, 0.351563, 0.351563))
 		code_panel.remove_breakpoints()
 	
+func get_reg_pc():
+	return main.debug_read_registers()[5]
+
 func regTextPanel_update(enabled):
 	if enabled:
 		var regs = main.debug_read_registers()
@@ -167,24 +182,31 @@ func breakpointsListPanel_update(enabled):
 	else:
 		breakpoints_list_panel.add_color_override("font_color", Color(1.0, 1.0, 1.0, 0.5))
 
-func itemlist_find(itemlist : ItemList, txt):
-	for idx in range(itemlist.get_item_count()):
-		if itemlist.get_item_text(idx) == txt:
+func is_breakpoint_auto(addrS):
+	var idx = breakpoint_list_find(addrS)
+	var postfix_idx = breakpoints_list_panel.get_item_text(idx).find(BREAKPOINT_AUTO_POSTFIX)
+	return postfix_idx != -1
+
+func breakpoint_list_find(addrS):
+	for idx in range(breakpoints_list_panel.get_item_count()):
+		if breakpoints_list_panel_get_addr(idx) == addrS:
 			return idx
 	return -1
 	
 func asm_line_to_addr(line):
 	return line.left(7).right(1)
 
-func insert_breakpoint(addrS):
-	var brk_exists = itemlist_find(breakpoints_list_panel, addrS) != -1
+func insert_breakpoint(addrS, auto_remove = false):
+	var brk_exists = breakpoint_list_find(addrS) != -1
 	if not brk_exists:
-		breakpoints_list_panel.add_item(addrS)
 		var addr = addrS.hex_to_int()
+		if auto_remove:
+			addrS += BREAKPOINT_AUTO_POSTFIX
+		breakpoints_list_panel.add_item(addrS)
 		main.debug_insert_breakpoint(addr)
 		
 func remove_breakpoint(addrS):
-	var idx = itemlist_find(breakpoints_list_panel, addrS)
+	var idx = breakpoint_list_find(addrS)
 	if idx != -1:
 		breakpoints_list_panel.remove_item(idx)
 		var addr = addrS.hex_to_int()
@@ -193,11 +215,14 @@ func remove_breakpoint(addrS):
 func remove_all_breakpoints():
 	code_panel.remove_breakpoints()
 	for idx in range(breakpoints_list_panel.get_item_count()):
-		var addrS = breakpoints_list_panel.get_item_text(idx)
+		var addrS = breakpoints_list_panel_get_addr(idx)
 		var addr = addrS.hex_to_int()
 		main.debug_remove_breakpoint(addr)
 	breakpoints_list_panel.clear()
 	codePanel_update(true)
+	
+func breakpoints_list_panel_get_addr(idx):
+	return breakpoints_list_panel.get_item_text(idx).left(6)
 
 func _on_code_panel_breakpoint_toggled(row):
 	var addrS = asm_line_to_addr(code_panel.get_line(row))
@@ -209,42 +234,45 @@ func _on_code_panel_breakpoint_toggled(row):
 
 func codePanel_scroll_to_addr(addr, lines_before = CODE_PANEL_LINES_AHEAD):
 	var lines = code_panel.get_visible_rows()
+	code_panel.remove_breakpoints()	
 	code_panel.text = main.debug_disasm(addr, lines, lines_before)
-	code_panel.remove_breakpoints()
 	# restore breakpoint markers in the code panel
 	for brk_idx in range(breakpoints_list_panel.get_item_count()):
-		var addrS = breakpoints_list_panel.get_item_text(brk_idx)
+		var addrS = breakpoints_list_panel_get_addr(brk_idx)
 		for line_idx in range(code_panel.get_line_count()):
 			if addrS == asm_line_to_addr(code_panel.get_line(line_idx)):
 				code_panel.set_line_as_breakpoint(line_idx, true)	
 
 func _on_breakpoints_list_panel_item_selected(index):
-	var addr = breakpoints_list_panel.get_item_text(index).hex_to_int()
+	var addr = breakpoints_list_panel_get_addr(index).hex_to_int()
 	codePanel_scroll_to_addr(addr)
 	code_panel.cursor_set_line(CODE_PANEL_LINES_AHEAD)
 	
 func code_panel_menu_id_pressed(id):
 	match id:
 		CODE_PANEL_MENU_ID_CURRENT_BREAK:
-			var regs = main.debug_read_registers();
-			var pc = regs[5]
+			var pc = get_reg_pc()
 			codePanel_scroll_to_addr(pc)
 			code_panel.cursor_set_line(CODE_PANEL_LINES_AHEAD)
 		CODE_PANEL_MENU_ID_REMOVE_ALL_BRKS:
 			remove_all_breakpoints()
 		CODE_PANEL_MENU_ID_RUN_CURSOR:
 			var addrS = asm_line_to_addr(code_panel.get_line(code_panel.cursor_get_line()))
-			insert_breakpoint(addrS)
+			insert_breakpoint(addrS, true)
 			_on_break_cont_pressed()
 
 func _physics_process(delta):
 	if not main.debug_break_enabled and main.debug_is_break():
 		main.debug_break_enabled = true
+		var pc = get_reg_pc()
+		var addrS = "0x%04X" % pc
+		if is_breakpoint_auto(addrS):
+			remove_breakpoint(addrS)
 		set_ui_on_break()
 		
 func _on_search_panel_text_entered(new_text : String):
 	# is it in the 0xNNNN format to show the code at that addr?
-	if new_text.left(2) == "0x" and new_text.length() < 7:
+	if new_text.left(2) == "0x" or new_text.left(2) == "0X":
 		var addr = new_text.hex_to_int()
 		codePanel_scroll_to_addr(addr, 0)
 
@@ -260,6 +288,21 @@ func _on_code_panel_gui_input(event):
 				codePanel_scroll_to_addr(addrS.hex_to_int(), 0)
 				code_panel.cursor_set_line(cursor_line)
 	code_panel_cursor_line_last = cursor_line
+
+func _on_step_over_pressed():
+	var pc = get_reg_pc()
+	var opcode = main.debug_read_executed_memory(pc, 1)[0]
+	if step_over_cmds.find(opcode) != -1:
+		var new_pc = (pc + OPCODE_CALL_LEN) % 0xffff
+		var addrS = "0x%04X" % new_pc
+		insert_breakpoint(addrS, true)
+		_on_break_cont_pressed()
+	else:
+		_on_step_into_pressed()
+		
+	
+	
+
 
 
 
