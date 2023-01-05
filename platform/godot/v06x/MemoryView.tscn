@@ -376,7 +376,8 @@ margin_bottom = 42.0
 rect_scale = Vector2( 0.5, 0.5 )
 hint_tooltip = "Search panel. 
 enter \"0x100\" to scroll to 0x100.
-enter a label name if there is a debug.txt file with labels stored in the same folder. the format supported from retroassembler."
+enter a label name if there is a debug.txt file with labels stored in the same folder. the format supported from retroassembler.
+ctrl+up/down prev searches."
 theme = SubResource( 3 )
 custom_fonts/font = SubResource( 4 )
 clear_button_enabled = true
@@ -445,6 +446,7 @@ text = "Helpful hints"
 [connection signal="pressed" from="HSplitContainer/debug_panel/command_panel/restart" to="HSplitContainer/debug_panel" method="_on_restart_pressed"]
 [connection signal="breakpoint_toggled" from="HSplitContainer/debug_panel/code_panel" to="HSplitContainer/debug_panel" method="_on_code_panel_breakpoint_toggled"]
 [connection signal="gui_input" from="HSplitContainer/debug_panel/code_panel" to="HSplitContainer/debug_panel" method="_on_code_panel_gui_input"]
+[connection signal="gui_input" from="HSplitContainer/debug_panel/main_bar/search_panel" to="HSplitContainer/debug_panel" method="_on_search_panel_gui_input"]
 [connection signal="text_entered" from="HSplitContainer/debug_panel/main_bar/search_panel" to="HSplitContainer/debug_panel" method="_on_search_panel_text_entered"]
 [connection signal="gui_input" from="HSplitContainer/VBoxContainer" to="." method="_on_gui_input"]
 [connection signal="gui_input" from="HSplitContainer/VBoxContainer/ScrollContainer/Dump" to="HSplitContainer/VBoxContainer/ScrollContainer/Dump" method="_on_gui_input"]
