@@ -374,7 +374,9 @@ margin_top = 2.0
 margin_right = 204.0
 margin_bottom = 42.0
 rect_scale = Vector2( 0.5, 0.5 )
-hint_tooltip = "Search panel. example:  enter \"0x100\" to show the code at the 0x100 addr."
+hint_tooltip = "Search panel. 
+enter \"0x100\" to scroll to 0x100.
+enter a label name if there is a debug.txt file with labels stored in the same folder. the format supported from retroassembler."
 theme = SubResource( 3 )
 custom_fonts/font = SubResource( 4 )
 clear_button_enabled = true

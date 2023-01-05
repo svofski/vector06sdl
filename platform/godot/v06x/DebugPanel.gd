@@ -46,11 +46,10 @@ const OPCODE_CP		= 0xF4
 const OPCODE_CM		= 0xFC
 const step_over_cmds = [OPCODE_CNZ, OPCODE_CZ, OPCODE_CALL, OPCODE_CNC, OPCODE_CC, OPCODE_CPO, OPCODE_CPE, OPCODE_CP, OPCODE_CM]
 
-var hardware_text = """CPU 1234560
-			CRT l/p 260, 160 
-			RAM-DSK S 1
-			RAM-DSK M 2-8ACE
-			IFF 0"""
+var last_total_v_cycles = 0
+
+var debug_labels = {}
+const DEBUG_LABELS_FILE_NAME = "debug.txt"
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -120,6 +119,7 @@ func _on_break_cont_pressed():
 		main.debug_break()
 
 func _on_restart_pressed():
+	last_total_v_cycles = 0
 	main.reload_file()
 
 #var step_into_pressed = 0
@@ -187,7 +187,9 @@ func breakpointsListPanel_update(enabled):
 func hw_text_panel_update(enabled):
 	if enabled:
 		var hw_info = main.debug_read_hw_info()
-		var cycles = hw_info[0]
+		var total_v_cycles = hw_info[0]
+		var last_run_v_cycles = total_v_cycles - last_total_v_cycles
+		last_total_v_cycles = total_v_cycles
 		var iff = hw_info[1]
 		var raster_pixel = hw_info[2]
 		var raster_line = hw_info[3]
@@ -195,7 +197,7 @@ func hw_text_panel_update(enabled):
 		var page_stack = hw_info[5] / 0xffff
 		var mode_map = hw_info[6]
 		var page_map = hw_info[7] / 0xffff
-		hw_text_panel.text  = "cycles %d\niff %d\ncrt (%d, %d)\nmode stack %d\npage stack %d\nmode ram %d\npage ram %d" % [cycles, iff, raster_pixel, raster_line, mode_stack, page_stack, mode_map, page_map]
+		hw_text_panel.text  = "cycles %d\nlast run %d\niff %d\ncrt (%d, %d)\nmode stack %d\npage stack %d\nmode ram %d\npage ram %d" % [total_v_cycles, last_run_v_cycles, iff, raster_pixel, raster_line, mode_stack, page_stack, mode_map, page_map]
 		
 		hw_text_panel.add_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
 	else:
@@ -295,6 +297,11 @@ func _on_search_panel_text_entered(new_text : String):
 	if new_text.left(2) == "0x" or new_text.left(2) == "0X":
 		var addr = new_text.hex_to_int()
 		codePanel_scroll_to_addr(addr, 0)
+	else:
+		if debug_labels.has(new_text.to_lower()):
+			var addrS = "0x" + debug_labels[new_text.to_lower()]
+			var addr = addrS.hex_to_int()
+			codePanel_scroll_to_addr(addr, 0)
 
 func _on_code_panel_gui_input(event):
 	var cursor_line = code_panel.cursor_get_line()
@@ -320,8 +327,35 @@ func _on_step_over_pressed():
 	else:
 		_on_step_into_pressed()
 		
+func debug_load_labels(rom_path : String):
+	var dir_end = rom_path.find_last("/")
+	var labels_path = rom_path.left(dir_end + 1) + DEBUG_LABELS_FILE_NAME
+	var file = File.new()
+
+	if file.open(labels_path, File.READ) == OK:
+		var labels = file.get_as_text().split("\n")
+		file.close()
+		debug_labels.clear()
+		for line in labels:
+			var separator_id = line.find(" ")
+			var key = line.left(separator_id)
+			var val = line.right(separator_id+2)
+			debug_labels[key] = val
 	
+func save_debug():
+	var cfg = ConfigFile.new()
+	cfg.load("user://v06x.debug")
+	for key in debug_labels:
+		cfg.set_value("debug_labels", key, debug_labels[key])
+	cfg.save("user://v06x.debug")
 	
+func load_debug():
+	var cfg = ConfigFile.new()
+	var err = cfg.load("user://v06x.debug")
+	if err == OK:
+		debug_labels.clear()
+		for key in cfg.get_section_keys("debug_labels"):
+			debug_labels[key] = cfg.get_value("debug_labels",key)
 
 
 
