@@ -309,6 +309,7 @@ func update_load_asses() -> void:
 
 # return true if should autostart
 func load_file(dev: int, path: String) -> bool:
+	debug_panel.debug_load_labels(path)
 	var file = File.new()
 	if file.open(path, File.READ) == OK:
 		var content = file.get_buffer(file.get_len())
@@ -429,6 +430,7 @@ func save_state():
 	file.close()
 
 	save_config()
+	debug_panel.save_debug()
 
 func load_state():
 	var file = File.new()
@@ -440,6 +442,7 @@ func load_state():
 	var res = v06x.RestoreState(buffer)
 
 	load_config()
+	debug_panel.load_debug()
 
 func save_config():
 	var cfg = ConfigFile.new()

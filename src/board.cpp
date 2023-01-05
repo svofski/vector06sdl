@@ -104,6 +104,7 @@ void Board::reset(Board::ResetMode mode)
 
     this->interrupt(false);
     last_opcode = 0;
+    total_v_cycles = 0;
     i8080_init();
 }
 
@@ -194,7 +195,9 @@ void Board::single_step(bool update_screen)
         this->instr_time = 0;
     }
 
-    this->instr_time += i8080_instruction(&this->last_opcode);
+    auto v_cycles = i8080_instruction(&this->last_opcode);
+    total_v_cycles += v_cycles;
+    this->instr_time += v_cycles; 
 
     int commit_time = -1, commit_time_pal = -1;
     if (this->last_opcode == 0xd3) {
@@ -394,7 +397,7 @@ auto Board::debug_read_hw_info() const
 {
 	std::vector<int> out;
 
-    out.push_back(i8080_cycles());
+    out.push_back(total_v_cycles);
     out.push_back(i8080_iff());
     out.push_back(filler.get_raster_pixel());
     out.push_back(filler.get_raster_line());

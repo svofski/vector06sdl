@@ -33,6 +33,7 @@ public:
 private:
     int between;
     int instr_time;
+    int total_v_cycles;
     int last_opcode;
     int frame_no;
 
