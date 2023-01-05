@@ -51,6 +51,9 @@ var last_total_v_cycles = 0
 var debug_labels = {}
 const DEBUG_LABELS_FILE_NAME = "debug.txt"
 
+var last_searchs = []
+var last_search_idx = 0
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	code_panel_menu.add_item("show the current break", CODE_PANEL_MENU_ID_CURRENT_BREAK)
@@ -291,8 +294,26 @@ func _physics_process(delta):
 		if is_breakpoint_auto(addrS):
 			remove_breakpoint(addrS)
 		set_ui_on_break()
+
+func _on_search_panel_gui_input(event):
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.scancode == KEY_UP:
+			last_search_idx = last_search_idx + 1
+			if search_panel.text == last_searchs[clamp(last_search_idx, 0, last_searchs.size()-1)]:
+				last_search_idx = last_search_idx + 1
+			search_panel.text = last_searchs[clamp(last_search_idx, 0, last_searchs.size()-1)]
+		elif event.scancode == KEY_DOWN:
+			last_search_idx = last_search_idx - 1
+			search_panel.text = last_searchs[clamp(last_search_idx, 0, last_searchs.size()-1)]
+		else:
+			last_search_idx = -1
 		
+		last_search_idx = clamp(last_search_idx, -1, last_searchs.size()-1)
+
 func _on_search_panel_text_entered(new_text : String):
+	last_searchs.erase(new_text)
+	last_searchs.push_front(new_text)
+	last_search_idx = -1
 	# is it in the 0xNNNN format to show the code at that addr?
 	if new_text.left(2) == "0x" or new_text.left(2) == "0X":
 		var addr = new_text.hex_to_int()
@@ -310,10 +331,24 @@ func _on_code_panel_gui_input(event):
 			if event.scancode == KEY_UP and cursor_line == 0 and code_panel_cursor_line_last == 0:
 				var addrS = asm_line_to_addr(code_panel.get_line(0))
 				codePanel_scroll_to_addr(addrS.hex_to_int(), 1)
-			if event.scancode == KEY_DOWN and cursor_line == code_panel.get_line_count()-1 and code_panel_cursor_line_last == code_panel.get_line_count()-1:
+			elif event.scancode == KEY_DOWN and cursor_line == code_panel.get_line_count()-1 and code_panel_cursor_line_last == code_panel.get_line_count()-1:
 				var addrS = asm_line_to_addr(code_panel.get_line(1))
 				codePanel_scroll_to_addr(addrS.hex_to_int(), 0)
 				code_panel.cursor_set_line(cursor_line)
+	if event is InputEventMouseButton:
+		if event.pressed:
+			match event.button_index:
+				BUTTON_WHEEL_UP:
+					code_panel.cursor_set_line(cursor_line - 1)
+					if cursor_line == 0 and code_panel_cursor_line_last == 0:
+						var addrS = asm_line_to_addr(code_panel.get_line(0))
+						codePanel_scroll_to_addr(addrS.hex_to_int(), 1)
+				BUTTON_WHEEL_DOWN:
+					code_panel.cursor_set_line(cursor_line + 1)
+					if cursor_line == code_panel.get_line_count()-1 and code_panel_cursor_line_last == code_panel.get_line_count()-1:
+						var addrS = asm_line_to_addr(code_panel.get_line(1))
+						codePanel_scroll_to_addr(addrS.hex_to_int(), 0)
+						code_panel.cursor_set_line(cursor_line)
 	code_panel_cursor_line_last = cursor_line
 
 func _on_step_over_pressed():
@@ -356,6 +391,9 @@ func load_debug():
 		debug_labels.clear()
 		for key in cfg.get_section_keys("debug_labels"):
 			debug_labels[key] = cfg.get_value("debug_labels",key)
+
+
+	
 
 
 
