@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "memory.h"
+#include "i8080.h"
 
 using namespace std;
 
@@ -73,7 +74,12 @@ uint8_t Memory::read(uint32_t addr, bool stackrq) const
 
     if (this->onread) this->onread(addr, phys, stackrq, value);
 
-    if (debug_onread) debug_onread(bigaddr);
+    if (debug_onread) 
+    {
+        auto pc = (i8080cpu::i8080_pc() - 1) % 0xffff; // decr by one because PC gets incremented by one right after the instr is executed and before Memory::read/write is called.
+        auto run = bigram_select(pc & 0xffff, false) == bigaddr;
+        debug_onread(bigaddr, value, run);
+    }
 
     return value;
 }
@@ -110,8 +116,7 @@ void Memory::write(uint32_t addr, uint8_t w8, bool stackrq)
         this->heatmap[bigaddr] = 255;
     }
     
-    if (debug_onwrite) debug_onwrite(bigaddr);
-
+    if (debug_onwrite) debug_onwrite(bigaddr, w8);
 }
 
 void Memory::init_from_vector(const vector<uint8_t> & from, uint32_t start_addr)
@@ -168,7 +173,7 @@ void Memory::deserialize(std::vector<uint8_t>::iterator it, uint32_t size)
 {
     auto begin = it;
     this->mode_stack = (bool) *it++;
-    this->mode_map = (bool) *it++;
+    this->mode_map = (uint8_t) *it++;
     this->page_map = ((uint32_t) *it++) << 16;
     this->page_stack = ((uint32_t) *it++) << 16;
     uint32_t stored_ramsize = 65536 * *it++;
@@ -214,10 +219,10 @@ auto Memory::get_mode_map() const -> const uint8_t
 
 auto Memory::get_page_map() const -> const uint32_t
 {
-    return page_map;
+    return page_map>>16 - 1;
 }
 
 auto Memory::get_page_stack() const -> const uint32_t
 {
-    return page_stack;
+    return page_stack>>16 - 1;
 }

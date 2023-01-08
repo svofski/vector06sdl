@@ -12,6 +12,7 @@ public:
         IO = 0xfeca1010,
         CPU = 0xfeca0000,
         BOARD = 0xfecababe,
+        DEBUG = 0xfefadada,
     };
 
     static void insert_chunk(stype_t &to, id chunk_id, stype_t &chunk)

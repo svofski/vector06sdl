@@ -37,12 +37,13 @@ extern "C" size_t    _binary_boots_bin_size;
 using namespace i8080cpu;
 
 Board::Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd,
-        TV & _tv, WavPlayer & _tape_player)
+        TV & _tv, WavPlayer & _tape_player, Debug& _debug)
     : memory(_memory), io(_io), filler(_filler), soundnik(_snd), tv(_tv),
     tape_player(_tape_player),
-    debugging(0), debugger_interrupt(0)
+    debugging(0), debugger_interrupt(0), debug(_debug)
 {
     this->inte = false;
+    debug.init(memory.debug_onread, memory.debug_onwrite);
 }
 
 void Board::init()
@@ -147,20 +148,17 @@ int Board::execute_frame(bool update_screen)
     // 59904
     this->between = 0;
     DBG_FRM(F1,F2, printf("--- %d ---\n", this->frame_no));
-    for (; !this->filler.brk && !this->debugger_interrupt;) {
+    while (!this->filler.brk) {
         this->check_interrupt();
         this->filler.irq = false;
         //DBG_FRM(F1,F2,printf("%05d %04x: ", this->between + this->instr_time, i8080_pc()));
-        if (this->debugging && this->check_breakpoint()) {
+        if (this->debugging && debug.check_break()) {
             this->debugger_interrupt = true;
             
-            printf("read_registers: %s\n", read_registers().c_str());
-            printf("Board::execute_frame: this->debugger_interrupt = true;\n");
+            printf("Board::execute_frame: break \n");
 
             if (this->onbreakpoint) this->onbreakpoint();
-            if (this->debugger_interrupt) {
-                break;
-            }
+            break;
         }
 
         this->single_step(update_screen);
@@ -260,13 +258,14 @@ void Board::single_step(bool update_screen)
     this->between += this->instr_time;
     this->instr_time = afterbrk12 >> 2;
     this->between -= this->instr_time;
-
+/*
     if (debug_on_single_step) 
     {
         auto addr = i8080cpu::i8080_pc();
         auto bigaddr = memory.bigram_select(addr & 0xffff, false);
         debug_on_single_step(bigaddr);
     }
+*/    
 }
 
 #if 0
@@ -489,6 +488,11 @@ int Board::is_break()
     return debugger_interrupt;
 }
 
+void Board::set_debugging(const bool _debugging)
+{
+	debugging = _debugging;
+}
+
 void Board::debugger_attached()
 {
     this->debugging = 1;
@@ -661,8 +665,8 @@ void Board::serialize(std::vector<uint8_t> &to) {
     this->memory.serialize(to);
     this->io.serialize(to);
     i8080cpu::serialize(to);
-
     this->serialize_self(to);
+    this->debug.serialize(to);
 }
 
 void Board::serialize_self(SerializeChunk::stype_t & to) const
@@ -671,6 +675,11 @@ void Board::serialize_self(SerializeChunk::stype_t & to) const
     chunk.push_back(static_cast<uint8_t>(this->inte));
     chunk.push_back(static_cast<uint8_t>(this->irq));
     chunk.push_back(static_cast<uint8_t>(this->irq_carry));
+    
+    size_t total_v_cycles_m[1] = {total_v_cycles};
+    auto total_v_cycles_p = reinterpret_cast<uint8_t*>(total_v_cycles_m);
+    chunk.insert(std::end(chunk), total_v_cycles_p, total_v_cycles_p + sizeof(size_t));
+    
     SerializeChunk::insert_chunk(to, SerializeChunk::BOARD, chunk);
 }
 
@@ -679,6 +688,18 @@ void Board::deserialize_self(SerializeChunk::stype_t::iterator from, uint32_t si
     this->inte = static_cast<bool>(*from++);
     this->irq = static_cast<bool>(*from++);
     this->irq_carry = static_cast<bool>(*from++);
+
+    
+    size_t total_v_cycles_m[1];
+    auto total_v_cycles_p = reinterpret_cast<uint8_t*>(total_v_cycles_m);
+	size_t total_v_cycles_sizeof = sizeof(size_t);
+
+    std::copy(from, from + total_v_cycles_sizeof, total_v_cycles_p);
+    
+    total_v_cycles = total_v_cycles_m[0];
+    from += total_v_cycles_sizeof;
+    
+   
 }
 
 bool Board::deserialize(std::vector<uint8_t> &from) {
@@ -703,6 +724,9 @@ bool Board::deserialize(std::vector<uint8_t> &from) {
                 case SerializeChunk::BOARD:
                     this->deserialize_self(begin, size);
                     break;
+                case SerializeChunk::DEBUG:
+                    this->debug.deserialize(begin, size);
+                    break;                    
                 default:
                     it = from.end();
                     result = false;

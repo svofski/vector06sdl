@@ -33,9 +33,8 @@ public:
     std::function<void(uint32_t,uint32_t,bool,uint8_t)> onwrite;
     std::function<void(uint32_t,uint32_t,bool,uint8_t)> onread;
 
-    /* bigaddr */
-    std::function<void(uint32_t)> debug_onwrite;
-    std::function<void(uint32_t)> debug_onread;
+    std::function<void(const uint32_t, const uint8_t, const bool)> debug_onread;
+    std::function<void(const uint32_t, const uint8_t)> debug_onwrite;
 
 public:
     Memory();

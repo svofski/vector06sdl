@@ -26,7 +26,7 @@ onready var shader_select_panel = find_node("shader_select_panel")
 onready var sound_panel = find_node("SoundPanel")
 onready var osk_panel = find_node("OnScreenKeyboard")
 onready var scope_panel = find_node("ScopePanel")
-onready var mem_panel = find_node("MemoryView")
+onready var debug_view = find_node("DebugView")
 onready var nice_tooltip = find_node("NiceTooltip")
 onready var loadass = [find_node("LoadAss2"), find_node("LoadAss3")]
 onready var debug_panel = find_node("debug_panel")
@@ -56,7 +56,7 @@ const SCOPE_BIG: int = 1
 var scope_state: int = SCOPE_SMALL
 
 var dialog_device: int = 0 # A: or B: for file dialog
-var debug_break_enabled = false
+var debug_ui_break = false
 
 func updateTexture(buttmap : PoolByteArray):
 	if textureImage == null:
@@ -169,7 +169,7 @@ func poll_joy(cur_joy):
 		| (int(Input.is_joy_button_pressed(cur_joy, JOY_XBOX_B)) << 7))
 		
 func _physics_process(delta):
-	if debug_break_enabled:
+	if debug_ui_break:
 		return
 	
 	v06x.SetJoysticks(poll_joy(0), poll_joy(1))
@@ -186,10 +186,10 @@ func _physics_process(delta):
 	if hud_panel.visible || scope_panel.get_parent() == self:
 		scope_panel.update_texture(sound)
 
-	if mem_panel.visible:
-		mem_panel.ram = v06x.GetMem(0, 65536*5)
-		mem_panel.heatmap = v06x.GetHeatmap(0, 65536*5)
-		mem_panel.emit_signal("visibility_changed")
+	if debug_view.visible:
+		debug_view.ram = v06x.GetMem(0, 65536*5)
+		debug_view.heatmap = v06x.GetHeatmap(0, 65536*5)
+		debug_view.emit_signal("visibility_changed")
 
 # it's impossible to tell where exactly the drop happens,
 # mouse coordinates are all over the place
@@ -209,12 +209,12 @@ func update_debugger_size():
 	var vert_available_size = hud_panel.rect_position.y
 	if not hud_panel.visible:
 		vert_available_size = get_viewport_rect().size.y
-	if mem_panel.visible:
-		mem_panel.rect_position = Vector2(0, 0)
-		mem_panel.rect_size.y = vert_available_size
+	if debug_view.visible:
+		debug_view.rect_position = Vector2(0, 0)
+		debug_view.rect_size.y = vert_available_size
 		debug_panel.debug_panel_size_update()
-		#mem_panel.rect_size.x = 1000
-		#print("update_debugger_size: mem_panel.rect_size is set to ", mem_panel.rect_size)
+		#debug_view.rect_size.x = 1000
+		#print("update_debugger_size: debug_view.rect_size is set to ", debug_view.rect_size)
 
 func update_crt_size(fit_to: Rect2):
 	var sz = Vector2(fit_to.size.x, fit_to.size.x / maintained_aspect)
@@ -244,26 +244,26 @@ func _on_size_changed():
 	update_debugger_size()
 
 	var crt_rect = Rect2(Vector2(0, 0), sz)
-	if mem_panel.visible:
-		crt_rect = crt_rect.grow_individual(-mem_panel.rect_size.x, 0, 0, 0) 
+	if debug_view.visible:
+		crt_rect = crt_rect.grow_individual(-debug_view.rect_size.x, 0, 0, 0) 
 	update_crt_size(crt_rect)
 
 	if shader_select_panel.visible:
 		shader_panel_visibility_changed()
 		
 	sz = get_viewport_rect().size
-	if mem_panel.visible:
-		sz.x = sz.x - mem_panel.rect_size.x
+	if debug_view.visible:
+		sz.x = sz.x - debug_view.rect_size.x
 	if hud_panel.visible:
 		sz.y = hud_panel.rect_position.y
 	if scope_panel.visible:
 		var pos = Vector2(0, 0)
-		if mem_panel.visible:
-			pos.x = mem_panel.rect_size.x
+		if debug_view.visible:
+			pos.x = debug_view.rect_size.x
 		update_scope_size(pos, sz)
 
-	if mem_panel.visible:
-		$VectorScreen.rect_position.x = mem_panel.rect_size.x
+	if debug_view.visible:
+		$VectorScreen.rect_position.x = debug_view.rect_size.x
 
 func place_shader_panel_please():
 	if hud_panel.visible:
@@ -390,12 +390,12 @@ func _input(event: InputEvent):
 				if event.scancode == KEY_ENTER and event.alt:
 					toggle_fullscreen()
 				else:
-					if not debug_break_enabled and (not mem_panel.visible or event.scancode != KEY_F5):
+					if not debug_ui_break and (not debug_view.visible or event.scancode != KEY_F5):
 						osk_panel._on_key_make(event.scancode, true)
-			if not debug_break_enabled and (not mem_panel.visible or event.scancode != KEY_F5):
+			if not debug_ui_break and (not debug_view.visible or event.scancode != KEY_F5):
 				get_tree().set_input_as_handled()
 		elif not event.pressed:
-			if not debug_break_enabled and (not mem_panel.visible or event.scancode != KEY_F5):
+			if not debug_ui_break and (not debug_view.visible or event.scancode != KEY_F5):
 				osk_panel._on_key_break(event.scancode)
 				get_tree().set_input_as_handled()
 
@@ -582,7 +582,8 @@ func _on_ScopePanel_pressed():
 		make_scope_small()
 
 func _on_BowserButton_pressed():
-	mem_panel.visible = not mem_panel.visible
+	debug_view.visible = not debug_view.visible
+	debug_set_debugging(debug_view.visible)
 	call_deferred("_on_size_changed")
 
 onready var rage_timer: Timer = find_node("RageTimer")
@@ -607,27 +608,43 @@ func _bowser_calm():
 	bowser_button.rect_scale = Vector2(1, 1)
 	bowser_button.rect_position = bowser_centre - bowser_button.rect_size * bowser_button.rect_scale / 2
 
+
+#==========================================================================
+#
+# DEBUGGING
+#
+#==========================================================================
+
+func debug_set_debugging(debugging_status):
+	v06x.debug_set_debugging(debugging_status)
+
+func debug_set_ui_break(break_status):
+	debug_ui_break = break_status
+
+func debug_is_ui_break():
+	return debug_ui_break
+
+func debug_is_break():
+	return v06x.debug_is_break()
+
 func debug_break_cont():
-	debug_break_enabled = not debug_break_enabled
-	if debug_break_enabled:
+	debug_ui_break = not debug_ui_break
+	if debug_ui_break:
 		debug_break()
 	else:
 		debug_continue()
 
-func is_debug_break():
-	return debug_break_enabled
-
 func debug_break():
-	debug_break_enabled = true
+	debug_ui_break = true
 	return v06x.debug_break()
-	
+
 func debug_continue():
-	debug_break_enabled = false
+	debug_ui_break = false
 	return v06x.debug_continue()
-	
+
 func debug_step_into():
 	return v06x.debug_step_into()
-	
+
 func debug_read_registers():
 	return v06x.debug_read_registers()
 
@@ -636,19 +653,16 @@ func debug_disasm(addr, lines, lines_before_addr):
 
 func debug_read_stack(lenght):
 	return v06x.debug_read_stack(lenght)
-	
-func debug_insert_breakpoint(addr):
-	return v06x.debug_insert_breakpoint(0, addr, 1)
-	
-func debug_remove_breakpoint(addr):
-	return v06x.debug_remove_breakpoint(0, addr, 1)
 
-func debug_is_break():
-	return v06x.debug_is_break()
-	
+func debug_add_breakpoint(addr):
+	return v06x.debug_add_breakpoint(addr)
+
+func debug_del_breakpoint(addr):
+	return v06x.debug_del_breakpoint(addr)
+
 func debug_read_executed_memory(addr, length):
 	return v06x.debug_read_executed_memory(addr, length)
-	
+
 func debug_read_hw_info():
 	return v06x.debug_read_hw_info()
 
