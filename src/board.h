@@ -15,6 +15,7 @@
 #include "cadence.h"
 #include "breakpoint.h"
 #include "serialize.h"
+#include "debug.h"
 
 class Board;
 
@@ -33,7 +34,7 @@ public:
 private:
     int between;
     int instr_time;
-    int total_v_cycles;
+    size_t total_v_cycles;
     int last_opcode;
     int frame_no;
 
@@ -51,6 +52,7 @@ private:
     Soundnik & soundnik;
     TV & tv;
     WavPlayer & tape_player;
+    Debug& debug;
 
     std::vector<uint8_t> boot;
 
@@ -82,7 +84,7 @@ private:
 
 public:
     Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd, 
-            TV & _tv, WavPlayer & _tape_player);
+            TV & _tv, WavPlayer & _tape_player, Debug& _debug);
 
     void init();
     void reset(Board::ResetMode blkvvod);    // true: power-on reset, false: boot loaded prog
@@ -106,9 +108,6 @@ public:
     TV & get_tv() const { return tv; }
     Soundnik & get_soundnik() const { return soundnik; }
 
-    /* bigaddr */
-    std::function<void(uint32_t)> debug_on_single_step;
-
 public:
     auto read_stack(const size_t _len) const -> std::vector<uint16_t>;
     auto debug_read_executed_memory(uint16_t _addr, const size_t _len) const -> std::vector<uint8_t>;
@@ -121,6 +120,7 @@ public:
     auto read_registers_b() -> const std::vector<int>;
     void write_registers(uint8_t * regs);
     int is_break();
+    void set_debugging(const bool _debugging);
     void debugger_attached();
     void debugger_detached();
     void debugger_break();

@@ -264,7 +264,7 @@ margin_bottom = 221.0
 rect_min_size = Vector2( 80, 204 )
 custom_styles/panel = SubResource( 43 )
 
-[node name="MemoryView" parent="." instance=ExtResource( 14 )]
+[node name="DebugView" parent="." instance=ExtResource( 14 )]
 visible = false
 margin_bottom = 470.0
 size_flags_horizontal = 2

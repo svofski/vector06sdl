@@ -71,7 +71,16 @@
 			"xtr1common": "cpp",
 			"xtree": "cpp",
 			"xutility": "cpp",
-			"iomanip": "cpp"
+			"iomanip": "cpp",
+			"charconv": "cpp",
+			"chrono": "cpp",
+			"format": "cpp",
+			"forward_list": "cpp",
+			"mutex": "cpp",
+			"optional": "cpp",
+			"ratio": "cpp",
+			"stop_token": "cpp",
+			"thread": "cpp"
 		}
 	}
 }

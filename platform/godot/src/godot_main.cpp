@@ -40,9 +40,10 @@ Soundnik soundnik(tw, aw);
 IO io(memory, keyboard, timer, fdc, ay, tape_player);//Options.nofdc ? fdc_dummy : fdc);
 TV tv;
 PixelFiller filler(memory, io, tv);
-Board board(memory, io, filler, soundnik, tv, tape_player);
+Debug debug(&memory);
+Board board(memory, io, filler, soundnik, tv, tape_player, debug);
 Emulator lator(board);
-Debug debug(&board, &memory);
+
 #if 0
 Scriptnik scriptnik;
 #endif
@@ -362,14 +363,12 @@ godot_variant V06X_ExportState(godot_object* p_instance, void* p_method_data,
 
 	auto v = static_cast<v06x_user_data *>(p_user_data);
 	api->godot_pool_byte_array_resize(&v->state, state.size());
-
 	auto wraccess = api->godot_pool_byte_array_write(&v->state);
 	uint8_t * wrptr = api->godot_pool_byte_array_write_access_ptr(wraccess);
-
+	
 	std::copy(state.begin(), state.end(), wrptr);
-
+	
 	api->godot_pool_byte_array_write_access_destroy(wraccess);
-
 	godot_variant ret;
 	api->godot_variant_new_pool_byte_array(&ret, &v->state);
 	return ret;
@@ -617,7 +616,7 @@ godot_variant debug_disasm(godot_object* p_instance, void* p_method_data,
 	return ret;
 }
 
-godot_variant debug_insert_breakpoint(godot_object* p_instance, void* p_method_data, 
+godot_variant debug_add_breakpoint(godot_object* p_instance, void* p_method_data, 
 		void* p_user_data, int p_num_args, godot_variant** p_args)
 {
 	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
@@ -627,24 +626,17 @@ godot_variant debug_insert_breakpoint(godot_object* p_instance, void* p_method_d
 		return ret;
 	}
 
-	godot_int type = api->godot_variant_as_int(p_args[0]);
-	godot_int addr = api->godot_variant_as_int(p_args[1]);
-	godot_int kind = api->godot_variant_as_int(p_args[2]);
+	godot_int addr = api->godot_variant_as_int(p_args[0]);
+	debug.add_breakpoint(addr);
 
-	auto out = board.insert_breakpoint(type, addr, kind);
+	debug.print_breakpoints();
 
-	//printf("debug_insert_breakpoint: addr: %02x, out: %s\n", addr, out.c_str());
-
-    godot_variant ret;
-    godot_string ret_gd_str;
-    api->godot_string_new(&ret_gd_str);
-    api->godot_string_parse_utf8(&ret_gd_str, out.c_str());
-    api->godot_variant_new_string(&ret, &ret_gd_str);
-    api->godot_string_destroy(&ret_gd_str);
+	godot_variant ret;
+	api->godot_variant_new_bool(&ret, 1);
 	return ret;
 }
 
-godot_variant debug_remove_breakpoint(godot_object* p_instance, void* p_method_data, 
+godot_variant debug_del_breakpoint(godot_object* p_instance, void* p_method_data, 
 		void* p_user_data, int p_num_args, godot_variant** p_args)
 {
 	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
@@ -654,20 +646,56 @@ godot_variant debug_remove_breakpoint(godot_object* p_instance, void* p_method_d
 		return ret;
 	}
 
-	godot_int type = api->godot_variant_as_int(p_args[0]);
-	godot_int addr = api->godot_variant_as_int(p_args[1]);
-	godot_int kind = api->godot_variant_as_int(p_args[2]);
+	godot_int addr = api->godot_variant_as_int(p_args[0]);
+	debug.del_breakpoint(addr);
 
-	auto out = board.remove_breakpoint(type, addr, kind);
+	debug.print_breakpoints(); 
 
-	//printf("debug_remove_breakpoint: addr: %02x, out: %s\n", addr, out.c_str());
+	godot_variant ret;
+	api->godot_variant_new_bool(&ret, 1);
+	return ret;
+}
 
-    godot_variant ret;
-    godot_string ret_gd_str;
-    api->godot_string_new(&ret_gd_str);
-    api->godot_string_parse_utf8(&ret_gd_str, out.c_str());
-    api->godot_variant_new_string(&ret, &ret_gd_str);
-    api->godot_string_destroy(&ret_gd_str);
+godot_variant debug_add_watchpoint(godot_object* p_instance, void* p_method_data, 
+		void* p_user_data, int p_num_args, godot_variant** p_args)
+{
+	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+	if (!user_data_p->initialized) {
+		godot_variant ret;
+		api->godot_variant_new_bool(&ret, 0);
+		return ret;
+	}
+
+	auto access = static_cast<Debug::Watchpoint::Access>(api->godot_variant_as_int(p_args[0]));
+	auto addr = api->godot_variant_as_int(p_args[1]);
+	auto cond = static_cast<Debug::Watchpoint::Condition>(api->godot_variant_as_int(p_args[2]));
+	auto value = static_cast<uint8_t>(api->godot_variant_as_int(p_args[3]));
+	debug.add_watchpoint(access, addr, cond, value);
+
+	debug.print_watchpoints();
+
+	godot_variant ret;
+	api->godot_variant_new_bool(&ret, 1);
+	return ret;
+}
+
+godot_variant debug_del_watchpoint(godot_object* p_instance, void* p_method_data, 
+		void* p_user_data, int p_num_args, godot_variant** p_args)
+{
+	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+	if (!user_data_p->initialized) {
+		godot_variant ret;
+		api->godot_variant_new_bool(&ret, 0);
+		return ret;
+	}
+
+	godot_int addr = api->godot_variant_as_int(p_args[0]);
+	debug.del_watchpoint(addr);
+
+	debug.print_watchpoints(); 
+
+	godot_variant ret;
+	api->godot_variant_new_bool(&ret, 1);
 	return ret;
 }
 
@@ -742,5 +770,24 @@ godot_variant debug_read_hw_info(godot_object* p_instance, void* p_method_data,
 	api->godot_pool_int_array_write_access_destroy(int_array_gd_wa);
 	godot_variant ret;
 	api->godot_variant_new_pool_int_array(&ret, &int_array_gd);
+	return ret;
+}
+
+godot_variant debug_set_debugging(godot_object* p_instance, void* p_method_data, 
+		void* p_user_data, int p_num_args, godot_variant** p_args)
+{
+	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+	if (!user_data_p->initialized) {
+		godot_variant ret;
+		api->godot_variant_new_bool(&ret, 0);
+		return ret;
+	}
+
+	godot_bool debugging = api->godot_variant_as_int(p_args[0]);
+
+	board.set_debugging(debugging);
+
+	godot_variant ret;
+	api->godot_variant_new_bool(&ret, 1);
 	return ret;
 }

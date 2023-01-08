@@ -1,49 +1,52 @@
 #include "debug.h"
+#include "..\..\..\src\i8080.h"
+#include "..\..\..\src\serialize.h"
 
 #include <string>
 #include <iomanip>
+#include <sstream>
+#include <vector>
 
-Debug::Debug(Board* _boardP, Memory* _memoryP)
-: mem_runs(), mem_reads(), mem_writes(), memoryP(_memoryP)
+Debug::Debug(Memory* _memoryP)
+: mem_runs(), mem_reads(), mem_writes(), memoryP(_memoryP), wp_break(false)
+{}
+
+void Debug::init(std::function<void(const uint32_t, const uint8_t, const bool)>& debug_onread, std::function<void(const uint32_t, const uint8_t)>& debug_onwrite)
 {
 	auto read_func =
-		[this](const size_t _addr)
+		[this](const uint32_t _addr, const uint8_t _val, const bool _run)
 		{
-			this->read(_addr);
+			this->read(_addr, _val, _run);
 		};
 
 	auto write_func =
-		[this](const size_t _addr)
+		[this](const uint32_t _addr, const uint8_t _val)
 		{
-			this->write(_addr);
+			this->write(_addr, _val);
 		};
 
-	auto run_func =
-		[this](const size_t _addr)
-		{
-			this->run(_addr);
-		};
-
-	_boardP->debug_on_single_step = run_func;
-	_memoryP->debug_onread = read_func;
-	_memoryP->debug_onwrite = write_func;
+	debug_onread = read_func;
+	debug_onwrite = write_func;
 }
 
-void Debug::run(const size_t _addr)
+void Debug::read(const size_t _global_addr, const uint8_t _val, const bool _run)
 {
-	mem_runs[_addr % MEMORY_SIZE]++;
+	if(_run)
+	{
+		mem_runs[_global_addr]++;
+	}
+	else
+	{
+		mem_reads[_global_addr]++;
+		wp_break = check_watchpoint(Watchpoint::Access::R, _global_addr, _val);
+	}
 }
 
-void Debug::read(const size_t _addr)
+void Debug::write(const size_t _global_addr, const uint8_t _val)
 {
-	mem_reads[_addr % MEMORY_SIZE]++;
+	mem_writes[_global_addr]++;
+	wp_break = check_watchpoint(Watchpoint::Access::W, _global_addr, _val);
 }
-
-void Debug::write(const size_t _addr)
-{
-	mem_writes[_addr % MEMORY_SIZE]++;
-}
-
 
  /*
  *  Based on original code by:
@@ -298,7 +301,7 @@ auto Debug::disasm(const size_t _addr, const size_t _lines, const size_t _before
 		auto data_l = memoryP->get_byte((addr+1) & 0xffff, false);
 		auto data_h = memoryP->get_byte((addr+2) & 0xffff, false);
 
-		uint32_t bigaddr = memoryP->bigram_select(addr, false);
+		size_t bigaddr = memoryP->bigram_select(addr, false);
 
 		std::string runsS = std::to_string(mem_runs[bigaddr]);
 		std::string readsS = std::to_string(mem_reads[bigaddr]);
@@ -320,7 +323,271 @@ auto Debug::disasm(const size_t _addr, const size_t _lines, const size_t _before
 
 void Debug::reset()
 {
-    std::fill(mem_runs, mem_runs + MEMORY_SIZE, 0);
-	std::fill(mem_reads, mem_reads + MEMORY_SIZE, 0);
-	std::fill(mem_writes, mem_writes + MEMORY_SIZE, 0);
+    std::fill(mem_runs, mem_runs + GLOBAL_MEM_SIZE, 0);
+	std::fill(mem_reads, mem_reads + GLOBAL_MEM_SIZE, 0);
+	std::fill(mem_writes, mem_writes + GLOBAL_MEM_SIZE, 0);
+}
+
+void Debug::serialize(std::vector<uint8_t> &to) 
+{
+    auto mem_runs_p = reinterpret_cast<uint8_t*>(mem_runs);
+	auto mem_reads_p = reinterpret_cast<uint8_t*>(mem_reads);
+	auto mem_writes_p = reinterpret_cast<uint8_t*>(mem_writes);
+	
+	std::vector<uint8_t> tmp;	
+    tmp.insert(std::end(tmp), mem_runs_p, mem_runs_p + GLOBAL_MEM_SIZE * sizeof(uint64_t));
+	tmp.insert(std::end(tmp), mem_reads_p, mem_reads_p + GLOBAL_MEM_SIZE * sizeof(uint64_t));
+	tmp.insert(std::end(tmp), mem_writes_p, mem_writes_p + GLOBAL_MEM_SIZE * sizeof(uint64_t));
+
+    SerializeChunk::insert_chunk(to, SerializeChunk::DEBUG, tmp);
+}
+
+void Debug::deserialize(std::vector<uint8_t>::iterator it, size_t size)
+{
+    auto begin = it;
+    
+	auto mem_runs_p = reinterpret_cast<uint8_t*>(mem_runs);
+	auto mem_reads_p = reinterpret_cast<uint8_t*>(mem_reads);
+	auto mem_writes_p = reinterpret_cast<uint8_t*>(mem_writes);
+
+	size_t mem_runs_size_in_bytes = GLOBAL_MEM_SIZE * sizeof(uint64_t);
+    std::copy(it, it + mem_runs_size_in_bytes, mem_runs_p);
+    it += mem_runs_size_in_bytes;
+
+	size_t mem_reads_size_in_bytes = GLOBAL_MEM_SIZE * sizeof(uint64_t);
+    std::copy(it, it + mem_reads_size_in_bytes, mem_reads_p);
+    it += mem_reads_size_in_bytes;
+
+	size_t mem_writes_size_in_bytes = GLOBAL_MEM_SIZE * sizeof(uint64_t);
+    std::copy(it, it + mem_writes_size_in_bytes, mem_writes_p);
+    it += mem_writes_size_in_bytes;		
+
+}
+
+void Debug::add_breakpoint(const size_t _addr, const AddrSpace _addr_space)
+{
+	auto addr = get_breakpoint_global_addr(_addr, _addr_space);
+	
+	std::lock_guard<std::mutex> mlock(breakpoints_mutex);
+	auto bp = breakpoints.find(addr);
+	if (bp != breakpoints.end())
+	{
+		breakpoints.erase(bp); 
+	}
+	
+	breakpoints.emplace(addr, std::move(Breakpoint(addr)));
+}
+
+void Debug::del_breakpoint(const size_t _addr, const AddrSpace _addr_space)
+{
+	auto addr = get_breakpoint_global_addr(_addr, _addr_space);
+
+	std::lock_guard<std::mutex> mlock(breakpoints_mutex);
+	auto bp = breakpoints.find(addr);
+	if (bp != breakpoints.end())
+	{
+		breakpoints.erase(bp);
+	}
+}
+
+void Debug::add_watchpoint(const Watchpoint::Access _access, const size_t _addr, const Watchpoint::Condition _cond, const uint8_t _value, const AddrSpace _addr_space)
+{
+	auto addr = get_breakpoint_global_addr(_addr, _addr_space);
+	
+	std::lock_guard<std::mutex> mlock(watchpoints_mutex);
+	auto bp = watchpoints.find(addr);
+	if (bp != watchpoints.end())
+	{
+		watchpoints.erase(bp);
+	}	
+	watchpoints.emplace(addr, std::move(Watchpoint(_access, addr, _cond, _value)));
+}
+
+void Debug::del_watchpoint(const size_t _addr, const AddrSpace _addr_space)
+{
+	auto addr = get_watchpoint_global_addr(_addr, _addr_space);
+
+	std::lock_guard<std::mutex> mlock(watchpoints_mutex);
+	auto bp = watchpoints.find(addr);
+	if (bp != watchpoints.end())
+	{
+		watchpoints.erase(bp);
+	}
+}
+
+bool Debug::check_breakpoints(const size_t _global_addr)
+{
+	std::lock_guard<std::mutex> mlock(breakpoints_mutex);
+	auto bp = breakpoints.find(_global_addr);
+	if (bp == breakpoints.end()) return false;
+	return bp->second.check();
+}
+
+bool Debug::check_watchpoint(const Watchpoint::Access _access, const size_t _global_addr, const uint8_t _value)
+{
+	std::lock_guard<std::mutex> mlock(watchpoints_mutex);
+	auto wp = watchpoints.find(_global_addr);
+	if (wp == watchpoints.end()) return false;
+	return wp->second.check(_access, _value);
+}
+
+bool Debug::check_break()
+{
+	if (wp_break) return wp_break;
+	wp_break = false;
+
+	auto pc = i8080cpu::i8080_pc();
+	auto global_addr = get_breakpoint_global_addr(pc, AddrSpace::CPU);
+
+	auto break_ = check_breakpoints(global_addr);
+		
+	if (break_){
+		std::printf("Debug::bp break. _global_addr: 0x%06x, _val: %02x\n", global_addr);
+	}
+
+	return break_;
+}
+
+auto Debug::get_breakpoint_global_addr(size_t _addr, const AddrSpace _addr_space) const
+-> const size_t
+{
+	if(_addr_space == AddrSpace::CPU)
+	{
+		_addr = memoryP->bigram_select(_addr & 0xffff, false);
+	}
+	else
+	{
+		_addr = _addr & (GLOBAL_MEM_SIZE-1);
+	}
+	return _addr;
+}
+
+auto Debug::get_watchpoint_global_addr(size_t _addr, const AddrSpace _addr_space) const
+-> const size_t
+{
+	if(_addr_space != AddrSpace::GLOBAL)
+	{
+		bool stack_space = _addr_space == AddrSpace::STACK ? true : false;
+		_addr = memoryP->bigram_select(_addr & 0xffff, stack_space);
+	}
+	else{
+		_addr = _addr & (GLOBAL_MEM_SIZE-1);
+	}
+	return _addr;
+}
+
+void Debug::print_breakpoints()
+{
+	std::printf("breakpoints:\n");
+	std::lock_guard<std::mutex> mlock(breakpoints_mutex);
+    for (const auto& [addr, bp] : breakpoints)
+	{
+		bp.print();
+	}
+}
+
+void Debug::print_watchpoints()
+{
+	std::printf("watchpoints:\n");
+	std::lock_guard<std::mutex> mlock(watchpoints_mutex);
+    for (const auto& [addr, wp] : watchpoints)
+	{
+		wp.print();
+	}
+}
+
+auto Debug::Breakpoint::is_active() const
+->const bool
+{
+	return active;
+}
+auto Debug::Breakpoint::check() const
+->const bool
+{
+	return active;
+}
+
+void Debug::Breakpoint::print() const
+{
+	std::printf("0x%06x, active: %d \n", global_addr, active);
+}
+
+auto Debug::Watchpoint::is_active() const
+->const bool
+{
+	return active;
+}
+
+auto Debug::Watchpoint::check(const Watchpoint::Access _access, const uint8_t _value) const
+->const bool
+{
+	if (!active) return false;
+	if (access != Access::RW || access != _access) return false;
+
+	switch (cond)
+	{
+        case Condition::ANY:
+		    return true;
+		case Condition::EQU:
+		    return _value == value;
+		case Condition::LESS:
+		    return _value < value;
+		case Condition::GREATER:
+		    return _value > value;
+		case Condition::LESS_EQU:
+		    return _value <= value;
+		case Condition::GREATER_EQU:
+		    return _value >= value;
+		case Condition::NOT_EQU:
+		    return _value != value;
+		default:
+            return false;
+	};
+}
+
+void Debug::Watchpoint::print() const
+{
+	std::string accessS;
+	switch (access){
+		case Access::R:
+			accessS = "R";
+			break;
+		case Access::W:
+			accessS = "W";
+			break;
+		case Access::RW:
+			accessS = "RW";
+			break;
+		default:
+			break;
+	};
+	std::string condS;
+	switch (cond)
+	{
+        case Condition::ANY:
+			condS = "ANY";
+		    break;
+		case Condition::EQU:
+			condS = "= " + std::to_string(value);
+		    break;
+		case Condition::LESS:
+			condS = "< " + std::to_string(value); 
+		    break;
+		case Condition::GREATER:
+			condS = "> " + std::to_string(value);
+		    break;
+		case Condition::LESS_EQU:
+			condS = "<= " + std::to_string(value);
+		    break;
+		case Condition::GREATER_EQU:
+			condS = ">= " + std::to_string(value);
+		    break;
+		case Condition::NOT_EQU:
+			condS = "!= " + std::to_string(value);
+		    break;
+		default:
+            break;
+	};
+
+	std::printf("0x%06x, access: %s, cond: %s, active: %d \n", global_addr, accessS, condS, active);
 }

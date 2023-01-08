@@ -11,6 +11,8 @@ onready var reg_text_panel = find_node("reg_text_panel")
 onready var flag_text_panel = find_node("flag_text_panel")
 onready var hw_text_panel = find_node("hw_text_panel")
 onready var breakpoints_list_panel = find_node("breakpoints_list_panel")
+onready var watchpoints_list_panel = find_node("watchpoints_list_panel")
+onready var watchpoint_popup = find_node("breakpoint_popup")
 
 onready var callstack_panel = find_node("callstack_panel")
 onready var callstack_list_panel = find_node("callstack_list_panel")
@@ -23,9 +25,15 @@ onready var step_out = find_node("step_out")
 onready var main_bar = find_node("main_bar")
 onready var search_panel = find_node("search_panel")
 
-const CODE_PANEL_MENU_ID_CURRENT_BREAK = 10
-const CODE_PANEL_MENU_ID_REMOVE_ALL_BRKS = 20
-const CODE_PANEL_MENU_ID_RUN_CURSOR = 30
+enum CODE_PANEL_MENU_ID {
+	CURRENT_BREAK,
+	REMOVE_ALL_BRKS,
+	RUN_CURSOR,
+	ADD_REMOVE_BRK,
+	ADD_REMOVE_WP,
+	REMOVE_ALL_WPS,
+}
+
 onready var code_panel_menu = code_panel.get_menu()
 
 const STACK_TEXT_LINES = 6
@@ -56,14 +64,17 @@ var last_search_idx = 0
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	code_panel_menu.add_item("show the current break", CODE_PANEL_MENU_ID_CURRENT_BREAK)
-	code_panel_menu.add_item("run to the selected line", CODE_PANEL_MENU_ID_RUN_CURSOR)
-	code_panel_menu.add_item("remove all breakpoints", CODE_PANEL_MENU_ID_REMOVE_ALL_BRKS)
+	code_panel_menu.add_item("show the current break", CODE_PANEL_MENU_ID.CURRENT_BREAK)
+	code_panel_menu.add_item("run to the selected line", CODE_PANEL_MENU_ID.RUN_CURSOR)
+	code_panel_menu.add_item("add/remove breakpoint", CODE_PANEL_MENU_ID.ADD_REMOVE_BRK)
+	code_panel_menu.add_item("remove all breakpoints", CODE_PANEL_MENU_ID.REMOVE_ALL_BRKS)
+	code_panel_menu.add_item("add/remove watchpoint", CODE_PANEL_MENU_ID.ADD_REMOVE_WP)
+	code_panel_menu.add_item("remove all watchpoints", CODE_PANEL_MENU_ID.REMOVE_ALL_WPS)
 	code_panel_menu.connect("id_pressed", self, "code_panel_menu_id_pressed")
 	set_ui_on_cont()
 	
 func debug_panel_size_update():
-	if main.debug_break_enabled:
+	if main.debug_is_ui_break():
 		var addrS = asm_line_to_addr(code_panel.get_line(0))
 		codePanel_scroll_to_addr(addrS.hex_to_int(), 0)
 	code_panel.margin_bottom = self.margin_bottom
@@ -79,9 +90,9 @@ func _on_debug_panel_focus_exited():
 	debug_panel_size_update()
 
 func set_ui_on_break():
-		code_panel_menu.set_item_disabled(code_panel_menu.get_item_index(CODE_PANEL_MENU_ID_CURRENT_BREAK), false)
-		code_panel_menu.set_item_disabled(code_panel_menu.get_item_index(CODE_PANEL_MENU_ID_REMOVE_ALL_BRKS), false)
-		code_panel_menu.set_item_disabled(code_panel_menu.get_item_index(CODE_PANEL_MENU_ID_RUN_CURSOR), false)
+		code_panel_menu.set_item_disabled(code_panel_menu.get_item_index(CODE_PANEL_MENU_ID.CURRENT_BREAK), false)
+		code_panel_menu.set_item_disabled(code_panel_menu.get_item_index(CODE_PANEL_MENU_ID.REMOVE_ALL_BRKS), false)
+		code_panel_menu.set_item_disabled(code_panel_menu.get_item_index(CODE_PANEL_MENU_ID.RUN_CURSOR), false)
 		
 		break_cont.icon = cont_icon_tex
 		regTextPanel_update(true)
@@ -96,9 +107,9 @@ func set_ui_on_break():
 		search_panel.editable = true;
 		
 func set_ui_on_cont():
-		code_panel_menu.set_item_disabled(code_panel_menu.get_item_index(CODE_PANEL_MENU_ID_CURRENT_BREAK), true)
-		code_panel_menu.set_item_disabled(code_panel_menu.get_item_index(CODE_PANEL_MENU_ID_REMOVE_ALL_BRKS), true)
-		code_panel_menu.set_item_disabled(code_panel_menu.get_item_index(CODE_PANEL_MENU_ID_RUN_CURSOR), true)
+		code_panel_menu.set_item_disabled(code_panel_menu.get_item_index(CODE_PANEL_MENU_ID.CURRENT_BREAK), true)
+		code_panel_menu.set_item_disabled(code_panel_menu.get_item_index(CODE_PANEL_MENU_ID.REMOVE_ALL_BRKS), true)
+		code_panel_menu.set_item_disabled(code_panel_menu.get_item_index(CODE_PANEL_MENU_ID.RUN_CURSOR), true)
 		break_cont.icon = break_icon_tex
 		regTextPanel_update(false)
 		flagTextPanel_update(false)
@@ -112,7 +123,7 @@ func set_ui_on_cont():
 		search_panel.editable = false;
 
 func _on_break_cont_pressed():
-	if main.is_debug_break():
+	if main.debug_is_ui_break():
 		set_ui_on_cont()
 		# to pass the breakpoint on the current addr
 		main.debug_step_into()
@@ -200,7 +211,12 @@ func hw_text_panel_update(enabled):
 		var page_stack = hw_info[5] / 0xffff
 		var mode_map = hw_info[6]
 		var page_map = hw_info[7] / 0xffff
-		hw_text_panel.text  = "cycles %d\nlast run %d\niff %d\ncrt (%d, %d)\nmode stack %d\npage stack %d\nmode ram %d\npage ram %d" % [total_v_cycles, last_run_v_cycles, iff, raster_pixel, raster_line, mode_stack, page_stack, mode_map, page_map]
+		var ram_e = "E" if mode_map & 0x80 else "_"
+		var ram_8 = "8" if mode_map & 0x40 else "_"
+		var ram_ac = "AC" if mode_map & 0x20 else "__"
+		var ram_mode = ram_8 + ram_ac + ram_e
+		
+		hw_text_panel.text  = "cycles %d\nlast run %d\niff %d\ncrt (%d, %d)\nmode stack %d\nmode ram %s\npage stack %d\npage ram %d" % [total_v_cycles, last_run_v_cycles, iff, raster_pixel, raster_line, mode_stack, ram_mode, page_stack, page_map]
 		
 		hw_text_panel.add_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
 	else:
@@ -221,28 +237,28 @@ func breakpoint_list_find(addrS):
 func asm_line_to_addr(line):
 	return line.left(7).right(1)
 
-func insert_breakpoint(addrS, auto_remove = false):
+func add_breakpoint(addrS, auto_remove = false):
 	var brk_exists = breakpoint_list_find(addrS) != -1
 	if not brk_exists:
 		var addr = addrS.hex_to_int()
 		if auto_remove:
 			addrS += BREAKPOINT_AUTO_POSTFIX
 		breakpoints_list_panel.add_item(addrS)
-		main.debug_insert_breakpoint(addr)
+		main.debug_add_breakpoint(addr)
 		
-func remove_breakpoint(addrS):
+func del_breakpoint(addrS):
 	var idx = breakpoint_list_find(addrS)
 	if idx != -1:
 		breakpoints_list_panel.remove_item(idx)
 		var addr = addrS.hex_to_int()
-		main.debug_remove_breakpoint(addr)
+		main.debug_del_breakpoint(addr)
 
-func remove_all_breakpoints():
+func del_all_breakpoints():
 	code_panel.remove_breakpoints()
 	for idx in range(breakpoints_list_panel.get_item_count()):
 		var addrS = breakpoints_list_panel_get_addr(idx)
 		var addr = addrS.hex_to_int()
-		main.debug_remove_breakpoint(addr)
+		main.debug_del_breakpoint(addr)
 	breakpoints_list_panel.clear()
 	codePanel_update(true)
 	
@@ -253,9 +269,9 @@ func _on_code_panel_breakpoint_toggled(row):
 	var addrS = asm_line_to_addr(code_panel.get_line(row))
 	var bp = code_panel.is_line_set_as_breakpoint(row)
 	if bp:
-		insert_breakpoint(addrS)
+		add_breakpoint(addrS)
 	else:
-		remove_breakpoint(addrS)
+		del_breakpoint(addrS)
 
 func codePanel_scroll_to_addr(addr, lines_before = CODE_PANEL_LINES_AHEAD):
 	var lines = code_panel.get_visible_rows()
@@ -275,27 +291,35 @@ func _on_breakpoints_list_panel_item_selected(index):
 	
 func code_panel_menu_id_pressed(id):
 	match id:
-		CODE_PANEL_MENU_ID_CURRENT_BREAK:
+		CODE_PANEL_MENU_ID.CURRENT_BREAK:
 			var pc = get_reg_pc()
 			codePanel_scroll_to_addr(pc)
 			code_panel.cursor_set_line(CODE_PANEL_LINES_AHEAD)
-		CODE_PANEL_MENU_ID_REMOVE_ALL_BRKS:
-			remove_all_breakpoints()
-		CODE_PANEL_MENU_ID_RUN_CURSOR:
+		CODE_PANEL_MENU_ID.REMOVE_ALL_BRKS:
+			del_all_breakpoints()
+		CODE_PANEL_MENU_ID.RUN_CURSOR:
 			var addrS = asm_line_to_addr(code_panel.get_line(code_panel.cursor_get_line()))
-			insert_breakpoint(addrS, true)
+			add_breakpoint(addrS, true)
 			_on_break_cont_pressed()
-
+		CODE_PANEL_MENU_ID.ADD_REMOVE_BRK:
+			var cursor_line = code_panel.cursor_get_line()
+			var bp = code_panel.is_line_set_as_breakpoint(cursor_line)
+			code_panel.set_line_as_breakpoint(cursor_line, not bp)
+			_on_code_panel_breakpoint_toggled(cursor_line)
+			
 func _physics_process(delta):
-	if not main.debug_break_enabled and main.debug_is_break():
-		main.debug_break_enabled = true
+	if not main.debug_is_ui_break() and main.debug_is_break():
+		main.debug_set_ui_break(true)
 		var pc = get_reg_pc()
 		var addrS = "0x%04X" % pc
 		if is_breakpoint_auto(addrS):
-			remove_breakpoint(addrS)
+			del_breakpoint(addrS)
 		set_ui_on_break()
 
 func _on_search_panel_gui_input(event):
+	if last_searchs.size() == 0:
+		return
+		
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.scancode == KEY_UP:
 			last_search_idx = last_search_idx + 1
@@ -325,6 +349,9 @@ func _on_search_panel_text_entered(new_text : String):
 			codePanel_scroll_to_addr(addr, 0)
 
 func _on_code_panel_gui_input(event):
+	if not main.debug_is_ui_break():
+		return
+	
 	var cursor_line = code_panel.cursor_get_line()
 	if event is InputEventKey:
 		if event.pressed:
@@ -357,7 +384,7 @@ func _on_step_over_pressed():
 	if step_over_cmds.find(opcode) != -1:
 		var new_pc = (pc + OPCODE_CALL_LEN) % 0xffff
 		var addrS = "0x%04X" % new_pc
-		insert_breakpoint(addrS, true)
+		add_breakpoint(addrS, true)
 		_on_break_cont_pressed()
 	else:
 		_on_step_into_pressed()
@@ -382,6 +409,8 @@ func save_debug():
 	cfg.load("user://v06x.debug")
 	for key in debug_labels:
 		cfg.set_value("debug_labels", key, debug_labels[key])
+		
+	cfg.set_value("debug_hw_info", "last_total_v_cycles", last_total_v_cycles)
 	cfg.save("user://v06x.debug")
 	
 func load_debug():
@@ -392,39 +421,16 @@ func load_debug():
 		for key in cfg.get_section_keys("debug_labels"):
 			debug_labels[key] = cfg.get_value("debug_labels",key)
 
+		last_total_v_cycles = cfg.get_value("debug_hw_info", "last_total_v_cycles", 0)
 
+func _on_watchpoints_list_panel_nothing_selected():
+	watchpoint_popup.set_position(get_local_mouse_position())
+	watchpoint_popup.visible = true
+
+func watchpoints_list_panel_insert_watchpoint(name, addrS, val):
+	var name_addr_val = "0x%s: %0x%02X %s" % [addrS, val, name]
+	watchpoints_list_panel.add_item(name_addr_val)
+
+func _on_watchpoint_popup_confirmed(addrS, name, val):
+	watchpoints_list_panel_insert_watchpoint(addrS, name, val)
 	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
