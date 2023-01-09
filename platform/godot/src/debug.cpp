@@ -9,9 +9,6 @@
 
 Debug::Debug(Memory* _memoryP)
 : mem_runs(), mem_reads(), mem_writes(), memoryP(_memoryP), wp_break(false)
-{}
-
-void Debug::init(std::function<void(const uint32_t, const uint8_t, const bool)>& debug_onread, std::function<void(const uint32_t, const uint8_t)>& debug_onwrite)
 {
 	auto read_func =
 		[this](const uint32_t _addr, const uint8_t _val, const bool _run)
@@ -25,8 +22,8 @@ void Debug::init(std::function<void(const uint32_t, const uint8_t, const bool)>&
 			this->write(_addr, _val);
 		};
 
-	debug_onread = read_func;
-	debug_onwrite = write_func;
+	memoryP->debug_onread = read_func;
+	memoryP->debug_onwrite = write_func;
 }
 
 void Debug::read(const size_t _global_addr, const uint8_t _val, const bool _run)
@@ -38,23 +35,16 @@ void Debug::read(const size_t _global_addr, const uint8_t _val, const bool _run)
 	else
 	{
 		mem_reads[_global_addr]++;
-		wp_break = check_watchpoint(Watchpoint::Access::R, _global_addr, _val);
+		wp_break |= check_watchpoint(Watchpoint::Access::R, _global_addr, _val);
 	}
 }
 
 void Debug::write(const size_t _global_addr, const uint8_t _val)
 {
 	mem_writes[_global_addr]++;
-	wp_break = check_watchpoint(Watchpoint::Access::W, _global_addr, _val);
+	wp_break |= check_watchpoint(Watchpoint::Access::W, _global_addr, _val);
 }
 
- /*
- *  Based on original code by:
- *  Juergen Buchmueller (MESS project, BSD-3-clause licence)
- *  and
- *  Emu80 v. 4.x
- *  © Viktor Pykhonin <pyk@mail.ru>, 2017
- */
 static const char* mnemonics[0x100] =
 {
 	"NOP",    "LXI B,",  "STAX B", "INX B",  "INR B", "DCR B", "MVI B,", "RLC", "DB 08H", "DAD B",  "LDAX B", "DCX B",  "INR C", "DCR C", "MVI C,", "RRC",
@@ -364,7 +354,7 @@ void Debug::deserialize(std::vector<uint8_t>::iterator it, size_t size)
 
 }
 
-void Debug::add_breakpoint(const size_t _addr, const AddrSpace _addr_space)
+void Debug::add_breakpoint(const size_t _addr, const bool _active, const AddrSpace _addr_space)
 {
 	auto addr = get_breakpoint_global_addr(_addr, _addr_space);
 	
@@ -375,7 +365,7 @@ void Debug::add_breakpoint(const size_t _addr, const AddrSpace _addr_space)
 		breakpoints.erase(bp); 
 	}
 	
-	breakpoints.emplace(addr, std::move(Breakpoint(addr)));
+	breakpoints.emplace(addr, std::move(Breakpoint(addr, _active)));
 }
 
 void Debug::del_breakpoint(const size_t _addr, const AddrSpace _addr_space)
@@ -390,7 +380,7 @@ void Debug::del_breakpoint(const size_t _addr, const AddrSpace _addr_space)
 	}
 }
 
-void Debug::add_watchpoint(const Watchpoint::Access _access, const size_t _addr, const Watchpoint::Condition _cond, const uint8_t _value, const AddrSpace _addr_space)
+void Debug::add_watchpoint(const Watchpoint::Access _access, const size_t _addr, const Watchpoint::Condition _cond, const uint8_t _value, const bool _active, const AddrSpace _addr_space)
 {
 	auto addr = get_breakpoint_global_addr(_addr, _addr_space);
 	
@@ -400,7 +390,7 @@ void Debug::add_watchpoint(const Watchpoint::Access _access, const size_t _addr,
 	{
 		watchpoints.erase(bp);
 	}	
-	watchpoints.emplace(addr, std::move(Watchpoint(_access, addr, _cond, _value)));
+	watchpoints.emplace(addr, std::move(Watchpoint(_access, addr, _cond, _value, _active)));
 }
 
 void Debug::del_watchpoint(const size_t _addr, const AddrSpace _addr_space)
@@ -428,23 +418,26 @@ bool Debug::check_watchpoint(const Watchpoint::Access _access, const size_t _glo
 	std::lock_guard<std::mutex> mlock(watchpoints_mutex);
 	auto wp = watchpoints.find(_global_addr);
 	if (wp == watchpoints.end()) return false;
+
 	return wp->second.check(_access, _value);
 }
 
 bool Debug::check_break()
 {
-	if (wp_break) return wp_break;
-	wp_break = false;
+	if (wp_break) 
+	{
+		wp_break = false;
+		print_watchpoints();
+		return true;
+	}
 
 	auto pc = i8080cpu::i8080_pc();
 	auto global_addr = get_breakpoint_global_addr(pc, AddrSpace::CPU);
 
 	auto break_ = check_breakpoints(global_addr);
+	
+	if (break_) print_watchpoints();
 		
-	if (break_){
-		std::printf("Debug::bp break. _global_addr: 0x%06x, _val: %02x\n", global_addr);
-	}
-
 	return break_;
 }
 
@@ -457,7 +450,7 @@ auto Debug::get_breakpoint_global_addr(size_t _addr, const AddrSpace _addr_space
 	}
 	else
 	{
-		_addr = _addr & (GLOBAL_MEM_SIZE-1);
+		_addr = _addr % GLOBAL_MEM_SIZE;
 	}
 	return _addr;
 }
@@ -471,7 +464,7 @@ auto Debug::get_watchpoint_global_addr(size_t _addr, const AddrSpace _addr_space
 		_addr = memoryP->bigram_select(_addr & 0xffff, stack_space);
 	}
 	else{
-		_addr = _addr & (GLOBAL_MEM_SIZE-1);
+		_addr = _addr % GLOBAL_MEM_SIZE;
 	}
 	return _addr;
 }
@@ -522,7 +515,7 @@ auto Debug::Watchpoint::check(const Watchpoint::Access _access, const uint8_t _v
 ->const bool
 {
 	if (!active) return false;
-	if (access != Access::RW || access != _access) return false;
+	if (access != Access::RW && access != _access) return false;
 
 	switch (cond)
 	{
@@ -543,51 +536,10 @@ auto Debug::Watchpoint::check(const Watchpoint::Access _access, const uint8_t _v
 		default:
             return false;
 	};
+
 }
 
 void Debug::Watchpoint::print() const
 {
-	std::string accessS;
-	switch (access){
-		case Access::R:
-			accessS = "R";
-			break;
-		case Access::W:
-			accessS = "W";
-			break;
-		case Access::RW:
-			accessS = "RW";
-			break;
-		default:
-			break;
-	};
-	std::string condS;
-	switch (cond)
-	{
-        case Condition::ANY:
-			condS = "ANY";
-		    break;
-		case Condition::EQU:
-			condS = "= " + std::to_string(value);
-		    break;
-		case Condition::LESS:
-			condS = "< " + std::to_string(value); 
-		    break;
-		case Condition::GREATER:
-			condS = "> " + std::to_string(value);
-		    break;
-		case Condition::LESS_EQU:
-			condS = "<= " + std::to_string(value);
-		    break;
-		case Condition::GREATER_EQU:
-			condS = ">= " + std::to_string(value);
-		    break;
-		case Condition::NOT_EQU:
-			condS = "!= " + std::to_string(value);
-		    break;
-		default:
-            break;
-	};
-
-	std::printf("0x%06x, access: %s, cond: %s, active: %d \n", global_addr, accessS, condS, active);
+	std::printf("0x%05x, access: %s, cond: %s, value: 0x%02x, active: %d \n", global_addr, access_s[static_cast<size_t>(access)], conditions_s[static_cast<size_t>(cond)], value, active);
 }

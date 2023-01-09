@@ -43,7 +43,6 @@ Board::Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd,
     debugging(0), debugger_interrupt(0), debug(_debug)
 {
     this->inte = false;
-    debug.init(memory.debug_onread, memory.debug_onwrite);
 }
 
 void Board::init()

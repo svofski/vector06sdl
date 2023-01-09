@@ -26,25 +26,14 @@ public:
 	class Watchpoint
 	{
 	public:
-		enum class Access : size_t
-		{
-			R,
-			W,
-			RW
-		};
-		enum class Condition : size_t
-		{
-			ANY,
-			EQU,
-			LESS,
-			GREATER,
-			LESS_EQU,
-			GREATER_EQU,
-			NOT_EQU
-		};
+		enum class Access : size_t {R = 0, W, RW, COUNT};
+		static constexpr const char* access_s[] = {"R-", "-W", "RW"};
+
+		enum class Condition : size_t {ANY = 0, EQU, LESS, GREATER, LESS_EQU, GREATER_EQU, NOT_EQU, COUNT};
+		static constexpr const char* conditions_s[] = {"ANY", "==", "<", ">", "<=", ">=", "!="};
 
 		Watchpoint(const Access _access, const size_t _global_addr, const Condition _cond, const uint8_t _value, const bool _active = true)
-		: access(_access), global_addr(_global_addr), cond(_cond), value(_value), active(_active)
+		: access(static_cast<Debug::Watchpoint::Access>((size_t)_access % (size_t)Access::COUNT)), global_addr(_global_addr), cond(static_cast<Debug::Watchpoint::Condition>((size_t)_cond & (size_t)Condition::COUNT)), value(_value & 0xff), active(_active)
 		{}
 		auto check(const Watchpoint::Access _access, const uint8_t _value) const -> const bool;
 		auto is_active() const -> const bool;
@@ -64,17 +53,14 @@ public:
 	static const constexpr size_t GLOBAL_MEM_SIZE	= RAM_SIZE + RAM_DISK_SIZE;
 
 
-	enum class AddrSpace
+	enum AddrSpace : size_t
 	{
-		CPU, // range: [0x0000, 0xffff]
+		CPU = 0, // range: [0x0000, 0xffff]
 		STACK, // range: 0x0000 - 0xFFFF accessed via stack commands: xthl, push, pop
 		GLOBAL // range: [0x0000, 0xffff] * 5 (ram + ram-disk)
 	};
 
 	Debug(Memory* _memory);
-	void init(std::function<void(const uint32_t, const uint8_t, const bool)>& debug_onread, std::function<void(const uint32_t, const uint8_t)>& debug_onwrite);
-
-	//void run(const size_t _addr);
 	void read(const size_t _global_addr, const uint8_t _val, const bool _run);
 	void write(const size_t _global_addr, const uint8_t _val);
 	auto disasm(const size_t _addr, const size_t _lines, const size_t _before_addr_lines) const ->std::string;
@@ -82,9 +68,9 @@ public:
 	void serialize(std::vector<uint8_t> &to);
 	void deserialize(std::vector<uint8_t>::iterator it, size_t size);
 
-	void add_breakpoint(const size_t _addr, const AddrSpace _addr_space = AddrSpace::CPU);
+	void add_breakpoint(const size_t _addr, const bool _active = true, const AddrSpace _addr_space = AddrSpace::CPU);
 	void del_breakpoint(const size_t _addr, const AddrSpace _addr_space = AddrSpace::CPU);
-	void add_watchpoint(const Watchpoint::Access _access, const size_t _addr, const Watchpoint::Condition _cond, const uint8_t _value, const AddrSpace _addr_space = AddrSpace::CPU);
+	void add_watchpoint(const Watchpoint::Access _access, const size_t _addr, const Watchpoint::Condition _cond, const uint8_t _value, const bool _active = true, const AddrSpace _addr_space = AddrSpace::CPU);
 	void del_watchpoint(const size_t _addr, const AddrSpace _addr_space = AddrSpace::CPU);
 	void print_breakpoints();
 	void print_watchpoints();

@@ -654,11 +654,17 @@ func debug_disasm(addr, lines, lines_before_addr):
 func debug_read_stack(lenght):
 	return v06x.debug_read_stack(lenght)
 
-func debug_add_breakpoint(addr):
-	return v06x.debug_add_breakpoint(addr)
+func debug_add_breakpoint(addr, active, addr_space):
+	return v06x.debug_add_breakpoint(addr, active, addr_space)
 
-func debug_del_breakpoint(addr):
-	return v06x.debug_del_breakpoint(addr)
+func debug_del_breakpoint(addr, addr_space):
+	return v06x.debug_del_breakpoint(addr, addr_space)
+
+func debug_add_watchpoint(access, addr, cond, val, active, addr_space):
+	return v06x.debug_add_watchpoint(access, addr, cond, val, active, addr_space)
+
+func debug_del_watchpoint(addr, addr_space):
+	return v06x.debug_del_watchpoint(addr, addr_space)
 
 func debug_read_executed_memory(addr, length):
 	return v06x.debug_read_executed_memory(addr, length)

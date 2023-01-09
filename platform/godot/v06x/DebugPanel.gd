@@ -12,7 +12,17 @@ onready var flag_text_panel = find_node("flag_text_panel")
 onready var hw_text_panel = find_node("hw_text_panel")
 onready var breakpoints_list_panel = find_node("breakpoints_list_panel")
 onready var watchpoints_list_panel = find_node("watchpoints_list_panel")
-onready var watchpoint_popup = find_node("breakpoint_popup")
+onready var watchpoint_popup = find_node("watchpoint_popup")
+onready var wp_access_r = find_node("wp_access_r")
+onready var wp_access_w = find_node("wp_access_w")
+onready var wp_addr = find_node("wp_addr")
+onready var wp_cond = find_node("wp_cond")
+onready var wp_value = find_node("wp_value")
+onready var wp_active = find_node("wp_active")
+onready var wp_addr_space_cpu = find_node("wp_addr_space_cpu")
+onready var wp_addr_space_stack = find_node("wp_addr_space_stack")
+onready var wp_addr_space_global = find_node("wp_addr_space_global")
+onready var wp_value_size = find_node("wp_value_size")
 
 onready var callstack_panel = find_node("callstack_panel")
 onready var callstack_list_panel = find_node("callstack_list_panel")
@@ -33,6 +43,48 @@ enum CODE_PANEL_MENU_ID {
 	ADD_REMOVE_WP,
 	REMOVE_ALL_WPS,
 }
+
+enum WATCHPOINTS_ACCESS {
+	R = 0,
+	W = 1,
+	RW = 2
+}
+var WATCHPOINTS_ACCESS_S = [
+	"R-",
+	"-W",
+	"RW"
+]
+
+enum WATCHPOINTS_COND {
+	ANY = 0,
+	EQU,
+	LESS,
+	GREATER,
+	LESS_EQU,
+	GREATER_EQU,
+	NOT_EQU
+}
+var WATCHPOINTS_COND_S = [
+	"ANY",
+	"==",
+	"<",
+	">",
+	"<=",
+	">=",
+	"!=",
+]
+
+enum BW_POINTS_ADDR_SPACE {
+	CPU = 0,
+	STACK,
+	GLOBAL
+}
+
+var BW_POINTS_ADDR_SPACE_S = [
+	"CPU",
+	"STACK",
+	"GLOBAL"
+]
 
 onready var code_panel_menu = code_panel.get_menu()
 
@@ -244,21 +296,21 @@ func add_breakpoint(addrS, auto_remove = false):
 		if auto_remove:
 			addrS += BREAKPOINT_AUTO_POSTFIX
 		breakpoints_list_panel.add_item(addrS)
-		main.debug_add_breakpoint(addr)
+		main.debug_add_breakpoint(addr, true, 0)
 		
 func del_breakpoint(addrS):
 	var idx = breakpoint_list_find(addrS)
 	if idx != -1:
 		breakpoints_list_panel.remove_item(idx)
 		var addr = addrS.hex_to_int()
-		main.debug_del_breakpoint(addr)
+		main.debug_del_breakpoint(addr, 0)
 
 func del_all_breakpoints():
 	code_panel.remove_breakpoints()
 	for idx in range(breakpoints_list_panel.get_item_count()):
 		var addrS = breakpoints_list_panel_get_addr(idx)
 		var addr = addrS.hex_to_int()
-		main.debug_del_breakpoint(addr)
+		main.debug_del_breakpoint(addr, 0)
 	breakpoints_list_panel.clear()
 	codePanel_update(true)
 	
@@ -427,10 +479,77 @@ func _on_watchpoints_list_panel_nothing_selected():
 	watchpoint_popup.set_position(get_local_mouse_position())
 	watchpoint_popup.visible = true
 
-func watchpoints_list_panel_insert_watchpoint(name, addrS, val):
-	var name_addr_val = "0x%s: %0x%02X %s" % [addrS, val, name]
-	watchpoints_list_panel.add_item(name_addr_val)
+func watchpoints_list_panel_add(access, addr, cond, val, active, addr_space):
+	var accessS = WATCHPOINTS_ACCESS_S[access]
+	var condS = WATCHPOINTS_COND_S[cond]
+	var valS = "" if cond == WATCHPOINTS_COND.ANY else "0x%02X" % val
+	var activeS = "+" if active else "-"
+	var addr_spaceS = BW_POINTS_ADDR_SPACE_S[addr_space]
+	var wp_text = "0x%05X: %s %s%s %s %s" % [addr, accessS, condS, valS, addr_spaceS, activeS]
+	watchpoints_list_panel.add_item(wp_text)
+	main.debug_add_watchpoint(access, addr, cond, val, active, addr_space)
 
-func _on_watchpoint_popup_confirmed(addrS, name, val):
-	watchpoints_list_panel_insert_watchpoint(addrS, name, val)
+func _on_watchpoint_popup_confirmed():
+	var access = WATCHPOINTS_ACCESS.RW
+	if wp_access_r.pressed and not wp_access_w.pressed:
+		access = WATCHPOINTS_ACCESS.R
+	if not wp_access_r.pressed and wp_access_w.pressed:
+		access = WATCHPOINTS_ACCESS.W
 	
+	var addr = wp_addr.text.hex_to_int()
+		
+	var cond = WATCHPOINTS_COND.ANY
+	if wp_cond.text == "==" or wp_cond.text == "=":
+		cond = WATCHPOINTS_COND.EQU
+	if wp_cond.text == "<":
+		cond = WATCHPOINTS_COND.LESS		
+	elif wp_cond.text == ">":
+		cond = WATCHPOINTS_COND.GREATER
+	elif wp_cond.text == "<=":
+		cond = WATCHPOINTS_COND.LESS_EQU
+	elif wp_cond.text == ">=":
+		cond = WATCHPOINTS_COND.GREATER_EQU
+	elif wp_cond.text == "!=":
+		cond = WATCHPOINTS_COND.NOT_EQU
+	
+	var val = wp_value.text.hex_to_int()
+	var active = wp_active.pressed
+	
+	var addr_space = 0
+	if wp_addr_space_cpu.pressed:
+		addr_space = BW_POINTS_ADDR_SPACE.CPU
+	elif wp_addr_space_stack.pressed:
+		addr_space = BW_POINTS_ADDR_SPACE.STACK
+	else: 
+		addr_space = BW_POINTS_ADDR_SPACE.GLOBAL
+	
+	watchpoints_list_panel_add(access, addr, cond, val, active, addr_space)
+
+func _on_wp_addr_space_cpu_pressed():
+	if not wp_addr_space_cpu.pressed:
+		wp_addr_space_cpu.pressed = true
+	wp_addr_space_stack.pressed = false
+	wp_addr_space_global.pressed = false
+
+func _on_wp_addr_space_stack_pressed():
+	wp_addr_space_cpu.pressed = false
+	if not wp_addr_space_stack.pressed:
+		wp_addr_space_stack.pressed = true
+	wp_addr_space_global.pressed = false
+
+func _on_wp_addr_space_global_pressed():
+	wp_addr_space_cpu.pressed = false
+	wp_addr_space_stack.pressed = false
+	if not wp_addr_space_global.pressed:
+		wp_addr_space_global.pressed = true
+
+func _on_wp_access_nor_r_not_w_pressed():
+	if not wp_access_r.pressed and not wp_access_w.pressed:
+		wp_access_r.pressed = true
+		wp_access_w.pressed = true
+
+func _on_wp_value_size_pressed():
+	if wp_value_size.text == "byte":
+		wp_value_size.text = "word"
+	else:
+		wp_value_size.text = "byte"

@@ -235,7 +235,7 @@ __meta__ = {
 
 [node name="watchpoint_panel" type="Panel" parent="HSplitContainer/debug_panel"]
 margin_left = 248.0
-margin_right = 300.0
+margin_right = 400.0
 margin_bottom = 103.0
 
 [node name="watchpoints_label" type="Label" parent="HSplitContainer/debug_panel/watchpoint_panel"]
@@ -253,7 +253,7 @@ text = "watchpts:"
 [node name="watchpoints_list_panel" type="ItemList" parent="HSplitContainer/debug_panel/watchpoint_panel"]
 margin_left = 2.0
 margin_top = 8.0
-margin_right = 98.0
+margin_right = 298.0
 margin_bottom = 194.0
 rect_scale = Vector2( 0.5, 0.5 )
 size_flags_vertical = 3
@@ -263,8 +263,9 @@ __meta__ = {
 
 [node name="callstack_panel" type="Panel" parent="HSplitContainer/debug_panel"]
 margin_left = 303.0
+margin_top = 104.0
 margin_right = 400.0
-margin_bottom = 278.0
+margin_bottom = 279.0
 
 [node name="callstack_label" type="Label" parent="HSplitContainer/debug_panel/callstack_panel"]
 margin_left = 3.0
@@ -282,7 +283,7 @@ text = "Call/Jmp Stack:"
 margin_left = 2.0
 margin_top = 8.0
 margin_right = 188.0
-margin_bottom = 544.0
+margin_bottom = 336.0
 rect_scale = Vector2( 0.5, 0.5 )
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -412,56 +413,63 @@ custom_fonts/font = SubResource( 4 )
 clear_button_enabled = true
 caret_blink = true
 
-[node name="breakpoint_popup" type="ConfirmationDialog" parent="HSplitContainer/debug_panel"]
+[node name="watchpoint_popup" type="ConfirmationDialog" parent="HSplitContainer/debug_panel"]
 visible = true
 margin_left = 100.0
 margin_top = 100.0
-margin_right = 280.0
-margin_bottom = 243.0
+margin_right = 343.0
+margin_bottom = 266.0
 rect_min_size = Vector2( 180, 100 )
-window_title = "Breakpoint Settings"
+window_title = "Watchpoint Settings"
 __meta__ = {
 "_editor_description_": ""
 }
 
-[node name="breakpoint_panel" type="Panel" parent="HSplitContainer/debug_panel/breakpoint_popup"]
+[node name="watchpoint_panel" type="Panel" parent="HSplitContainer/debug_panel/watchpoint_popup"]
 margin_left = 8.0
 margin_top = 8.0
-margin_right = 172.0
-margin_bottom = 96.0
+margin_right = 235.0
+margin_bottom = 119.0
 
-[node name="bp_mode_e" type="CheckButton" parent="HSplitContainer/debug_panel/breakpoint_popup/breakpoint_panel"]
+[node name="wp_access_label" type="Label" parent="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel"]
 margin_left = 7.0
-margin_top = 2.0
-margin_right = 187.0
-margin_bottom = 34.0
-rect_scale = Vector2( 0.5, 0.5 )
-text = "Executed"
-flat = true
-
-[node name="bp_mode_r" type="CheckButton" parent="HSplitContainer/debug_panel/breakpoint_popup/breakpoint_panel"]
-margin_left = 7.0
-margin_top = 15.0
-margin_right = 187.0
-margin_bottom = 47.0
-rect_scale = Vector2( 0.5, 0.5 )
-text = "Read"
-flat = true
-
-[node name="bp_mode_w" type="CheckButton" parent="HSplitContainer/debug_panel/breakpoint_popup/breakpoint_panel"]
-margin_left = 7.0
-margin_top = 28.0
-margin_right = 187.0
-margin_bottom = 60.0
-rect_scale = Vector2( 0.5, 0.5 )
-text = "Written"
-flat = true
-
-[node name="wp_addr_label" type="Label" parent="HSplitContainer/debug_panel/breakpoint_popup/breakpoint_panel"]
-margin_left = 7.00001
-margin_top = 44.0
+margin_top = 6.0
 margin_right = 77.0
-margin_bottom = 65.0
+margin_bottom = 27.0
+rect_scale = Vector2( 0.7, 0.7 )
+rect_clip_content = true
+size_flags_horizontal = 0
+size_flags_vertical = 0
+custom_colors/font_color = Color( 1, 1, 1, 1 )
+custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
+custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
+text = "Access"
+
+[node name="wp_access_r" type="CheckBox" parent="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel"]
+margin_left = 89.0
+margin_top = 6.0
+margin_right = 155.0
+margin_bottom = 38.0
+rect_scale = Vector2( 0.5, 0.5 )
+pressed = true
+text = "R"
+flat = true
+
+[node name="wp_access_w" type="CheckBox" parent="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel"]
+margin_left = 131.0
+margin_top = 6.0
+margin_right = 193.0
+margin_bottom = 38.0
+rect_scale = Vector2( 0.5, 0.5 )
+pressed = true
+text = "W"
+flat = true
+
+[node name="wp_addr_label" type="Label" parent="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel"]
+margin_left = 7.00001
+margin_top = 28.0
+margin_right = 77.0
+margin_bottom = 49.0
 rect_scale = Vector2( 0.7, 0.7 )
 rect_clip_content = true
 size_flags_horizontal = 0
@@ -471,21 +479,21 @@ custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
 text = "Address"
 
-[node name="wp_addr" type="LineEdit" parent="HSplitContainer/debug_panel/breakpoint_popup/breakpoint_panel"]
-margin_left = 80.0
-margin_top = 44.0
-margin_right = 210.0
-margin_bottom = 75.0
+[node name="wp_addr" type="LineEdit" parent="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel"]
+margin_left = 89.0
+margin_top = 28.0
+margin_right = 357.0
+margin_bottom = 59.0
 rect_scale = Vector2( 0.5, 0.5 )
 size_flags_horizontal = 0
 size_flags_vertical = 0
 text = "0x1000"
 
-[node name="wp_cond_label" type="Label" parent="HSplitContainer/debug_panel/breakpoint_popup/breakpoint_panel"]
+[node name="wp_cond_label" type="Label" parent="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel"]
 margin_left = 7.00001
-margin_top = 63.0
+margin_top = 48.0
 margin_right = 97.0
-margin_bottom = 84.0
+margin_bottom = 69.0
 rect_scale = Vector2( 0.7, 0.7 )
 rect_clip_content = true
 size_flags_horizontal = 0
@@ -493,16 +501,100 @@ size_flags_vertical = 0
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
-text = "Condition"
+text = "Cond/Value"
 
-[node name="wp_cond" type="LineEdit" parent="HSplitContainer/debug_panel/breakpoint_popup/breakpoint_panel"]
-margin_left = 80.0
-margin_top = 63.0
-margin_right = 210.0
-margin_bottom = 94.0
+[node name="wp_cond" type="LineEdit" parent="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel"]
+margin_left = 89.0
+margin_top = 48.0
+margin_right = 219.0
+margin_bottom = 79.0
 rect_scale = Vector2( 0.5, 0.5 )
 size_flags_horizontal = 0
 size_flags_vertical = 0
+
+[node name="wp_value" type="LineEdit" parent="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel"]
+margin_left = 158.0
+margin_top = 48.0
+margin_right = 288.0
+margin_bottom = 79.0
+rect_scale = Vector2( 0.5, 0.5 )
+size_flags_horizontal = 0
+size_flags_vertical = 0
+
+[node name="wp_active_label" type="Label" parent="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel"]
+margin_left = 7.00001
+margin_top = 68.0
+margin_right = 97.0
+margin_bottom = 89.0
+rect_scale = Vector2( 0.7, 0.7 )
+rect_clip_content = true
+size_flags_horizontal = 0
+size_flags_vertical = 0
+custom_colors/font_color = Color( 1, 1, 1, 1 )
+custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
+custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
+text = "Active"
+
+[node name="wp_active" type="CheckBox" parent="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel"]
+margin_left = 89.0
+margin_top = 68.0
+margin_right = 173.0
+margin_bottom = 100.0
+rect_scale = Vector2( 0.5, 0.5 )
+pressed = true
+flat = true
+
+[node name="wp_addr_space_label2" type="Label" parent="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel"]
+margin_left = 7.0
+margin_top = 88.0
+margin_right = 107.0
+margin_bottom = 109.0
+rect_scale = Vector2( 0.7, 0.7 )
+rect_clip_content = true
+size_flags_horizontal = 0
+size_flags_vertical = 0
+custom_colors/font_color = Color( 1, 1, 1, 1 )
+custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
+custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
+text = "AddrSpace"
+
+[node name="wp_addr_space_cpu" type="CheckBox" parent="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel"]
+margin_left = 89.0
+margin_top = 88.0
+margin_right = 173.0
+margin_bottom = 120.0
+rect_scale = Vector2( 0.5, 0.5 )
+pressed = true
+text = "CPU"
+flat = true
+
+[node name="wp_addr_space_stack" type="CheckBox" parent="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel"]
+margin_left = 131.0
+margin_top = 88.0
+margin_right = 225.0
+margin_bottom = 120.0
+rect_scale = Vector2( 0.5, 0.5 )
+text = "STACK"
+flat = true
+
+[node name="wp_addr_space_global" type="CheckBox" parent="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel"]
+margin_left = 177.0
+margin_top = 88.0
+margin_right = 271.0
+margin_bottom = 120.0
+rect_scale = Vector2( 0.5, 0.5 )
+text = "GLOBAL"
+flat = true
+
+[node name="wp_value_size" type="CheckBox" parent="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel"]
+margin_left = 155.0
+margin_top = 63.0
+margin_right = 249.0
+margin_bottom = 95.0
+rect_scale = Vector2( 0.5, 0.5 )
+toggle_mode = false
+text = "byte"
+flat = true
 
 [node name="VBoxContainer" type="VBoxContainer" parent="HSplitContainer"]
 margin_left = 412.0
@@ -571,6 +663,12 @@ text = "Helpful hints"
 [connection signal="gui_input" from="HSplitContainer/debug_panel/code_panel" to="HSplitContainer/debug_panel" method="_on_code_panel_gui_input"]
 [connection signal="gui_input" from="HSplitContainer/debug_panel/main_bar/search_panel" to="HSplitContainer/debug_panel" method="_on_search_panel_gui_input"]
 [connection signal="text_entered" from="HSplitContainer/debug_panel/main_bar/search_panel" to="HSplitContainer/debug_panel" method="_on_search_panel_text_entered"]
-[connection signal="confirmed" from="HSplitContainer/debug_panel/breakpoint_popup" to="HSplitContainer/debug_panel" method="_on_watchpoint_popup_confirmed"]
+[connection signal="confirmed" from="HSplitContainer/debug_panel/watchpoint_popup" to="HSplitContainer/debug_panel" method="_on_watchpoint_popup_confirmed"]
+[connection signal="pressed" from="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel/wp_access_r" to="HSplitContainer/debug_panel" method="_on_wp_access_nor_r_not_w_pressed"]
+[connection signal="pressed" from="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel/wp_access_w" to="HSplitContainer/debug_panel" method="_on_wp_access_nor_r_not_w_pressed"]
+[connection signal="pressed" from="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel/wp_addr_space_cpu" to="HSplitContainer/debug_panel" method="_on_wp_addr_space_cpu_pressed"]
+[connection signal="pressed" from="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel/wp_addr_space_stack" to="HSplitContainer/debug_panel" method="_on_wp_addr_space_stack_pressed"]
+[connection signal="pressed" from="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel/wp_addr_space_global" to="HSplitContainer/debug_panel" method="_on_wp_addr_space_global_pressed"]
+[connection signal="pressed" from="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel/wp_value_size" to="HSplitContainer/debug_panel" method="_on_wp_value_size_pressed"]
 [connection signal="gui_input" from="HSplitContainer/VBoxContainer" to="." method="_on_gui_input"]
 [connection signal="gui_input" from="HSplitContainer/VBoxContainer/ScrollContainer/Dump" to="HSplitContainer/VBoxContainer/ScrollContainer/Dump" method="_on_gui_input"]

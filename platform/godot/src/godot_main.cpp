@@ -627,7 +627,9 @@ godot_variant debug_add_breakpoint(godot_object* p_instance, void* p_method_data
 	}
 
 	godot_int addr = api->godot_variant_as_int(p_args[0]);
-	debug.add_breakpoint(addr);
+	auto active = static_cast<bool>(api->godot_variant_as_int(p_args[1]));
+	auto addr_space = static_cast<Debug::AddrSpace>(api->godot_variant_as_int(p_args[2]));
+	debug.add_breakpoint(addr, active, addr_space);
 
 	debug.print_breakpoints();
 
@@ -647,7 +649,8 @@ godot_variant debug_del_breakpoint(godot_object* p_instance, void* p_method_data
 	}
 
 	godot_int addr = api->godot_variant_as_int(p_args[0]);
-	debug.del_breakpoint(addr);
+	auto addr_space = static_cast<Debug::AddrSpace>(api->godot_variant_as_int(p_args[1]));
+	debug.del_breakpoint(addr, addr_space);
 
 	debug.print_breakpoints(); 
 
@@ -670,7 +673,9 @@ godot_variant debug_add_watchpoint(godot_object* p_instance, void* p_method_data
 	auto addr = api->godot_variant_as_int(p_args[1]);
 	auto cond = static_cast<Debug::Watchpoint::Condition>(api->godot_variant_as_int(p_args[2]));
 	auto value = static_cast<uint8_t>(api->godot_variant_as_int(p_args[3]));
-	debug.add_watchpoint(access, addr, cond, value);
+	auto active = static_cast<bool>(api->godot_variant_as_int(p_args[4]));
+	auto addr_space = static_cast<Debug::AddrSpace>(api->godot_variant_as_int(p_args[5]));
+	debug.add_watchpoint(access, addr, cond, value, active, addr_space);
 
 	debug.print_watchpoints();
 
@@ -690,7 +695,8 @@ godot_variant debug_del_watchpoint(godot_object* p_instance, void* p_method_data
 	}
 
 	godot_int addr = api->godot_variant_as_int(p_args[0]);
-	debug.del_watchpoint(addr);
+	auto addr_space = static_cast<Debug::AddrSpace>(api->godot_variant_as_int(p_args[1]));
+	debug.del_watchpoint(addr, addr_space);
 
 	debug.print_watchpoints(); 
 
