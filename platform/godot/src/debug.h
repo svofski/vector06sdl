@@ -3,10 +3,11 @@
 #include <memory>
 #include <mutex>
 #include <map>
+#include <vector>
 
 class Debug
 {
-public:	
+public:
 	class Breakpoint
 	{
 	public:
@@ -28,24 +29,35 @@ public:
 	public:
 		enum class Access : size_t {R = 0, W, RW, COUNT};
 		static constexpr const char* access_s[] = {"R-", "-W", "RW"};
+		static constexpr size_t VAL_BYTE_SIZE = sizeof(uint8_t);
+		static constexpr size_t VAL_WORD_SIZE = sizeof(uint16_t);
+		static constexpr size_t VAL_MAX_SIZE = VAL_WORD_SIZE;
 
 		enum class Condition : size_t {ANY = 0, EQU, LESS, GREATER, LESS_EQU, GREATER_EQU, NOT_EQU, COUNT};
 		static constexpr const char* conditions_s[] = {"ANY", "==", "<", ">", "<=", ">=", "!="};
 
-		Watchpoint(const Access _access, const size_t _global_addr, const Condition _cond, const uint8_t _value, const bool _active = true)
-		: access(static_cast<Debug::Watchpoint::Access>((size_t)_access % (size_t)Access::COUNT)), global_addr(_global_addr), cond(static_cast<Debug::Watchpoint::Condition>((size_t)_cond & (size_t)Condition::COUNT)), value(_value & 0xff), active(_active)
+		Watchpoint(const Access _access, const size_t _global_addr, const Condition _cond, const uint16_t _value, const size_t _value_size = VAL_BYTE_SIZE, const bool _active = true)
+		: access(static_cast<Debug::Watchpoint::Access>((size_t)_access % (size_t)Access::COUNT)), global_addr(_global_addr), cond(static_cast<Debug::Watchpoint::Condition>((size_t)_cond & (size_t)Condition::COUNT)), 
+		value(_value & 0xffff), value_size(_value_size % VAL_MAX_SIZE), active(_active), break_l(false), break_h(false)
 		{}
-		auto check(const Watchpoint::Access _access, const uint8_t _value) const -> const bool;
+		auto check(const Watchpoint::Access _access, const size_t _global_addr, const uint8_t _value) -> const bool;
 		auto is_active() const -> const bool;
+		auto get_global_addr() const -> const size_t;
+		auto check_addr(const size_t _global_addr) const -> const bool;
+		void reset();
 		void print() const;
 
 	private:
 		Access access;
 		size_t global_addr;
 		Condition cond;
-		uint8_t value;
+		uint16_t value;
+		size_t value_size;
 		bool active;
+		bool break_l;
+		bool break_h;
 	};
+	using Watchpoints = std::vector<Debug::Watchpoint>;
 
 	static const constexpr size_t MEM_BANK_SIZE	= 0x10000;
 	static const constexpr size_t RAM_SIZE		= MEM_BANK_SIZE;
@@ -55,9 +67,9 @@ public:
 
 	enum AddrSpace : size_t
 	{
-		CPU = 0, // range: [0x0000, 0xffff]
-		STACK, // range: 0x0000 - 0xFFFF accessed via stack commands: xthl, push, pop
-		GLOBAL // range: [0x0000, 0xffff] * 5 (ram + ram-disk)
+		CPU = 0,	// cpu adressed space. range: [0x0000, 0xffff]
+		STACK,		// cpu adressed space via stack commands: xthl, push, pop. range: 0x0000 - 0xFFFF accessed 
+		GLOBAL		// flat virtual addr space (ram + ram-disk). range: [0x0000, 0x4ffff]
 	};
 
 	Debug(Memory* _memory);
@@ -70,8 +82,9 @@ public:
 
 	void add_breakpoint(const size_t _addr, const bool _active = true, const AddrSpace _addr_space = AddrSpace::CPU);
 	void del_breakpoint(const size_t _addr, const AddrSpace _addr_space = AddrSpace::CPU);
-	void add_watchpoint(const Watchpoint::Access _access, const size_t _addr, const Watchpoint::Condition _cond, const uint8_t _value, const bool _active = true, const AddrSpace _addr_space = AddrSpace::CPU);
+	void add_watchpoint(const Watchpoint::Access _access, const size_t _addr, const Watchpoint::Condition _cond, const uint16_t _value, const size_t _value_size = 1, const bool _active = true, const AddrSpace _addr_space = AddrSpace::CPU);
 	void del_watchpoint(const size_t _addr, const AddrSpace _addr_space = AddrSpace::CPU);
+	void reset_watchpoints();
 	void print_breakpoints();
 	void print_watchpoints();
 
@@ -87,9 +100,9 @@ private:
 	auto get_addr(const size_t _end_addr, const size_t _before_addr_lines) const -> size_t;
 	auto get_breakpoint_global_addr(size_t _addr, const AddrSpace _addr_space) const -> const size_t;
 	auto get_watchpoint_global_addr(size_t _addr, const AddrSpace _addr_space) const -> const size_t;
+	auto watchpoints_find(const size_t global_addr) -> Watchpoints::iterator;
+	void watchpoints_erase(const size_t global_addr);
 
-private:
-	//uint8_t  mem[GLOBAL_MEM_SIZE];
 	uint64_t mem_runs[GLOBAL_MEM_SIZE];
 	uint64_t mem_reads[GLOBAL_MEM_SIZE];
 	uint64_t mem_writes[GLOBAL_MEM_SIZE];
@@ -99,6 +112,6 @@ private:
 	std::mutex breakpoints_mutex;
 	std::mutex watchpoints_mutex;
 	std::map<size_t, Debug::Breakpoint> breakpoints;
-	std::map<size_t, Debug::Watchpoint> watchpoints;
+	Watchpoints watchpoints;
 	bool wp_break;
 };

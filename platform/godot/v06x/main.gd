@@ -660,8 +660,8 @@ func debug_add_breakpoint(addr, active, addr_space):
 func debug_del_breakpoint(addr, addr_space):
 	return v06x.debug_del_breakpoint(addr, addr_space)
 
-func debug_add_watchpoint(access, addr, cond, val, active, addr_space):
-	return v06x.debug_add_watchpoint(access, addr, cond, val, active, addr_space)
+func debug_add_watchpoint(access, addr, cond, val, size, active, addr_space):
+	return v06x.debug_add_watchpoint(access, addr, cond, val, size, active, addr_space)
 
 func debug_del_watchpoint(addr, addr_space):
 	return v06x.debug_del_watchpoint(addr, addr_space)
