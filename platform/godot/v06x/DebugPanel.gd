@@ -314,8 +314,22 @@ func del_all_breakpoints():
 	breakpoints_list_panel.clear()
 	codePanel_update(true)
 	
+func del_all_watchpoints():
+	for idx in range(breakpoints_list_panel.get_item_count()):
+		var addrS_addr_space = watchpoints_list_panel_get_addr(idx)
+		var addr = addrS_addr_space[0].hex_to_int()
+		main.debug_del_watchpoint(addr, addrS_addr_space[1])
+	watchpoints_list_panel.clear()
+	codePanel_update(true)	
+	
 func breakpoints_list_panel_get_addr(idx):
 	return breakpoints_list_panel.get_item_text(idx).left(6)
+	
+func watchpoints_list_panel_get_addr(idx):
+	var txt = watchpoints_list_panel.get_item_text(idx)
+	var addr_end_idx = txt.find(":")
+	var addr_space = 0
+	return [txt.left(addr_end_idx), addr_space]
 
 func _on_code_panel_breakpoint_toggled(row):
 	var addrS = asm_line_to_addr(code_panel.get_line(row))
@@ -358,6 +372,8 @@ func code_panel_menu_id_pressed(id):
 			var bp = code_panel.is_line_set_as_breakpoint(cursor_line)
 			code_panel.set_line_as_breakpoint(cursor_line, not bp)
 			_on_code_panel_breakpoint_toggled(cursor_line)
+		CODE_PANEL_MENU_ID.REMOVE_ALL_WPS:
+			del_all_watchpoints()
 			
 func _physics_process(delta):
 	if not main.debug_is_ui_break() and main.debug_is_break():
@@ -479,15 +495,16 @@ func _on_watchpoints_list_panel_nothing_selected():
 	watchpoint_popup.set_position(get_local_mouse_position())
 	watchpoint_popup.visible = true
 
-func watchpoints_list_panel_add(access, addr, cond, val, active, addr_space):
+func watchpoints_list_panel_add(access, addr, cond, val, size, active, addr_space):
 	var accessS = WATCHPOINTS_ACCESS_S[access]
 	var condS = WATCHPOINTS_COND_S[cond]
 	var valS = "" if cond == WATCHPOINTS_COND.ANY else "0x%02X" % val
+	var val_sizeS = "b" if size == 1 else "w"
 	var activeS = "+" if active else "-"
 	var addr_spaceS = BW_POINTS_ADDR_SPACE_S[addr_space]
-	var wp_text = "0x%05X: %s %s%s %s %s" % [addr, accessS, condS, valS, addr_spaceS, activeS]
+	var wp_text = "0x%05X: %s %s%s %s %s %s" % [addr, accessS, condS, valS, val_sizeS, addr_spaceS, activeS]
 	watchpoints_list_panel.add_item(wp_text)
-	main.debug_add_watchpoint(access, addr, cond, val, active, addr_space)
+	main.debug_add_watchpoint(access, addr, cond, val, size, active, addr_space)
 
 func _on_watchpoint_popup_confirmed():
 	var access = WATCHPOINTS_ACCESS.RW
@@ -515,6 +532,9 @@ func _on_watchpoint_popup_confirmed():
 	var val = wp_value.text.hex_to_int()
 	var active = wp_active.pressed
 	
+	var sizeS = wp_value_size.text
+	var size = 1 if sizeS == "byte" else 2
+	
 	var addr_space = 0
 	if wp_addr_space_cpu.pressed:
 		addr_space = BW_POINTS_ADDR_SPACE.CPU
@@ -523,7 +543,7 @@ func _on_watchpoint_popup_confirmed():
 	else: 
 		addr_space = BW_POINTS_ADDR_SPACE.GLOBAL
 	
-	watchpoints_list_panel_add(access, addr, cond, val, active, addr_space)
+	watchpoints_list_panel_add(access, addr, cond, val, size, active, addr_space)
 
 func _on_wp_addr_space_cpu_pressed():
 	if not wp_addr_space_cpu.pressed:

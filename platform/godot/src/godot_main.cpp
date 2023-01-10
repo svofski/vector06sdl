@@ -672,10 +672,11 @@ godot_variant debug_add_watchpoint(godot_object* p_instance, void* p_method_data
 	auto access = static_cast<Debug::Watchpoint::Access>(api->godot_variant_as_int(p_args[0]));
 	auto addr = api->godot_variant_as_int(p_args[1]);
 	auto cond = static_cast<Debug::Watchpoint::Condition>(api->godot_variant_as_int(p_args[2]));
-	auto value = static_cast<uint8_t>(api->godot_variant_as_int(p_args[3]));
-	auto active = static_cast<bool>(api->godot_variant_as_int(p_args[4]));
-	auto addr_space = static_cast<Debug::AddrSpace>(api->godot_variant_as_int(p_args[5]));
-	debug.add_watchpoint(access, addr, cond, value, active, addr_space);
+	auto value = static_cast<uint16_t>(api->godot_variant_as_int(p_args[3]));
+	auto value_size = static_cast<size_t>(api->godot_variant_as_int(p_args[4]));
+	auto active = static_cast<bool>(api->godot_variant_as_int(p_args[5]));
+	auto addr_space = static_cast<Debug::AddrSpace>(api->godot_variant_as_int(p_args[6]));
+	debug.add_watchpoint(access, addr, cond, value, value_size, active, addr_space);
 
 	debug.print_watchpoints();
 
