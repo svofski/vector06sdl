@@ -356,7 +356,7 @@ void Debug::deserialize(std::vector<uint8_t>::iterator it, size_t size)
 
 void Debug::add_breakpoint(const size_t _addr, const bool _active, const AddrSpace _addr_space)
 {
-	auto global_addr = get_breakpoint_global_addr(_addr, _addr_space);
+	auto global_addr = get_global_addr(_addr, _addr_space);
 	
 	std::lock_guard<std::mutex> mlock(breakpoints_mutex);
 	auto bp = breakpoints.find(global_addr);
@@ -370,7 +370,7 @@ void Debug::add_breakpoint(const size_t _addr, const bool _active, const AddrSpa
 
 void Debug::del_breakpoint(const size_t _addr, const AddrSpace _addr_space)
 {
-	auto global_addr = get_breakpoint_global_addr(_addr, _addr_space);
+	auto global_addr = get_global_addr(_addr, _addr_space);
 
 	std::lock_guard<std::mutex> mlock(breakpoints_mutex);
 	auto bp = breakpoints.find(global_addr);
@@ -397,17 +397,15 @@ void Debug::watchpoints_erase(const size_t global_addr)
 
 void Debug::add_watchpoint(const Watchpoint::Access _access, const size_t _addr, const Watchpoint::Condition _cond, const uint16_t _value, const size_t _value_size, const bool _active, const AddrSpace _addr_space)
 {
-	auto global_addr = get_breakpoint_global_addr(_addr, _addr_space);
+	auto global_addr = get_global_addr(_addr, _addr_space);
 	
 	std::lock_guard<std::mutex> mlock(watchpoints_mutex);
-	watchpoints_erase(global_addr);
-
 	watchpoints.emplace_back(std::move(Watchpoint(_access, global_addr, _cond, _value, _value_size, _active)));
 }
 
 void Debug::del_watchpoint(const size_t _addr, const AddrSpace _addr_space)
 {
-	auto global_addr = get_watchpoint_global_addr(_addr, _addr_space);
+	auto global_addr = get_global_addr(_addr, _addr_space);
 
 	std::lock_guard<std::mutex> mlock(watchpoints_mutex);
 	watchpoints_erase(global_addr);
@@ -428,9 +426,11 @@ bool Debug::check_watchpoint(const Watchpoint::Access _access, const size_t _glo
 	if (wp == watchpoints.end()) return false;
 
 	auto out = wp->check(_access, _global_addr, _value);
-	if (out) {
-		std::printf("Debug::check_watchpoint(_access: %s, _global_addr: 0x%05x, _value: 0x%02x) - break: %d \n", Watchpoint::access_s[(size_t)_access], _global_addr, _value, out );
-		wp->print();
+	
+	if (out){
+		auto byte_l = memoryP->get_byte(_global_addr & 0xffff, false);
+		auto byte_h = memoryP->get_byte((_global_addr+1) & 0xffff, false);
+		std::printf("wp break = true. addr: 0x%05x, word: 0x%02x \n", _global_addr, byte_l | byte_h<<8);
 	}
 	return out;
 }
@@ -455,7 +455,7 @@ bool Debug::check_break()
 	}
 
 	auto pc = i8080cpu::i8080_pc();
-	auto global_addr = get_breakpoint_global_addr(pc, AddrSpace::CPU);
+	auto global_addr = get_global_addr(pc, AddrSpace::CPU);
 
 	auto break_ = check_breakpoints(global_addr);
 	
@@ -464,21 +464,7 @@ bool Debug::check_break()
 	return break_;
 }
 
-auto Debug::get_breakpoint_global_addr(size_t _addr, const AddrSpace _addr_space) const
--> const size_t
-{
-	if(_addr_space == AddrSpace::CPU)
-	{
-		_addr = memoryP->bigram_select(_addr & 0xffff, false);
-	}
-	else
-	{
-		_addr = _addr % GLOBAL_MEM_SIZE;
-	}
-	return _addr;
-}
-
-auto Debug::get_watchpoint_global_addr(size_t _addr, const AddrSpace _addr_space) const
+auto Debug::get_global_addr(size_t _addr, const AddrSpace _addr_space) const
 -> const size_t
 {
 	if(_addr_space != AddrSpace::GLOBAL)
@@ -547,13 +533,11 @@ auto Debug::Watchpoint::check(const Watchpoint::Access _access, const size_t _gl
 
 	if (_global_addr == global_addr) 
 	{
-		if (break_l) return false;
 		break_p = &break_l;
 		value_byte = value & 0xff;	
 	}
 	else
 	{
-		if (break_h) return false;
 		break_p = &break_h;
 		value_byte = value>>8 & 0xff;		
 	}
@@ -584,8 +568,6 @@ auto Debug::Watchpoint::check(const Watchpoint::Access _access, const size_t _gl
 		default:
             return false;
 	};
-	
-	std::printf("Debug::Watchpoint::check(_access: %s, _global_addr: 0x%05x, _value: 0x%02x) (break_l: %d, break_h: %d)\n", Watchpoint::access_s[(size_t)_access], _global_addr, _value, break_l, break_h );
 
 	return break_l & (value_size == VAL_BYTE_SIZE | break_h);
 }
@@ -610,5 +592,5 @@ void Debug::Watchpoint::reset()
 
 void Debug::Watchpoint::print() const
 {
-	std::printf("0x%05x, access: %s, cond: %s, value: 0x%02x, value_size: %d, active: %d \n", global_addr, access_s[static_cast<size_t>(access)], conditions_s[static_cast<size_t>(cond)], value, value_size, active);
+	std::printf("0x%05x, access: %s, cond: %s, value: 0x%04x, value_size: %d, active: %d \n", global_addr, access_s[static_cast<size_t>(access)], conditions_s[static_cast<size_t>(cond)], value, value_size, active);
 }

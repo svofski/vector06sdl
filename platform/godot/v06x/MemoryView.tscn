@@ -652,8 +652,6 @@ text = "Helpful hints"
 [connection signal="resized" from="HSplitContainer/debug_panel" to="HSplitContainer/debug_panel" method="_on_debug_panel_resized"]
 [connection signal="item_activated" from="HSplitContainer/debug_panel/breakpoints_panel/breakpoints_list_panel" to="HSplitContainer/debug_panel" method="_on_breakpoints_list_panel_item_selected"]
 [connection signal="item_selected" from="HSplitContainer/debug_panel/breakpoints_panel/breakpoints_list_panel" to="HSplitContainer/debug_panel" method="_on_breakpoints_list_panel_item_selected"]
-[connection signal="item_activated" from="HSplitContainer/debug_panel/watchpoint_panel/watchpoints_list_panel" to="HSplitContainer/debug_panel" method="_on_breakpoints_list_panel_item_selected"]
-[connection signal="item_selected" from="HSplitContainer/debug_panel/watchpoint_panel/watchpoints_list_panel" to="HSplitContainer/debug_panel" method="_on_breakpoints_list_panel_item_selected"]
 [connection signal="nothing_selected" from="HSplitContainer/debug_panel/watchpoint_panel/watchpoints_list_panel" to="HSplitContainer/debug_panel" method="_on_watchpoints_list_panel_nothing_selected"]
 [connection signal="pressed" from="HSplitContainer/debug_panel/command_panel/break_cont" to="HSplitContainer/debug_panel" method="_on_break_cont_pressed"]
 [connection signal="pressed" from="HSplitContainer/debug_panel/command_panel/step_over" to="HSplitContainer/debug_panel" method="_on_step_over_pressed"]
