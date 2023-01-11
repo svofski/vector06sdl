@@ -50,6 +50,7 @@ V06X_DECL(debug_is_break);
 V06X_DECL(debug_read_executed_memory);
 V06X_DECL(debug_read_hw_info);
 V06X_DECL(debug_set_debugging);
+V06X_DECL(debug_get_global_addr);
 
 #undef V06X_DECL
 
@@ -126,6 +127,7 @@ extern "C" void GDN_EXPORT godot_nativescript_init(void* p_handle)
     V06X_METHOD("debug_read_executed_memory", debug_read_executed_memory);
     V06X_METHOD("debug_read_hw_info", debug_read_hw_info);
     V06X_METHOD("debug_set_debugging", debug_set_debugging);
+    V06X_METHOD("debug_get_global_addr", debug_get_global_addr);
 #undef V06X_METHOD
 }
 

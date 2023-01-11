@@ -38,7 +38,7 @@ public:
 
 		Watchpoint(const Access _access, const size_t _global_addr, const Condition _cond, const uint16_t _value, const size_t _value_size = VAL_BYTE_SIZE, const bool _active = true)
 		: access(static_cast<Debug::Watchpoint::Access>((size_t)_access % (size_t)Access::COUNT)), global_addr(_global_addr), cond(static_cast<Debug::Watchpoint::Condition>((size_t)_cond & (size_t)Condition::COUNT)), 
-		value(_value & 0xffff), value_size(_value_size % VAL_MAX_SIZE), active(_active), break_l(false), break_h(false)
+		value(_value & 0xffff), value_size(_value_size), active(_active), break_l(false), break_h(false)
 		{}
 		auto check(const Watchpoint::Access _access, const size_t _global_addr, const uint8_t _value) -> const bool;
 		auto is_active() const -> const bool;
@@ -87,6 +87,7 @@ public:
 	void reset_watchpoints();
 	void print_breakpoints();
 	void print_watchpoints();
+	auto get_global_addr(size_t _addr, const AddrSpace _addr_space) const -> const size_t;
 
 	bool check_breakpoints(const size_t _global_addr);
 	bool check_watchpoint(const Watchpoint::Access _access, const size_t _global_addr, const uint8_t _value);
@@ -98,8 +99,6 @@ private:
 	auto get_disasm_db_line(const size_t _addr, const uint8_t _data) const ->const std::string;
 	auto get_cmd_len(const uint8_t _addr) const -> const size_t;
 	auto get_addr(const size_t _end_addr, const size_t _before_addr_lines) const -> size_t;
-	auto get_breakpoint_global_addr(size_t _addr, const AddrSpace _addr_space) const -> const size_t;
-	auto get_watchpoint_global_addr(size_t _addr, const AddrSpace _addr_space) const -> const size_t;
 	auto watchpoints_find(const size_t global_addr) -> Watchpoints::iterator;
 	void watchpoints_erase(const size_t global_addr);
 

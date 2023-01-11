@@ -40,7 +40,7 @@ enum CODE_PANEL_MENU_ID {
 	REMOVE_ALL_BRKS,
 	RUN_CURSOR,
 	ADD_REMOVE_BRK,
-	ADD_REMOVE_WP,
+	ADD_WP,
 	REMOVE_ALL_WPS,
 }
 
@@ -114,13 +114,17 @@ const DEBUG_LABELS_FILE_NAME = "debug.txt"
 var last_searchs = []
 var last_search_idx = 0
 
+const ADDR_SPACE_CPU = 0
+const ADDR_SPACE_STACK = 1
+const ADDR_SPACE_GLOBAL = 2
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	code_panel_menu.add_item("show the current break", CODE_PANEL_MENU_ID.CURRENT_BREAK)
 	code_panel_menu.add_item("run to the selected line", CODE_PANEL_MENU_ID.RUN_CURSOR)
 	code_panel_menu.add_item("add/remove breakpoint", CODE_PANEL_MENU_ID.ADD_REMOVE_BRK)
 	code_panel_menu.add_item("remove all breakpoints", CODE_PANEL_MENU_ID.REMOVE_ALL_BRKS)
-	code_panel_menu.add_item("add/remove watchpoint", CODE_PANEL_MENU_ID.ADD_REMOVE_WP)
+	code_panel_menu.add_item("add watchpoint", CODE_PANEL_MENU_ID.ADD_WP)
 	code_panel_menu.add_item("remove all watchpoints", CODE_PANEL_MENU_ID.REMOVE_ALL_WPS)
 	code_panel_menu.connect("id_pressed", self, "code_panel_menu_id_pressed")
 	set_ui_on_cont()
@@ -132,7 +136,7 @@ func debug_panel_size_update():
 	code_panel.margin_bottom = self.margin_bottom
 	code_panel.cursor_set_line(code_panel_cursor_line_last)
 	callstack_panel.margin_bottom = self.margin_bottom
-	callstack_list_panel.margin_bottom = self.margin_bottom / callstack_list_panel.rect_scale.y - 10
+	callstack_list_panel.rect_size.y = callstack_panel.rect_size.y*2 - 20
 	
 func _on_debug_panel_item_rect_changed():
 	debug_panel_size_update()
@@ -148,10 +152,11 @@ func set_ui_on_break():
 		
 		break_cont.icon = cont_icon_tex
 		regTextPanel_update(true)
-		flagTextPanel_update(true)
-		stackTextPanel_update(true)
-		codePanel_update(true)
-		breakpointsListPanel_update(true)
+		flag_text_panel_update(true)
+		stack_text_panel_update(true)
+		code_panel_update(true)
+		breakpoints_list_panel_update(true)
+		watchpoints_list_panel_update(true)
 		hw_text_panel_update(true)
 		step_over.disabled = false;
 		step_into.disabled = false;
@@ -164,10 +169,11 @@ func set_ui_on_cont():
 		code_panel_menu.set_item_disabled(code_panel_menu.get_item_index(CODE_PANEL_MENU_ID.RUN_CURSOR), true)
 		break_cont.icon = break_icon_tex
 		regTextPanel_update(false)
-		flagTextPanel_update(false)
-		stackTextPanel_update(false)
-		codePanel_update(false)
-		breakpointsListPanel_update(false)
+		flag_text_panel_update(false)
+		stack_text_panel_update(false)
+		code_panel_update(false)
+		breakpoints_list_panel_update(false)
+		watchpoints_list_panel_update(false)
 		hw_text_panel_update(false)
 		step_over.disabled = true;
 		step_into.disabled = true;
@@ -196,7 +202,7 @@ func _on_step_into_pressed():
 	#step_into_pressed=step_into_pressed+1
 	#print("TEST PRINT: %s gd: step_into done. pressed=%d" % [Time.get_time_string_from_system(), step_into_pressed])
 
-func codePanel_update(enabled):
+func code_panel_update(enabled):
 	if enabled:
 		code_panel.syntax_highlighting = true
 		code_panel.add_color_override("current_line_color", Color(0.248718, 0.390625, 0.257319))
@@ -219,7 +225,7 @@ func regTextPanel_update(enabled):
 	else:
 		reg_text_panel.add_color_override("font_color", Color(1.0, 1.0, 1.0, 0.5))
 
-func flagTextPanel_update(enabled):
+func flag_text_panel_update(enabled):
 	if enabled:
 		var regs = main.debug_read_registers()
 		var flags = regs[0] & 0xff
@@ -233,7 +239,7 @@ func flagTextPanel_update(enabled):
 	else:
 		flag_text_panel.add_color_override("font_color", Color(1.0, 1.0, 1.0, 0.5))
 
-func stackTextPanel_update(enabled):
+func stack_text_panel_update(enabled):
 	if enabled:
 		var stack = main.debug_read_stack(STACK_TEXT_LINES)
 		stack_text_panel.text  = ""
@@ -243,12 +249,19 @@ func stackTextPanel_update(enabled):
 	else:
 		stack_text_panel.add_color_override("font_color", Color(1.0, 1.0, 1.0, 0.5))
 
-func breakpointsListPanel_update(enabled):
+func breakpoints_list_panel_update(enabled):
 	breakpoints_list_panel.unselect_all()
 	if enabled:
 		breakpoints_list_panel.add_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
 	else:
 		breakpoints_list_panel.add_color_override("font_color", Color(1.0, 1.0, 1.0, 0.5))
+
+func watchpoints_list_panel_update(enabled):
+	watchpoints_list_panel.unselect_all()
+	if enabled:
+		watchpoints_list_panel.add_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
+	else:
+		watchpoints_list_panel.add_color_override("font_color", Color(1.0, 1.0, 1.0, 0.5))
 
 func hw_text_panel_update(enabled):
 	if enabled:
@@ -312,24 +325,24 @@ func del_all_breakpoints():
 		var addr = addrS.hex_to_int()
 		main.debug_del_breakpoint(addr, 0)
 	breakpoints_list_panel.clear()
-	codePanel_update(true)
+	code_panel_update(true)
 	
 func del_all_watchpoints():
-	for idx in range(breakpoints_list_panel.get_item_count()):
-		var addrS_addr_space = watchpoints_list_panel_get_addr(idx)
-		var addr = addrS_addr_space[0].hex_to_int()
-		main.debug_del_watchpoint(addr, addrS_addr_space[1])
+	for idx in range(watchpoints_list_panel.get_item_count()):
+		var global_addr = watchpoints_list_panel_get_global_addr(idx)
+		main.debug_del_watchpoint(global_addr, ADDR_SPACE_GLOBAL)
 	watchpoints_list_panel.clear()
-	codePanel_update(true)	
+	code_panel_update(true)
 	
 func breakpoints_list_panel_get_addr(idx):
 	return breakpoints_list_panel.get_item_text(idx).left(6)
 	
-func watchpoints_list_panel_get_addr(idx):
+func watchpoints_list_panel_get_global_addr(idx):
 	var txt = watchpoints_list_panel.get_item_text(idx)
 	var addr_end_idx = txt.find(":")
 	var addr_space = 0
-	return [txt.left(addr_end_idx), addr_space]
+	var global_addr = main.debug_get_global_addr(txt.left(addr_end_idx).hex_to_int(), addr_space)
+	return global_addr
 
 func _on_code_panel_breakpoint_toggled(row):
 	var addrS = asm_line_to_addr(code_panel.get_line(row))
@@ -355,6 +368,11 @@ func _on_breakpoints_list_panel_item_selected(index):
 	codePanel_scroll_to_addr(addr)
 	code_panel.cursor_set_line(CODE_PANEL_LINES_AHEAD)
 	
+func _on_watchpoints_list_panel_item_selected(index):
+	var global_addr = watchpoints_list_panel_get_global_addr(index)
+	codePanel_scroll_to_addr(global_addr % 0xffff)
+	code_panel.cursor_set_line(CODE_PANEL_LINES_AHEAD)
+	
 func code_panel_menu_id_pressed(id):
 	match id:
 		CODE_PANEL_MENU_ID.CURRENT_BREAK:
@@ -372,6 +390,8 @@ func code_panel_menu_id_pressed(id):
 			var bp = code_panel.is_line_set_as_breakpoint(cursor_line)
 			code_panel.set_line_as_breakpoint(cursor_line, not bp)
 			_on_code_panel_breakpoint_toggled(cursor_line)
+		CODE_PANEL_MENU_ID.ADD_WP:
+			_on_watchpoints_list_panel_nothing_selected()
 		CODE_PANEL_MENU_ID.REMOVE_ALL_WPS:
 			del_all_watchpoints()
 			
@@ -409,12 +429,14 @@ func _on_search_panel_text_entered(new_text : String):
 	# is it in the 0xNNNN format to show the code at that addr?
 	if new_text.left(2) == "0x" or new_text.left(2) == "0X":
 		var addr = new_text.hex_to_int()
-		codePanel_scroll_to_addr(addr, 0)
+		codePanel_scroll_to_addr(addr)
+		code_panel.cursor_set_line(CODE_PANEL_LINES_AHEAD)
 	else:
 		if debug_labels.has(new_text.to_lower()):
 			var addrS = "0x" + debug_labels[new_text.to_lower()]
 			var addr = addrS.hex_to_int()
-			codePanel_scroll_to_addr(addr, 0)
+			codePanel_scroll_to_addr(addr)
+			code_panel.cursor_set_line(CODE_PANEL_LINES_AHEAD)
 
 func _on_code_panel_gui_input(event):
 	if not main.debug_is_ui_break():
@@ -491,9 +513,10 @@ func load_debug():
 
 		last_total_v_cycles = cfg.get_value("debug_hw_info", "last_total_v_cycles", 0)
 
-func _on_watchpoints_list_panel_nothing_selected():
-	watchpoint_popup.set_position(get_local_mouse_position())
-	watchpoint_popup.visible = true
+func _on_watchpoints_list_panel_nothing_selected(): 
+	if main.debug_is_ui_break():
+		watchpoint_popup.set_position(get_local_mouse_position())
+		watchpoint_popup.visible = true
 
 func watchpoints_list_panel_add(access, addr, cond, val, size, active, addr_space):
 	var accessS = WATCHPOINTS_ACCESS_S[access]

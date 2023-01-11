@@ -671,6 +671,9 @@ func debug_read_executed_memory(addr, length):
 
 func debug_read_hw_info():
 	return v06x.debug_read_hw_info()
+	
+func debug_get_global_addr(addr, addr_space):
+	return v06x.debug_get_global_addr(addr, addr_space)
 
 
 

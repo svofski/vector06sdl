@@ -798,3 +798,22 @@ godot_variant debug_set_debugging(godot_object* p_instance, void* p_method_data,
 	api->godot_variant_new_bool(&ret, 1);
 	return ret;
 }
+godot_variant debug_get_global_addr(godot_object* p_instance, void* p_method_data, 
+		void* p_user_data, int p_num_args, godot_variant** p_args)
+{
+	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+	if (!user_data_p->initialized) {
+		godot_variant ret;
+		api->godot_variant_new_bool(&ret, 0);
+		return ret;
+	}
+
+	godot_int addr = api->godot_variant_as_int(p_args[0]);
+	auto addr_space = static_cast<Debug::AddrSpace>(api->godot_variant_as_int(p_args[1]));
+
+	auto global_addr = debug.get_global_addr(addr, addr_space);
+
+	godot_variant ret;
+	api->godot_variant_new_int(&ret, global_addr);
+	return ret;
+}
