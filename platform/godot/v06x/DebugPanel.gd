@@ -109,7 +109,8 @@ const step_over_cmds = [OPCODE_CNZ, OPCODE_CZ, OPCODE_CALL, OPCODE_CNC, OPCODE_C
 var last_total_v_cycles = 0
 
 var debug_labels = {}
-const DEBUG_LABELS_FILE_NAME = "debug.txt"
+const DEBUG_LABELS_FILE_NAME_RETROASSEMBLER = "debug.txt"
+const DEBUG_LABELS_FILE_NAME_TASM_EXT = "sym"
 
 var last_searchs = []
 var last_search_idx = 0
@@ -481,17 +482,24 @@ func _on_step_over_pressed():
 		
 func debug_load_labels(rom_path : String):
 	var dir_end = rom_path.find_last("/")
-	var labels_path = rom_path.left(dir_end + 1) + DEBUG_LABELS_FILE_NAME
+	var rom_name_end = rom_path.find_last(".")
+	
+	var labels_path_retroassembler = rom_path.left(dir_end + 1) + DEBUG_LABELS_FILE_NAME_RETROASSEMBLER
+	var labels_path_tasm = rom_path.left(rom_name_end + 1) + DEBUG_LABELS_FILE_NAME_TASM_EXT
 	var file = File.new()
 
-	if file.open(labels_path, File.READ) == OK:
+	if file.open(labels_path_retroassembler, File.READ) == OK or file.open(labels_path_tasm, File.READ) == OK:
 		var labels = file.get_as_text().split("\n")
 		file.close()
 		debug_labels.clear()
 		for line in labels:
-			var separator_id = line.find(" ")
-			var key = line.left(separator_id)
-			var val = line.right(separator_id+2)
+			var separator_id_first = line.find(" ")
+			var separator_id_last1 = line.find_last(" ")
+			var separator_id_last2 = line.find_last("$")
+			var separator_id_last = max(separator_id_last1, separator_id_last2)
+			
+			var key = line.left(separator_id_first).to_lower()
+			var val = line.right(separator_id_last + 1)
 			debug_labels[key] = val
 	
 func save_debug():
