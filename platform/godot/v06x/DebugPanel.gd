@@ -11,6 +11,7 @@ onready var reg_text_panel = find_node("reg_text_panel")
 onready var flag_text_panel = find_node("flag_text_panel")
 onready var hw_text_panel = find_node("hw_text_panel")
 onready var breakpoints_list_panel = find_node("breakpoints_list_panel")
+onready var watchpoints_panel = find_node("watchpoints_panel")
 onready var watchpoints_list_panel = find_node("watchpoints_list_panel")
 onready var watchpoint_popup = find_node("watchpoint_popup")
 onready var wp_access_r = find_node("wp_access_r")
@@ -24,8 +25,8 @@ onready var wp_addr_space_stack = find_node("wp_addr_space_stack")
 onready var wp_addr_space_global = find_node("wp_addr_space_global")
 onready var wp_value_size = find_node("wp_value_size")
 
-onready var callstack_panel = find_node("callstack_panel")
-onready var callstack_list_panel = find_node("callstack_list_panel")
+onready var call_stack_panel = find_node("call_stack_panel")
+onready var call_stack_list_panel = find_node("call_stack_list_panel")
 
 onready var break_cont = find_node("break_cont")
 onready var step_over = find_node("step_over")
@@ -136,8 +137,12 @@ func debug_panel_size_update():
 		codePanel_scroll_to_addr(addrS.hex_to_int(), 0)
 	code_panel.margin_bottom = self.margin_bottom
 	code_panel.cursor_set_line(code_panel_cursor_line_last)
-	callstack_panel.margin_bottom = self.margin_bottom
-	callstack_list_panel.rect_size.y = callstack_panel.rect_size.y*2 - 20
+	call_stack_panel.margin_bottom = self.margin_bottom
+	call_stack_list_panel.rect_size.y = call_stack_panel.rect_size.y*2 - 20
+	call_stack_panel.margin_right = margin_right
+	call_stack_list_panel.rect_size.x = call_stack_panel.rect_size.x * 2 - 8
+	watchpoints_panel.margin_right = margin_right
+	watchpoints_list_panel.rect_size.x = watchpoints_panel.rect_size.x * 2 - 8	
 	
 func _on_debug_panel_item_rect_changed():
 	debug_panel_size_update()
@@ -159,6 +164,7 @@ func set_ui_on_break():
 		breakpoints_list_panel_update(true)
 		watchpoints_list_panel_update(true)
 		hw_text_panel_update(true)
+		call_stack_list_panel_update(true)
 		step_over.disabled = false;
 		step_into.disabled = false;
 		step_out.disabled = false;
@@ -176,6 +182,7 @@ func set_ui_on_cont():
 		breakpoints_list_panel_update(false)
 		watchpoints_list_panel_update(false)
 		hw_text_panel_update(false)
+		call_stack_list_panel_update(false)
 		step_over.disabled = true;
 		step_into.disabled = true;
 		step_out.disabled = true;
@@ -214,6 +221,16 @@ func code_panel_update(enabled):
 		code_panel.syntax_highlighting = false
 		code_panel.add_color_override("current_line_color", Color(0.351563, 0.351563, 0.351563))
 		code_panel.remove_breakpoints()
+
+
+func call_stack_list_panel_update(enabled):
+	if enabled:
+		call_stack_list_panel.syntax_highlighting = true
+		call_stack_list_panel.add_color_override("current_line_color", Color(0.248718, 0.390625, 0.257319))
+		call_stack_list_panel.text = main.debug_get_call_stack()
+	else:
+		call_stack_list_panel.syntax_highlighting = false
+		call_stack_list_panel.add_color_override("current_line_color", Color(0.351563, 0.351563, 0.351563))
 	
 func get_reg_pc():
 	return main.debug_read_registers()[5]
@@ -489,7 +506,9 @@ func debug_load_labels(rom_path : String):
 	var file = File.new()
 
 	if file.open(labels_path_retroassembler, File.READ) == OK or file.open(labels_path_tasm, File.READ) == OK:
-		var labels = file.get_as_text().split("\n")
+		var labels_str = file.get_as_text()
+		main.debug_set_labels(labels_str)
+		var labels = labels_str.split("\n")
 		file.close()
 		debug_labels.clear()
 		for line in labels:
@@ -512,12 +531,16 @@ func save_debug():
 	cfg.save("user://v06x.debug")
 	
 func load_debug():
+	var labels_str = ""
 	var cfg = ConfigFile.new()
 	var err = cfg.load("user://v06x.debug")
 	if err == OK:
 		debug_labels.clear()
 		for key in cfg.get_section_keys("debug_labels"):
-			debug_labels[key] = cfg.get_value("debug_labels",key)
+			var val = cfg.get_value("debug_labels", key)
+			debug_labels[key] = val
+			labels_str += key + " " + val + "\n"
+		main.debug_set_labels(labels_str)
 
 		last_total_v_cycles = cfg.get_value("debug_hw_info", "last_total_v_cycles", 0)
 

@@ -11,5 +11,14 @@ namespace utils
 
 	const std::wstring str_to_strW(const std::string& _s);
 	const std::string strW_to_str(const std::wstring& _s);
+
+	typedef enum {
+		STR2INT_SUCCESS = 0,
+		STR2INT_OVERFLOW,
+		STR2INT_UNDERFLOW,
+		STR2INT_INCONVERTIBLE
+	} str2int_errno;
+
+	str2int_errno str2int(int *out, char *s, int base);
 }
 #endif // !STRING_UTILS_H

@@ -1,14 +1,16 @@
 #include "debug.h"
 #include "..\..\..\src\i8080.h"
 #include "..\..\..\src\serialize.h"
+#include "utils_string.h"
 
 #include <string>
 #include <iomanip>
 #include <sstream>
+#include <cstring>
 #include <vector>
 
 Debug::Debug(Memory* _memoryP)
-: mem_runs(), mem_reads(), mem_writes(), memoryP(_memoryP), wp_break(false)
+: mem_runs(), mem_reads(), mem_writes(), memoryP(_memoryP), wp_break(false), call_stack()
 {
 	auto read_func =
 		[this](const uint32_t _addr, const uint8_t _val, const bool _run)
@@ -31,6 +33,7 @@ void Debug::read(const size_t _global_addr, const uint8_t _val, const bool _run)
 	if(_run)
 	{
 		mem_runs[_global_addr]++;
+		call_stack_update(_global_addr, _val);
 	}
 	else
 	{
@@ -103,7 +106,7 @@ static size_t cmd[3];
 #define MAX_DATA_CHR_LEN 11
 #define MAX_CMD_LEN 13
 
-auto Debug::get_mnemonic(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const
+auto get_mnemonic(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h)
 ->const std::string
 {
 	CMD_OPCODE = _opcode;
@@ -245,8 +248,10 @@ auto Debug::disasm(const size_t _addr, const size_t _lines, const size_t _before
 
 	if (_before_addr_lines > 0)
 	{
+		// find new addr that's _before_addr_lines commands ahead of _addr
 		addr = get_addr(_addr & 0xffff, _before_addr_lines) & 0xffff;
 
+		// if it fails to find an addr, we assume a data is ahead
 		if (addr == _addr)
 		{
 			addr = (addr - _before_addr_lines) & 0xffff;
@@ -265,6 +270,18 @@ auto Debug::disasm(const size_t _addr, const size_t _lines, const size_t _before
 				}
 				auto db = memoryP->get_byte(addr, false);
 				out += get_disasm_db_line(addr, db);
+
+				size_t bigaddr = memoryP->bigram_select(addr, false);
+				std::string runsS = std::to_string(mem_runs[bigaddr]);
+				std::string readsS = std::to_string(mem_reads[bigaddr]);
+				std::string writesS = std::to_string(mem_writes[bigaddr]);
+				std::string runsS_readsS_writesS = "(" + runsS + "," + readsS + "," + writesS + ")";
+				out += runsS_readsS_writesS;
+
+				if (labels.find(addr & 0xffff) != labels.end())
+				{
+					out += " " + labels.at(addr & 0xffff);
+				}
 
 				if (lines > 0 || i != _before_addr_lines-1)
 				{
@@ -290,17 +307,20 @@ auto Debug::disasm(const size_t _addr, const size_t _lines, const size_t _before
 		auto opcode = memoryP->get_byte(addr, false);
 		auto data_l = memoryP->get_byte((addr+1) & 0xffff, false);
 		auto data_h = memoryP->get_byte((addr+2) & 0xffff, false);
+		out += get_disasm_line(addr, opcode, data_l, data_h);
 
 		size_t bigaddr = memoryP->bigram_select(addr, false);
-
 		std::string runsS = std::to_string(mem_runs[bigaddr]);
 		std::string readsS = std::to_string(mem_reads[bigaddr]);
 		std::string writesS = std::to_string(mem_writes[bigaddr]);
-
 		std::string runsS_readsS_writesS = "(" + runsS + "," + readsS + "," + writesS + ")";
-
-		out += get_disasm_line(addr, opcode, data_l, data_h);
 		out += runsS_readsS_writesS;
+
+		if (labels.find(addr & 0xffff) != labels.end())
+		{
+			out += " " + labels.at(addr & 0xffff);
+		}
+
 		if (i != lines-1)
 		{
 			out += "\n";
@@ -316,6 +336,12 @@ void Debug::reset()
     std::fill(mem_runs, mem_runs + GLOBAL_MEM_SIZE, 0);
 	std::fill(mem_reads, mem_reads + GLOBAL_MEM_SIZE, 0);
 	std::fill(mem_writes, mem_writes + GLOBAL_MEM_SIZE, 0);
+	
+	for (size_t i = 0; i < CALL_STACK_SIZE; i++)
+	{
+		call_stack[i].clear();
+	}
+	call_stack_idx = CALL_STACK_SIZE - 1;
 }
 
 void Debug::serialize(std::vector<uint8_t> &to) 
@@ -464,6 +490,116 @@ bool Debug::check_break()
 	return break_;
 }
 
+#define OPCODE_PCHL 0xE9
+
+void Debug::call_stack_update(const size_t _global_addr, const uint8_t _val)
+{
+	if (is_opcode_call_jmp(_val))
+	{
+		auto last_global_addr = call_stack[call_stack_idx].global_addr;
+		auto last_opcode = call_stack[call_stack_idx].opcode;
+
+		if (last_global_addr != _global_addr || last_opcode != _val)
+		{
+			call_stack_idx = (call_stack_idx + 1) % CALL_STACK_SIZE;
+			call_stack[call_stack_idx].global_addr = _global_addr;
+			call_stack[call_stack_idx].opcode = _val;
+			call_stack[call_stack_idx].count = 0;
+		}
+		
+		call_stack[call_stack_idx].count++;
+		call_stack[call_stack_idx].data_l = memoryP->get_byte((_global_addr + 1) & 0xffff, false);
+		call_stack[call_stack_idx].data_h = memoryP->get_byte((_global_addr + 2) & 0xffff, false);
+
+		if (_val == OPCODE_PCHL)
+		{
+			call_stack[call_stack_idx].call_addr = i8080cpu::i8080_regs_hl() & 0xffff;
+		}
+		else
+		{
+			call_stack[call_stack_idx].call_addr = call_stack[call_stack_idx].data_h<<8 | call_stack[call_stack_idx].data_l;
+		}
+		
+	}
+}
+
+// 1 - call, c*, rst
+// 2 - pchl
+// 3 - jmp, j*
+// 4 - ret, r*
+// 0 - other
+static const uint8_t opcode_pc_change[0x100] =
+{
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+	4, 0, 3, 3, 1, 0, 0, 1, 4, 4, 3, 0, 1, 1, 0, 1,
+	4, 0, 3, 0, 1, 0, 0, 1, 4, 0, 3, 0, 1, 0, 0, 1,
+	4, 0, 3, 0, 1, 0, 0, 1, 4, 2, 3, 0, 1, 0, 0, 1,
+	4, 0, 3, 0, 1, 0, 0, 1, 4, 0, 3, 0, 1, 0, 0, 1
+};
+
+bool Debug::is_opcode_call_jmp(const uint8_t _opcode)
+{
+	return opcode_pc_change[_opcode] > 0 && opcode_pc_change[_opcode] <= 2;
+}
+
+auto Debug::CallStackItem::to_str() const
+->std::string
+{	
+	std::stringstream out;
+
+	out << "0x";
+	out << std::setw(5) << std::setfill('0');
+	out << std::uppercase << std::hex << static_cast<int>(global_addr) << ": ";
+
+	out << get_mnemonic(opcode, data_l, data_h);
+
+	return out.str();
+}
+
+void Debug::CallStackItem::clear()
+{
+	global_addr = 0;
+	opcode = 0;
+	data_l = 0;
+	data_h = 0;
+	call_addr = 0;
+	count = 0;
+}
+
+auto Debug::get_call_stack() const 
+->std::string
+{
+	std::string out;
+	auto idx = call_stack_idx;
+	for (size_t i = 0; i < CALL_STACK_SIZE; i++)
+	{
+		const size_t idx = (call_stack_idx + i) % CALL_STACK_SIZE;
+		const size_t call_addr = call_stack[idx].call_addr & 0xffff;
+		out += call_stack[idx].to_str();
+
+		if (labels.find(call_addr) != labels.end())
+		{
+			out += "(" + labels.at(call_addr) + ")";
+		}
+		out += "\n";
+	}
+	return out;
+}
+
 auto Debug::get_global_addr(size_t _addr, const AddrSpace _addr_space) const
 -> const size_t
 {
@@ -476,6 +612,38 @@ auto Debug::get_global_addr(size_t _addr, const AddrSpace _addr_space) const
 		_addr = _addr % GLOBAL_MEM_SIZE;
 	}
 	return _addr;
+}
+
+void Debug::set_labels(const char* _labels_c)
+{
+	labels.clear();
+	char* labels_c = strdup(_labels_c);
+
+	char* label_c = strtok(labels_c, " $\n");
+	char* addr_c = strtok(nullptr, " $\n");
+
+	int addr = 0;
+
+	while (label_c != nullptr)
+	{	
+		if (label_c == nullptr || addr_c == nullptr) break;
+		if (utils::str2int( &addr, addr_c, 16) == utils::STR2INT_SUCCESS)
+		{
+			auto it = labels.find(addr);
+			if (it == labels.end()) 
+			{
+				labels[addr] = label_c;
+			}
+			else
+			{
+				labels[addr] += ", " + std::string(label_c);
+			}
+		}
+		label_c = strtok(nullptr, " $\n");
+		addr_c = strtok(nullptr, " $\n");
+	}
+
+	free(labels_c);
 }
 
 void Debug::print_breakpoints()

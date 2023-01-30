@@ -675,6 +675,11 @@ func debug_read_hw_info():
 func debug_get_global_addr(addr, addr_space):
 	return v06x.debug_get_global_addr(addr, addr_space)
 
+func debug_get_call_stack():
+	return v06x.debug_get_call_stack()
+	
+func debug_set_labels(labels):
+	return v06x.debug_set_labels(labels)
 
 
 
