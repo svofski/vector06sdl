@@ -817,3 +817,42 @@ godot_variant debug_get_global_addr(godot_object* p_instance, void* p_method_dat
 	api->godot_variant_new_int(&ret, global_addr);
 	return ret;
 }
+
+godot_variant debug_get_call_stack(godot_object* p_instance, void* p_method_data, 
+		void* p_user_data, int p_num_args, godot_variant** p_args)
+{
+	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+	if (!user_data_p->initialized) {
+		godot_variant ret;
+		api->godot_variant_new_bool(&ret, 0);
+		return ret;
+	}
+
+	auto out = debug.get_call_stack(); 
+
+    godot_variant ret;
+    godot_string ret_gd_str;
+    api->godot_string_new(&ret_gd_str);
+    api->godot_string_parse_utf8(&ret_gd_str, out.c_str());
+    api->godot_variant_new_string(&ret, &ret_gd_str);
+    api->godot_string_destroy(&ret_gd_str);
+	return ret;
+}
+
+godot_variant debug_set_labels(godot_object* p_instance, void* p_method_data, 
+		void* p_user_data, int p_num_args, godot_variant** p_args)
+{
+	godot_dictionary labels_gd_dict = api->godot_variant_as_dictionary(p_args[0]);
+
+	
+	godot_string labels_gd_str = api->godot_variant_as_string(p_args[0]);
+	godot_char_string labels_ch_gd_str = api->godot_string_ascii(&labels_gd_str);
+	const char* labels_c = api->godot_char_string_get_data(&labels_ch_gd_str);
+	debug.set_labels(labels_c);
+
+	api->godot_char_string_destroy(&labels_ch_gd_str);
+
+	godot_variant ret;
+	api->godot_variant_new_bool(&ret, 1);
+	return ret;
+}

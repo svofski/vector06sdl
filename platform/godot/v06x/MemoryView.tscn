@@ -99,7 +99,7 @@ size_flags_vertical = 3
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
-text = "Stack:"
+text = "Stack"
 
 [node name="stack_text_panel" type="Label" parent="HSplitContainer/debug_panel/stack_panel"]
 margin_left = 3.0
@@ -129,7 +129,7 @@ size_flags_vertical = 3
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
-text = "Regs:"
+text = "Regs"
 
 [node name="reg_text_panel" type="Label" parent="HSplitContainer/debug_panel/reg_panel"]
 margin_left = 3.0
@@ -164,7 +164,7 @@ size_flags_vertical = 3
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
-text = "Flags:"
+text = "Flags"
 
 [node name="flag_text_panel" type="Label" parent="HSplitContainer/debug_panel/flag_panel"]
 margin_left = 3.0
@@ -176,7 +176,7 @@ rect_clip_content = true
 size_flags_vertical = 3
 
 [node name="hw_panel" type="Panel" parent="HSplitContainer/debug_panel"]
-anchor_right = 0.01
+anchor_right = 0.0075
 margin_left = 106.0
 margin_right = 192.0
 margin_bottom = 103.0
@@ -194,20 +194,20 @@ size_flags_vertical = 3
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
-text = "HW info:"
+text = "HW info"
 
 [node name="hw_text_panel" type="Label" parent="HSplitContainer/debug_panel/hw_panel"]
-margin_left = 3.0
+margin_left = 2.0
 margin_top = 8.0
-margin_right = 171.0
+margin_right = 172.0
 margin_bottom = 194.0
 rect_scale = Vector2( 0.5, 0.5 )
 rect_clip_content = true
 size_flags_vertical = 3
 
 [node name="breakpoints_panel" type="Panel" parent="HSplitContainer/debug_panel"]
-margin_left = 198.0
-margin_right = 246.0
+margin_left = 197.0
+margin_right = 259.0
 margin_bottom = 103.0
 
 [node name="breakpoints_label" type="Label" parent="HSplitContainer/debug_panel/breakpoints_panel"]
@@ -220,12 +220,12 @@ size_flags_vertical = 3
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
-text = "Brkpts:"
+text = "Breakpoints"
 
 [node name="breakpoints_list_panel" type="ItemList" parent="HSplitContainer/debug_panel/breakpoints_panel"]
-margin_left = 2.0
+margin_left = 1.0
 margin_top = 8.0
-margin_right = 90.0
+margin_right = 121.0
 margin_bottom = 194.0
 rect_scale = Vector2( 0.5, 0.5 )
 size_flags_vertical = 3
@@ -233,12 +233,12 @@ __meta__ = {
 "_editor_description_": ""
 }
 
-[node name="watchpoint_panel" type="Panel" parent="HSplitContainer/debug_panel"]
-margin_left = 248.0
+[node name="watchpoints_panel" type="Panel" parent="HSplitContainer/debug_panel"]
+margin_left = 261.0
 margin_right = 400.0
 margin_bottom = 103.0
 
-[node name="watchpoints_label" type="Label" parent="HSplitContainer/debug_panel/watchpoint_panel"]
+[node name="watchpoints_label" type="Label" parent="HSplitContainer/debug_panel/watchpoints_panel"]
 margin_left = 3.0
 margin_right = 71.0
 margin_bottom = 25.0
@@ -248,12 +248,12 @@ size_flags_vertical = 3
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
-text = "watchpts:"
+text = "watchpoints"
 
-[node name="watchpoints_list_panel" type="ItemList" parent="HSplitContainer/debug_panel/watchpoint_panel"]
-margin_left = 2.0
+[node name="watchpoints_list_panel" type="ItemList" parent="HSplitContainer/debug_panel/watchpoints_panel"]
+margin_left = 1.0
 margin_top = 8.0
-margin_right = 298.0
+margin_right = 273.0
 margin_bottom = 194.0
 rect_scale = Vector2( 0.5, 0.5 )
 size_flags_vertical = 3
@@ -261,13 +261,14 @@ __meta__ = {
 "_editor_description_": ""
 }
 
-[node name="callstack_panel" type="Panel" parent="HSplitContainer/debug_panel"]
-margin_left = 303.0
+[node name="call_stack_panel" type="Panel" parent="HSplitContainer/debug_panel"]
+margin_left = 248.0
 margin_top = 104.0
 margin_right = 400.0
 margin_bottom = 279.0
+size_flags_horizontal = 3
 
-[node name="callstack_label" type="Label" parent="HSplitContainer/debug_panel/callstack_panel"]
+[node name="call_stack_label" type="Label" parent="HSplitContainer/debug_panel/call_stack_panel"]
 margin_left = 3.0
 margin_right = 71.0
 margin_bottom = 25.0
@@ -277,16 +278,18 @@ size_flags_vertical = 3
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
-text = "Call/Jmp Stack:"
+text = "Call Stack:"
 
-[node name="callstack_list_panel" type="ItemList" parent="HSplitContainer/debug_panel/callstack_panel"]
+[node name="call_stack_list_panel" type="TextEdit" parent="HSplitContainer/debug_panel/call_stack_panel"]
 margin_left = 2.0
 margin_top = 8.0
-margin_right = 188.0
+margin_right = 300.0
 margin_bottom = 336.0
 rect_scale = Vector2( 0.5, 0.5 )
 size_flags_horizontal = 3
 size_flags_vertical = 3
+readonly = true
+highlight_current_line = true
 __meta__ = {
 "_editor_description_": ""
 }
@@ -377,7 +380,7 @@ expand_icon = true
 
 [node name="code_panel" type="TextEdit" parent="HSplitContainer/debug_panel"]
 margin_top = 131.0
-margin_right = 300.0
+margin_right = 246.0
 margin_bottom = 279.0
 rect_min_size = Vector2( 200, 100 )
 rect_clip_content = true
@@ -394,14 +397,14 @@ highlight_all_occurrences = true
 script = ExtResource( 13 )
 
 [node name="main_bar" type="Panel" parent="HSplitContainer/debug_panel"]
-margin_top = 104.0
-margin_right = 300.0
+margin_top = 105.0
+margin_right = 246.0
 margin_bottom = 129.0
 
 [node name="search_panel" type="LineEdit" parent="HSplitContainer/debug_panel/main_bar"]
 margin_left = 2.0
 margin_top = 2.0
-margin_right = 204.0
+margin_right = 232.0
 margin_bottom = 42.0
 rect_scale = Vector2( 0.5, 0.5 )
 hint_tooltip = "Search panel. 
@@ -414,7 +417,6 @@ clear_button_enabled = true
 caret_blink = true
 
 [node name="watchpoint_popup" type="ConfirmationDialog" parent="HSplitContainer/debug_panel"]
-visible = true
 margin_left = 100.0
 margin_top = 100.0
 margin_right = 343.0
@@ -626,7 +628,6 @@ margin_top = 79.0
 margin_right = 377.0
 margin_bottom = 143.0
 mouse_filter = 1
-size_flags_horizontal = 3
 size_flags_vertical = 3
 scroll_horizontal_enabled = false
 __meta__ = {
@@ -634,9 +635,10 @@ __meta__ = {
 }
 
 [node name="Bitmaps" parent="HSplitContainer/VBoxContainer/ScrollContainer2" instance=ExtResource( 3 )]
-margin_right = 4.0
+margin_right = 377.0
 margin_bottom = 0.0
 mouse_filter = 2
+size_flags_horizontal = 3
 
 [node name="HintLabel" type="Label" parent="HSplitContainer/VBoxContainer"]
 margin_top = 265.0
@@ -652,7 +654,7 @@ text = "Helpful hints"
 [connection signal="resized" from="HSplitContainer/debug_panel" to="HSplitContainer/debug_panel" method="_on_debug_panel_resized"]
 [connection signal="item_activated" from="HSplitContainer/debug_panel/breakpoints_panel/breakpoints_list_panel" to="HSplitContainer/debug_panel" method="_on_breakpoints_list_panel_item_selected"]
 [connection signal="item_selected" from="HSplitContainer/debug_panel/breakpoints_panel/breakpoints_list_panel" to="HSplitContainer/debug_panel" method="_on_breakpoints_list_panel_item_selected"]
-[connection signal="nothing_selected" from="HSplitContainer/debug_panel/watchpoint_panel/watchpoints_list_panel" to="HSplitContainer/debug_panel" method="_on_watchpoints_list_panel_nothing_selected"]
+[connection signal="nothing_selected" from="HSplitContainer/debug_panel/watchpoints_panel/watchpoints_list_panel" to="HSplitContainer/debug_panel" method="_on_watchpoints_list_panel_nothing_selected"]
 [connection signal="pressed" from="HSplitContainer/debug_panel/command_panel/break_cont" to="HSplitContainer/debug_panel" method="_on_break_cont_pressed"]
 [connection signal="pressed" from="HSplitContainer/debug_panel/command_panel/step_over" to="HSplitContainer/debug_panel" method="_on_step_over_pressed"]
 [connection signal="pressed" from="HSplitContainer/debug_panel/command_panel/step_into" to="HSplitContainer/debug_panel" method="_on_step_into_pressed"]

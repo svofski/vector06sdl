@@ -63,6 +63,7 @@ public:
 	static const constexpr size_t RAM_SIZE		= MEM_BANK_SIZE;
 	static const constexpr size_t RAM_DISK_SIZE	= MEM_BANK_SIZE * 4;
 	static const constexpr size_t GLOBAL_MEM_SIZE	= RAM_SIZE + RAM_DISK_SIZE;
+	static const constexpr size_t CALL_STACK_SIZE   = 80;
 
 
 	enum AddrSpace : size_t
@@ -88,23 +89,43 @@ public:
 	void print_breakpoints();
 	void print_watchpoints();
 	auto get_global_addr(size_t _addr, const AddrSpace _addr_space) const -> const size_t;
-
 	bool check_breakpoints(const size_t _global_addr);
 	bool check_watchpoint(const Watchpoint::Access _access, const size_t _global_addr, const uint8_t _value);
 	bool check_break();
+	auto get_call_stack() const ->std::string;
+	void set_labels(const char* _labels_c);
 
 private:
-	auto get_mnemonic(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const -> const std::string;
 	auto get_disasm_line(const size_t _addr, const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const ->const std::string ;
 	auto get_disasm_db_line(const size_t _addr, const uint8_t _data) const ->const std::string;
 	auto get_cmd_len(const uint8_t _addr) const -> const size_t;
 	auto get_addr(const size_t _end_addr, const size_t _before_addr_lines) const -> size_t;
 	auto watchpoints_find(const size_t global_addr) -> Watchpoints::iterator;
 	void watchpoints_erase(const size_t global_addr);
+	
+	void call_stack_update(const size_t _global_addr, const uint8_t _val);
+	bool is_opcode_call_jmp(const uint8_t _opcode);
 
 	uint64_t mem_runs[GLOBAL_MEM_SIZE];
 	uint64_t mem_reads[GLOBAL_MEM_SIZE];
 	uint64_t mem_writes[GLOBAL_MEM_SIZE];
+
+	struct CallStackItem
+	{
+		size_t global_addr;
+		uint8_t opcode;
+		uint8_t data_l;
+		uint8_t data_h;
+		size_t call_addr;
+		size_t count;
+
+		auto to_str() const -> std::string;
+		void clear();
+	};
+	CallStackItem call_stack[CALL_STACK_SIZE];
+	size_t call_stack_idx = CALL_STACK_SIZE - 1;
+
+	std::map<size_t, std::string> labels;
 
 	Memory* memoryP;
 

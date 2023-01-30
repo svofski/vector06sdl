@@ -1,0 +1,1 @@
+scons platform=nuwen-mingw64
