@@ -37,7 +37,7 @@
 extern int i8080_hal_memory_read_word(int addr, bool stack);
 extern void i8080_hal_memory_write_word(int addr, int word, bool stack);
 
-extern int i8080_hal_memory_read_byte(int addr);
+extern int i8080_hal_memory_read_byte(int addr, const bool _is_opcode = false);
 extern void i8080_hal_memory_write_byte(int addr, int byte);
 
 extern int i8080_hal_io_input(int port);

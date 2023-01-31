@@ -591,7 +591,7 @@ godot_variant debug_step_into(godot_object* p_instance, void* p_method_data,
 	return ret;
 }
 
-godot_variant debug_disasm(godot_object* p_instance, void* p_method_data, 
+godot_variant debug_get_disasm(godot_object* p_instance, void* p_method_data, 
 		void* p_user_data, int p_num_args, godot_variant** p_args)
 {
 	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
@@ -605,7 +605,7 @@ godot_variant debug_disasm(godot_object* p_instance, void* p_method_data,
 	godot_int lines = api->godot_variant_as_int(p_args[1]);
 	godot_int lines_before_addr = api->godot_variant_as_int(p_args[2]);
 
-	auto out = debug.disasm(addr, lines, lines_before_addr); 
+	auto out = debug.get_disasm(addr, lines, lines_before_addr); 
 
     godot_variant ret;
     godot_string ret_gd_str;

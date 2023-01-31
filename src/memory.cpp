@@ -58,7 +58,7 @@ uint32_t Memory::tobank(uint32_t a) const
     return (a & 0x78000) | ((a<<2)&0x7ffc) | ((a>>13)&3);
 }
 
-uint8_t Memory::read(uint32_t addr, bool stackrq) const
+uint8_t Memory::read(uint32_t addr, bool stackrq, const bool _is_opcode) const
 {
     uint8_t value;
     uint32_t phys = addr;
@@ -76,9 +76,7 @@ uint8_t Memory::read(uint32_t addr, bool stackrq) const
 
     if (debug_onread) 
     {
-        auto pc = (i8080cpu::i8080_pc() - 1) % 0xffff; // decr by one because PC gets incremented by one right after the instr is executed and before Memory::read/write is called.
-        auto run = bigram_select(pc & 0xffff, false) == bigaddr;
-        debug_onread(bigaddr, value, run);
+        debug_onread(bigaddr, value, _is_opcode);
     }
 
     return value;

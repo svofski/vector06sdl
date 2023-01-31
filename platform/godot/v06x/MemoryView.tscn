@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=2]
+[gd_scene load_steps=29 format=2]
 
 [ext_resource path="res://MemoryDump.tscn" type="PackedScene" id=1]
 [ext_resource path="res://MemoryView.gd" type="Script" id=2]
@@ -14,6 +14,7 @@
 [ext_resource path="res://assets/fonts/Roboto_Mono/static/RobotoMono-Regular.ttf" type="DynamicFontData" id=12]
 [ext_resource path="res://CodePanel.gd" type="Script" id=13]
 [ext_resource path="res://assets/fonts/Roboto_Mono/static/RobotoMono-Bold.ttf" type="DynamicFontData" id=14]
+[ext_resource path="res://call_stack_list_panel.gd" type="Script" id=15]
 
 [sub_resource type="InputEventKey" id=5]
 pressed = true
@@ -288,8 +289,11 @@ margin_bottom = 336.0
 rect_scale = Vector2( 0.5, 0.5 )
 size_flags_horizontal = 3
 size_flags_vertical = 3
+custom_colors/number_color = Color( 0.678431, 0.678431, 0.721569, 1 )
 readonly = true
 highlight_current_line = true
+highlight_all_occurrences = true
+script = ExtResource( 15 )
 __meta__ = {
 "_editor_description_": ""
 }
@@ -413,6 +417,7 @@ enter a label name if there is a debug.txt file with labels stored in the same f
 ctrl+up/down prev searches."
 theme = SubResource( 3 )
 custom_fonts/font = SubResource( 4 )
+text = "0x100"
 clear_button_enabled = true
 caret_blink = true
 
@@ -489,7 +494,7 @@ margin_bottom = 59.0
 rect_scale = Vector2( 0.5, 0.5 )
 size_flags_horizontal = 0
 size_flags_vertical = 0
-text = "0x1000"
+text = "0x100"
 
 [node name="wp_cond_label" type="Label" parent="HSplitContainer/debug_panel/watchpoint_popup/watchpoint_panel"]
 margin_left = 7.00001
@@ -511,6 +516,11 @@ margin_top = 48.0
 margin_right = 219.0
 margin_bottom = 79.0
 rect_scale = Vector2( 0.5, 0.5 )
+hint_tooltip = "empty to catch any change.
+= to break when it's equal to a value.
+> to break when it's bigger than a value.
+also works <, >=, <=, !=, ==
+"
 size_flags_horizontal = 0
 size_flags_vertical = 0
 
@@ -655,6 +665,7 @@ text = "Helpful hints"
 [connection signal="item_activated" from="HSplitContainer/debug_panel/breakpoints_panel/breakpoints_list_panel" to="HSplitContainer/debug_panel" method="_on_breakpoints_list_panel_item_selected"]
 [connection signal="item_selected" from="HSplitContainer/debug_panel/breakpoints_panel/breakpoints_list_panel" to="HSplitContainer/debug_panel" method="_on_breakpoints_list_panel_item_selected"]
 [connection signal="nothing_selected" from="HSplitContainer/debug_panel/watchpoints_panel/watchpoints_list_panel" to="HSplitContainer/debug_panel" method="_on_watchpoints_list_panel_nothing_selected"]
+[connection signal="ready" from="HSplitContainer/debug_panel/call_stack_panel/call_stack_list_panel" to="HSplitContainer/debug_panel/call_stack_panel/call_stack_list_panel" method="_on_call_stack_list_panel_ready"]
 [connection signal="pressed" from="HSplitContainer/debug_panel/command_panel/break_cont" to="HSplitContainer/debug_panel" method="_on_break_cont_pressed"]
 [connection signal="pressed" from="HSplitContainer/debug_panel/command_panel/step_over" to="HSplitContainer/debug_panel" method="_on_step_over_pressed"]
 [connection signal="pressed" from="HSplitContainer/debug_panel/command_panel/step_into" to="HSplitContainer/debug_panel" method="_on_step_into_pressed"]

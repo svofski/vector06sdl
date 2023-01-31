@@ -63,7 +63,7 @@ public:
 	static const constexpr size_t RAM_SIZE		= MEM_BANK_SIZE;
 	static const constexpr size_t RAM_DISK_SIZE	= MEM_BANK_SIZE * 4;
 	static const constexpr size_t GLOBAL_MEM_SIZE	= RAM_SIZE + RAM_DISK_SIZE;
-	static const constexpr size_t CALL_STACK_SIZE   = 80;
+	static const constexpr size_t CALL_STACK_SIZE   = 1000;
 
 
 	enum AddrSpace : size_t
@@ -74,9 +74,9 @@ public:
 	};
 
 	Debug(Memory* _memory);
-	void read(const size_t _global_addr, const uint8_t _val, const bool _run);
+	void read(const size_t _global_addr, const uint8_t _val, const bool _is_opcode);
 	void write(const size_t _global_addr, const uint8_t _val);
-	auto disasm(const size_t _addr, const size_t _lines, const size_t _before_addr_lines) const ->std::string;
+	auto get_disasm(const size_t _addr, const size_t _lines, const size_t _before_addr_lines) const ->std::string;
 	void reset();
 	void serialize(std::vector<uint8_t> &to);
 	void deserialize(std::vector<uint8_t>::iterator it, size_t size);
@@ -104,7 +104,6 @@ private:
 	void watchpoints_erase(const size_t global_addr);
 	
 	void call_stack_update(const size_t _global_addr, const uint8_t _val);
-	bool is_opcode_call_jmp(const uint8_t _opcode);
 
 	uint64_t mem_runs[GLOBAL_MEM_SIZE];
 	uint64_t mem_reads[GLOBAL_MEM_SIZE];

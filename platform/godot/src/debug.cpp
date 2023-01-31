@@ -13,9 +13,9 @@ Debug::Debug(Memory* _memoryP)
 : mem_runs(), mem_reads(), mem_writes(), memoryP(_memoryP), wp_break(false), call_stack()
 {
 	auto read_func =
-		[this](const uint32_t _addr, const uint8_t _val, const bool _run)
+		[this](const uint32_t _addr, const uint8_t _val, const bool _is_opcode)
 		{
-			this->read(_addr, _val, _run);
+			this->read(_addr, _val, _is_opcode);
 		};
 
 	auto write_func =
@@ -28,9 +28,9 @@ Debug::Debug(Memory* _memoryP)
 	memoryP->debug_onwrite = write_func;
 }
 
-void Debug::read(const size_t _global_addr, const uint8_t _val, const bool _run)
+void Debug::read(const size_t _global_addr, const uint8_t _val, const bool _is_opcode)
 {
-	if(_run)
+	if(_is_opcode)
 	{
 		mem_runs[_global_addr]++;
 		call_stack_update(_global_addr, _val);
@@ -50,10 +50,10 @@ void Debug::write(const size_t _global_addr, const uint8_t _val)
 
 static const char* mnemonics[0x100] =
 {
-	"NOP",    "LXI B,",  "STAX B", "INX B",  "INR B", "DCR B", "MVI B,", "RLC", "DB 08H", "DAD B",  "LDAX B", "DCX B",  "INR C", "DCR C", "MVI C,", "RRC",
-	"DB 10H", "LXI D,",  "STAX D", "INX D",  "INR D", "DCR D", "MVI D,", "RAL", "DB 18H", "DAD D",  "LDAX D", "DCX D",  "INR E", "DCR E", "MVI E,", "RAR",
-	"DB 20H", "LXI H,",  "SHLD",   "INX H",  "INR H", "DCR H", "MVI H,", "DAA", "DB 28H", "DAD H",  "LHLD",   "DCX H",  "INR L", "DCR L", "MVI L,", "CMA",
-	"DB 30H", "LXI SP,", "STA",    "INX SP", "INR M", "DCR M", "MVI M,", "STC", "DB 38H", "DAD SP", "LDA",    "DCX SP", "INR A", "DCR A", "MVI A,", "CMC",
+	"NOP",   "LXI B,",  "STAX B", "INX B",  "INR B", "DCR B", "MVI B,", "RLC", "DB 08", "DAD B",  "LDAX B", "DCX B",  "INR C", "DCR C", "MVI C,", "RRC",
+	"DB 10", "LXI D,",  "STAX D", "INX D",  "INR D", "DCR D", "MVI D,", "RAL", "DB 18", "DAD D",  "LDAX D", "DCX D",  "INR E", "DCR E", "MVI E,", "RAR",
+	"DB 20", "LXI H,",  "SHLD",   "INX H",  "INR H", "DCR H", "MVI H,", "DAA", "DB 28", "DAD H",  "LHLD",   "DCX H",  "INR L", "DCR L", "MVI L,", "CMA",
+	"DB 30", "LXI SP,", "STA",    "INX SP", "INR M", "DCR M", "MVI M,", "STC", "DB 38", "DAD SP", "LDA",    "DCX SP", "INR A", "DCR A", "MVI A,", "CMC",
 
 	"MOV B, B", "MOV B, C", "MOV B, D", "MOV B, E", "MOV B, H", "MOV B, L", "MOV B, M", "MOV B, A", "MOV C, B", "MOV C, C", "MOV C, D", "MOV C, E", "MOV C, H", "MOV C, L", "MOV C, M", "MOV C, A",
 	"MOV D, B", "MOV D, C", "MOV D, D", "MOV D, E", "MOV D, H", "MOV D, L", "MOV D, M", "MOV D, A", "MOV E, B", "MOV E, C", "MOV E, D", "MOV E, E", "MOV E, H", "MOV E, L", "MOV E, M", "MOV E, A",
@@ -65,10 +65,10 @@ static const char* mnemonics[0x100] =
 	"ANA B", "ANA C", "ANA D", "ANA E", "ANA H", "ANA L", "ANA M", "ANA A", "XRA B", "XRA C", "XRA D", "XRA E", "XRA H", "XRA L", "XRA M", "XRA A",
 	"ORA B", "ORA C", "ORA D", "ORA E", "ORA H", "ORA L", "ORA M", "ORA A", "CMP B", "CMP C", "CMP D", "CMP E", "CMP H", "CMP L", "CMP M", "CMP A",
 
-	"RNZ", "POP B",   "JNZ", "JMP",  "CNZ", "PUSH B",   "ADI", "RST 0", "RZ",  "RET",     "JZ",  "DB CBH",  "CZ",  "CALL",   "ACI", "RST 1",
-	"RNC", "POP D",   "JNC", "OUT",  "CNC", "PUSH D",   "SUI", "RST 2", "RC",  "DB D9H",  "JC",  "IN",      "CC",  "DB DDH", "SBI", "RST 3",
-	"RPO", "POP H",   "JPO", "XTHL", "CPO", "PUSH H",   "ANI", "RST 4", "RPE", "PCHL",    "JPE", "XCHG",    "CPE", "DB EDH", "XRI", "RST 5",
-	"RP",  "POP PSW", "JP",  "DI",   "CP",  "PUSH PSW", "ORI", "RST 6", "RM",  "SPHL",    "JM",  "EI",      "CM",  "DB FDH", "CPI", "RST 7"
+	"RNZ", "POP B",   "JNZ", "JMP",  "CNZ", "PUSH B",   "ADI", "RST 0", "RZ",  "RET",    "JZ",  "DB CB",  "CZ",  "CALL",  "ACI", "RST 1",
+	"RNC", "POP D",   "JNC", "OUT",  "CNC", "PUSH D",   "SUI", "RST 2", "RC",  "DB D9",  "JC",  "IN",     "CC",  "DB DD", "SBI", "RST 3",
+	"RPO", "POP H",   "JPO", "XTHL", "CPO", "PUSH H",   "ANI", "RST 4", "RPE", "PCHL",   "JPE", "XCHG",   "CPE", "DB ED", "XRI", "RST 5",
+	"RP",  "POP PSW", "JP",  "DI",   "CP",  "PUSH PSW", "ORI", "RST 6", "RM",  "SPHL",   "JM",  "EI",     "CM",  "DB FD", "CPI", "RST 7"
 };
 
 
@@ -88,10 +88,10 @@ static const uint8_t cmd_lens[0x100] =
 	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
 	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
 	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-	1,1,3,3,3,1,2,1,1,1,3,3,3,3,2,1,
-	1,1,3,2,3,1,2,1,1,1,3,2,3,3,2,1,
-	1,1,3,1,3,1,2,1,1,1,3,1,3,3,2,1,
-	1,1,3,1,3,1,2,1,1,1,3,1,3,3,2,1
+	1,1,3,3,3,1,2,1,1,1,3,1,3,3,2,1,
+	1,1,3,2,3,1,2,1,1,1,3,2,3,1,2,1,
+	1,1,3,1,3,1,2,1,1,1,3,1,3,1,2,1,
+	1,1,3,1,3,1,2,1,1,1,3,1,3,1,2,1
 };
 
 auto Debug::get_cmd_len(const uint8_t _addr) const -> const size_t
@@ -104,9 +104,8 @@ static size_t cmd[3];
 #define CMD_OP_L cmd[1]
 #define CMD_OP_H cmd[2]
 #define MAX_DATA_CHR_LEN 11
-#define MAX_CMD_LEN 13
 
-auto get_mnemonic(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h)
+auto get_mnemonic(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h, const int _cmd_len_min)
 ->const std::string
 {
 	CMD_OPCODE = _opcode;
@@ -129,13 +128,49 @@ auto get_mnemonic(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _d
 	}
 
 	int i = out.str().size();
-	for(; i < MAX_CMD_LEN; i++)
+	for(; i < _cmd_len_min; i++)
 	{
 			out << " ";
 	}
 
 	return out.str();
 }
+
+// 1 - call, c*
+// 2 - rst
+// 3 - pchl
+// 4 - jmp, j*
+// 5 - ret, r*
+// 0 - other
+static const uint8_t opcode_types[0x100] =
+{
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+	5, 0, 4, 4, 1, 0, 0, 2, 5, 5, 4, 0, 1, 1, 0, 2,
+	5, 0, 4, 0, 1, 0, 0, 2, 5, 0, 4, 0, 1, 0, 0, 2,
+	5, 0, 4, 0, 1, 0, 0, 2, 5, 3, 4, 0, 1, 0, 0, 2,
+	5, 0, 4, 0, 1, 0, 0, 2, 5, 0, 4, 0, 1, 0, 0, 2
+};
+
+bool is_opcode_call_jmp(const uint8_t _opcode)
+{
+	return opcode_types[_opcode] > 0 && opcode_types[_opcode] <= 4;
+}
+
+#define OPCODE_PCHL 0xE9
 
 auto Debug::get_disasm_db_line(const size_t _addr, const uint8_t _data) const
 ->const std::string
@@ -193,7 +228,7 @@ auto Debug::get_disasm_line(const size_t _addr, const uint8_t _opcode, const uin
 		out << " ";
 	}
 
-	out << get_mnemonic(_opcode, _data_l, _data_h);
+	out << get_mnemonic(_opcode, _data_l, _data_h, 13);
 
 	return out.str();
 }
@@ -235,7 +270,7 @@ size_t Debug::get_addr(const size_t _end_addr, const size_t _before_addr_lines) 
 	return _end_addr;
 }
 
-auto Debug::disasm(const size_t _addr, const size_t _lines, const size_t _before_addr_lines) const
+auto Debug::get_disasm(const size_t _addr, const size_t _lines, const size_t _before_addr_lines) const
 ->std::string
 {
 	std::string out;
@@ -275,7 +310,7 @@ auto Debug::disasm(const size_t _addr, const size_t _lines, const size_t _before
 				std::string runsS = std::to_string(mem_runs[bigaddr]);
 				std::string readsS = std::to_string(mem_reads[bigaddr]);
 				std::string writesS = std::to_string(mem_writes[bigaddr]);
-				std::string runsS_readsS_writesS = "(" + runsS + "," + readsS + "," + writesS + ")";
+				std::string runsS_readsS_writesS = " (" + runsS + "," + readsS + "," + writesS + ")";
 				out += runsS_readsS_writesS;
 
 				if (labels.find(addr & 0xffff) != labels.end())
@@ -319,6 +354,24 @@ auto Debug::disasm(const size_t _addr, const size_t _lines, const size_t _before
 		if (labels.find(addr & 0xffff) != labels.end())
 		{
 			out += " " + labels.at(addr & 0xffff);
+		}
+
+		if (get_cmd_len(opcode) == 3 || opcode == OPCODE_PCHL)
+		{
+			int label_addr = 0;
+			if (opcode == OPCODE_PCHL)
+			{
+				label_addr = i8080cpu::i8080_regs_hl() & 0xffff;
+			}
+			else
+			{
+				label_addr = (data_h<<8 | data_l) % 0xffff;
+			}
+			
+			if (labels.find(label_addr) != labels.end())
+			{
+				out += " (" + labels.at(label_addr) + ")";
+			}
 		}
 
 		if (i != lines-1)
@@ -490,8 +543,6 @@ bool Debug::check_break()
 	return break_;
 }
 
-#define OPCODE_PCHL 0xE9
-
 void Debug::call_stack_update(const size_t _global_addr, const uint8_t _val)
 {
 	if (is_opcode_call_jmp(_val))
@@ -523,39 +574,6 @@ void Debug::call_stack_update(const size_t _global_addr, const uint8_t _val)
 	}
 }
 
-// 1 - call, c*, rst
-// 2 - pchl
-// 3 - jmp, j*
-// 4 - ret, r*
-// 0 - other
-static const uint8_t opcode_pc_change[0x100] =
-{
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-
-	4, 0, 3, 3, 1, 0, 0, 1, 4, 4, 3, 0, 1, 1, 0, 1,
-	4, 0, 3, 0, 1, 0, 0, 1, 4, 0, 3, 0, 1, 0, 0, 1,
-	4, 0, 3, 0, 1, 0, 0, 1, 4, 2, 3, 0, 1, 0, 0, 1,
-	4, 0, 3, 0, 1, 0, 0, 1, 4, 0, 3, 0, 1, 0, 0, 1
-};
-
-bool Debug::is_opcode_call_jmp(const uint8_t _opcode)
-{
-	return opcode_pc_change[_opcode] > 0 && opcode_pc_change[_opcode] <= 2;
-}
-
 auto Debug::CallStackItem::to_str() const
 ->std::string
 {	
@@ -565,7 +583,7 @@ auto Debug::CallStackItem::to_str() const
 	out << std::setw(5) << std::setfill('0');
 	out << std::uppercase << std::hex << static_cast<int>(global_addr) << ": ";
 
-	out << get_mnemonic(opcode, data_l, data_h);
+	out << get_mnemonic(opcode, data_l, data_h, 10) << std::dec << "(" << count << ", ";
 
 	return out.str();
 }
@@ -587,13 +605,17 @@ auto Debug::get_call_stack() const
 	auto idx = call_stack_idx;
 	for (size_t i = 0; i < CALL_STACK_SIZE; i++)
 	{
-		const size_t idx = (call_stack_idx + i) % CALL_STACK_SIZE;
+		const size_t idx = (call_stack_idx - i) % CALL_STACK_SIZE;
+		
+		if (call_stack[idx].count == 0) break;
+
+		out += " " + call_stack[idx].to_str();
+		
 		const size_t call_addr = call_stack[idx].call_addr & 0xffff;
-		out += call_stack[idx].to_str();
 
 		if (labels.find(call_addr) != labels.end())
 		{
-			out += "(" + labels.at(call_addr) + ")";
+			out += labels.at(call_addr) + ")";
 		}
 		out += "\n";
 	}
