@@ -122,8 +122,7 @@ bool Board::check_interrupt()
         if (this->last_opcode == 0x76) {
             i8080_jump(i8080_pc() + 1);
         }
-        i8080_execute(0xff);    // rst7
-        this->instr_time += 16;
+        this->instr_time += i8080_execute(0xff);    // rst7
 
         return true;
     }
@@ -194,7 +193,7 @@ void Board::single_step(bool update_screen)
 
     auto v_cycles = i8080_instruction(&this->last_opcode);
     total_v_cycles += v_cycles;
-    this->instr_time += v_cycles; 
+    this->instr_time += v_cycles;
 
     int commit_time = -1, commit_time_pal = -1;
     if (this->last_opcode == 0xd3) {

@@ -39,7 +39,7 @@ public:
 public:
     Memory();
     void control_write(uint8_t w8);
-    uint8_t read(uint32_t addr, bool stackrq) const;
+    uint8_t read(uint32_t addr, bool stackrq, const bool _is_opcode = false) const;
     void write(uint32_t addr, uint8_t w8, bool stackrq);
     void init_from_vector(const std::vector<uint8_t> & from, uint32_t start_addr);
     void attach_boot(std::vector<uint8_t> boot);

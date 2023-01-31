@@ -373,7 +373,7 @@ func _on_code_panel_breakpoint_toggled(row):
 func codePanel_scroll_to_addr(addr, lines_before = CODE_PANEL_LINES_AHEAD):
 	var lines = code_panel.get_visible_rows()
 	code_panel.remove_breakpoints()	
-	code_panel.text = main.debug_disasm(addr, lines, lines_before)
+	code_panel.text = main.debug_get_disasm(addr, lines, lines_before)
 	# restore breakpoint markers in the code panel
 	for brk_idx in range(breakpoints_list_panel.get_item_count()):
 		var addrS = breakpoints_list_panel_get_addr(brk_idx)

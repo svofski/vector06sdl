@@ -41,7 +41,7 @@ V06X_DECL(debug_continue);
 V06X_DECL(debug_read_registers);
 V06X_DECL(debug_read_stack);
 V06X_DECL(debug_step_into);
-V06X_DECL(debug_disasm);
+V06X_DECL(debug_get_disasm);
 V06X_DECL(debug_add_breakpoint);
 V06X_DECL(debug_del_breakpoint);
 V06X_DECL(debug_add_watchpoint);
@@ -120,7 +120,7 @@ extern "C" void GDN_EXPORT godot_nativescript_init(void* p_handle)
     V06X_METHOD("debug_read_registers", debug_read_registers);
     V06X_METHOD("debug_read_stack", debug_read_stack);
     V06X_METHOD("debug_step_into", debug_step_into);
-    V06X_METHOD("debug_disasm", debug_disasm);
+    V06X_METHOD("debug_get_disasm", debug_get_disasm);
     V06X_METHOD("debug_add_breakpoint", debug_add_breakpoint);
     V06X_METHOD("debug_del_breakpoint", debug_del_breakpoint);
     V06X_METHOD("debug_add_watchpoint", debug_add_watchpoint);

@@ -20,9 +20,9 @@ void i8080_hal_bind(Memory & _mem, IO & _io, Board & _board)
     board = &_board;
 }
 
-int i8080_hal_memory_read_byte(int addr)
+int i8080_hal_memory_read_byte(int addr, const bool _is_opcode)
 {
-    return memory->read(addr, false);
+    return memory->read(addr, false, _is_opcode);
 }
 
 void i8080_hal_memory_write_byte(int addr, int value)

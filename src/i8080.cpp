@@ -36,6 +36,7 @@
 #include <stdio.h>
 
 #define RD_BYTE(addr) i8080_hal_memory_read_byte(addr)
+#define RD_OPCODE(addr) i8080_hal_memory_read_byte(addr, true)
 #define RD_WORD(addr) i8080_hal_memory_read_word(addr,false)
 #define RD_STACK(addr) i8080_hal_memory_read_word(addr, true)
 
@@ -2002,7 +2003,7 @@ int i8080_execute(int opcode) {
 }
 
 int i8080_instruction(int * report_opcode) {
-    *report_opcode = RD_BYTE(PC++);
+    *report_opcode = RD_OPCODE(PC++);
     return i8080_execute(*report_opcode);
 }
 
