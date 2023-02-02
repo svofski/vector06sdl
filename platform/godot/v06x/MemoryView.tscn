@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=2]
+[gd_scene load_steps=31 format=2]
 
 [ext_resource path="res://MemoryDump.tscn" type="PackedScene" id=1]
 [ext_resource path="res://MemoryView.gd" type="Script" id=2]
@@ -15,6 +15,11 @@
 [ext_resource path="res://CodePanel.gd" type="Script" id=13]
 [ext_resource path="res://assets/fonts/Roboto_Mono/static/RobotoMono-Bold.ttf" type="DynamicFontData" id=14]
 [ext_resource path="res://call_stack_list_panel.gd" type="Script" id=15]
+[ext_resource path="res://new_theme.tres" type="Theme" id=16]
+
+[sub_resource type="DynamicFont" id=16]
+size = 8
+font_data = ExtResource( 12 )
 
 [sub_resource type="InputEventKey" id=5]
 pressed = true
@@ -249,7 +254,7 @@ size_flags_vertical = 3
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
-text = "watchpoints"
+text = "Watchpoints"
 
 [node name="watchpoints_list_panel" type="ItemList" parent="HSplitContainer/debug_panel/watchpoints_panel"]
 margin_left = 1.0
@@ -262,14 +267,23 @@ __meta__ = {
 "_editor_description_": ""
 }
 
-[node name="call_stack_panel" type="Panel" parent="HSplitContainer/debug_panel"]
+[node name="trace_log_panel" type="Panel" parent="HSplitContainer/debug_panel"]
 margin_left = 248.0
 margin_top = 104.0
 margin_right = 400.0
-margin_bottom = 279.0
+margin_bottom = 129.0
 size_flags_horizontal = 3
 
-[node name="call_stack_label" type="Label" parent="HSplitContainer/debug_panel/call_stack_panel"]
+[node name="trace_log_filter" type="OptionButton" parent="HSplitContainer/debug_panel/trace_log_panel"]
+margin_left = 2.0
+margin_top = 9.0
+margin_right = 147.0
+margin_bottom = 40.0
+rect_scale = Vector2( 0.5, 0.5 )
+theme = ExtResource( 16 )
+flat = true
+
+[node name="trace_log_label" type="Label" parent="HSplitContainer/debug_panel/trace_log_panel"]
 margin_left = 3.0
 margin_right = 71.0
 margin_bottom = 25.0
@@ -279,17 +293,18 @@ size_flags_vertical = 3
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 custom_colors/font_outline_modulate = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
-text = "Call Stack:"
+text = "Trace Log"
 
-[node name="call_stack_list_panel" type="TextEdit" parent="HSplitContainer/debug_panel/call_stack_panel"]
-margin_left = 2.0
-margin_top = 8.0
-margin_right = 300.0
-margin_bottom = 336.0
-rect_scale = Vector2( 0.5, 0.5 )
+[node name="trace_log" type="TextEdit" parent="HSplitContainer/debug_panel"]
+margin_left = 249.0
+margin_top = 131.0
+margin_right = 400.0
+margin_bottom = 278.0
+rect_clip_content = true
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_colors/number_color = Color( 0.678431, 0.678431, 0.721569, 1 )
+custom_fonts/font = SubResource( 16 )
 readonly = true
 highlight_current_line = true
 highlight_all_occurrences = true
@@ -665,7 +680,9 @@ text = "Helpful hints"
 [connection signal="item_activated" from="HSplitContainer/debug_panel/breakpoints_panel/breakpoints_list_panel" to="HSplitContainer/debug_panel" method="_on_breakpoints_list_panel_item_selected"]
 [connection signal="item_selected" from="HSplitContainer/debug_panel/breakpoints_panel/breakpoints_list_panel" to="HSplitContainer/debug_panel" method="_on_breakpoints_list_panel_item_selected"]
 [connection signal="nothing_selected" from="HSplitContainer/debug_panel/watchpoints_panel/watchpoints_list_panel" to="HSplitContainer/debug_panel" method="_on_watchpoints_list_panel_nothing_selected"]
-[connection signal="ready" from="HSplitContainer/debug_panel/call_stack_panel/call_stack_list_panel" to="HSplitContainer/debug_panel/call_stack_panel/call_stack_list_panel" method="_on_call_stack_list_panel_ready"]
+[connection signal="item_selected" from="HSplitContainer/debug_panel/trace_log_panel/trace_log_filter" to="HSplitContainer/debug_panel" method="_on_trace_log_filter_item_selected"]
+[connection signal="gui_input" from="HSplitContainer/debug_panel/trace_log" to="HSplitContainer/debug_panel" method="_on_trace_log_gui_input"]
+[connection signal="ready" from="HSplitContainer/debug_panel/trace_log" to="HSplitContainer/debug_panel/trace_log" method="_on_call_stack_list_panel_ready"]
 [connection signal="pressed" from="HSplitContainer/debug_panel/command_panel/break_cont" to="HSplitContainer/debug_panel" method="_on_break_cont_pressed"]
 [connection signal="pressed" from="HSplitContainer/debug_panel/command_panel/step_over" to="HSplitContainer/debug_panel" method="_on_step_over_pressed"]
 [connection signal="pressed" from="HSplitContainer/debug_panel/command_panel/step_into" to="HSplitContainer/debug_panel" method="_on_step_into_pressed"]

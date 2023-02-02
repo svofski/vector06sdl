@@ -25,8 +25,9 @@ onready var wp_addr_space_stack = find_node("wp_addr_space_stack")
 onready var wp_addr_space_global = find_node("wp_addr_space_global")
 onready var wp_value_size = find_node("wp_value_size")
 
-onready var call_stack_panel = find_node("call_stack_panel")
-onready var call_stack_list_panel = find_node("call_stack_list_panel")
+onready var trace_log_panel = find_node("trace_log_panel")
+onready var trace_log_filter = find_node("trace_log_filter")
+onready var trace_log = find_node("trace_log")
 
 onready var break_cont = find_node("break_cont")
 onready var step_over = find_node("step_over")
@@ -87,6 +88,17 @@ var BW_POINTS_ADDR_SPACE_S = [
 	"GLOBAL"
 ]
 
+var TRACE_LOG_FILTER_LIST = [
+	"call",
+	"+ c*",
+	"+ rst", 
+	"+ pchl",
+	"+ jmp",
+	"+ j*",
+	"+ ret, r*",
+	"all"
+]
+
 onready var code_panel_menu = code_panel.get_menu()
 
 const STACK_TEXT_LINES = 6
@@ -94,6 +106,7 @@ const CODE_PANEL_LINES_AHEAD = 6
 const BREAKPOINT_AUTO_POSTFIX = ":A"
 
 var code_panel_cursor_line_last = 0
+var trace_log_cursor_line_last = -1
 
 const OPCODE_CALL_LEN = 3
 const OPCODE_CNZ	= 0xC4
@@ -129,20 +142,25 @@ func _ready():
 	code_panel_menu.add_item("add watchpoint", CODE_PANEL_MENU_ID.ADD_WP)
 	code_panel_menu.add_item("remove all watchpoints", CODE_PANEL_MENU_ID.REMOVE_ALL_WPS)
 	code_panel_menu.connect("id_pressed", self, "code_panel_menu_id_pressed")
+	
+	for item in TRACE_LOG_FILTER_LIST:
+		trace_log_filter.add_item(item)
+
 	set_ui_on_cont()
 	
 func debug_panel_size_update():
 	if main.debug_is_ui_break():
 		var addrS = asm_line_to_addr(code_panel.get_line(0))
 		codePanel_scroll_to_addr(addrS.hex_to_int(), 0)
+		trace_log_update(true)
 	code_panel.margin_bottom = self.margin_bottom
 	code_panel.cursor_set_line(code_panel_cursor_line_last)
-	call_stack_panel.margin_bottom = self.margin_bottom
-	call_stack_list_panel.rect_size.y = call_stack_panel.rect_size.y*2 - 20
-	call_stack_panel.margin_right = margin_right
-	call_stack_list_panel.rect_size.x = call_stack_panel.rect_size.x * 2 - 8
+	trace_log_panel.margin_right = self.margin_right
+	trace_log.margin_bottom = self.margin_bottom	
+	trace_log.margin_right = self.margin_right
+	trace_log.cursor_set_line(trace_log_cursor_line_last)
 	watchpoints_panel.margin_right = margin_right
-	watchpoints_list_panel.rect_size.x = watchpoints_panel.rect_size.x * 2 - 8	
+	watchpoints_list_panel.rect_size.x = watchpoints_panel.rect_size.x * 2 - 8
 	
 func _on_debug_panel_item_rect_changed():
 	debug_panel_size_update()
@@ -164,7 +182,8 @@ func set_ui_on_break():
 		breakpoints_list_panel_update(true)
 		watchpoints_list_panel_update(true)
 		hw_text_panel_update(true)
-		call_stack_list_panel_update(true)
+		trace_log_update(true)
+		trace_log_filter.disabled = false
 		step_over.disabled = false;
 		step_into.disabled = false;
 		step_out.disabled = false;
@@ -182,7 +201,8 @@ func set_ui_on_cont():
 		breakpoints_list_panel_update(false)
 		watchpoints_list_panel_update(false)
 		hw_text_panel_update(false)
-		call_stack_list_panel_update(false)
+		trace_log_update(false)
+		trace_log_filter.disabled = true
 		step_over.disabled = true;
 		step_into.disabled = true;
 		step_out.disabled = true;
@@ -222,15 +242,19 @@ func code_panel_update(enabled):
 		code_panel.add_color_override("current_line_color", Color(0.351563, 0.351563, 0.351563))
 		code_panel.remove_breakpoints()
 
-
-func call_stack_list_panel_update(enabled):
+func trace_log_update(enabled):
 	if enabled:
-		call_stack_list_panel.syntax_highlighting = true
-		call_stack_list_panel.add_color_override("current_line_color", Color(0.248718, 0.390625, 0.257319))
-		call_stack_list_panel.text = main.debug_get_call_stack()
+		trace_log.syntax_highlighting = true
+		trace_log.add_color_override("current_line_color", Color(0.248718, 0.390625, 0.257319))
+		trace_log_scroll(0)
+		if trace_log_cursor_line_last == -1:
+			trace_log.cursor_set_line(trace_log.get_line_count()-1)
+			trace_log_cursor_line_last = trace_log.cursor_get_line()
+		else:
+			trace_log.cursor_set_line(trace_log_cursor_line_last)
 	else:
-		call_stack_list_panel.syntax_highlighting = false
-		call_stack_list_panel.add_color_override("current_line_color", Color(0.351563, 0.351563, 0.351563))
+		trace_log.syntax_highlighting = false
+		trace_log.add_color_override("current_line_color", Color(0.351563, 0.351563, 0.351563))
 	
 func get_reg_pc():
 	return main.debug_read_registers()[5]
@@ -369,6 +393,11 @@ func _on_code_panel_breakpoint_toggled(row):
 		add_breakpoint(addrS)
 	else:
 		del_breakpoint(addrS)
+		
+func trace_log_scroll(offset):
+	var lines = trace_log.get_visible_rows()
+	var filter = trace_log_filter.selected
+	trace_log.text = main.debug_get_trace_log(offset, lines, filter)
 
 func codePanel_scroll_to_addr(addr, lines_before = CODE_PANEL_LINES_AHEAD):
 	var lines = code_panel.get_visible_rows()
@@ -410,6 +439,7 @@ func code_panel_menu_id_pressed(id):
 			_on_code_panel_breakpoint_toggled(cursor_line)
 		CODE_PANEL_MENU_ID.ADD_WP:
 			_on_watchpoints_list_panel_nothing_selected()
+			
 		CODE_PANEL_MENU_ID.REMOVE_ALL_WPS:
 			del_all_watchpoints()
 			
@@ -485,6 +515,32 @@ func _on_code_panel_gui_input(event):
 						codePanel_scroll_to_addr(addrS.hex_to_int(), 0)
 						code_panel.cursor_set_line(cursor_line)
 	code_panel_cursor_line_last = cursor_line
+
+func _on_trace_log_gui_input(event):
+	if not main.debug_is_ui_break():
+		return
+	
+	var cursor_line = trace_log.cursor_get_line()
+	if event is InputEventKey:
+		if event.pressed:
+			if event.scancode == KEY_UP and cursor_line == 0 and trace_log_cursor_line_last == 0:
+				trace_log_scroll(1)
+			elif event.scancode == KEY_DOWN and cursor_line == trace_log.get_line_count()-1 and trace_log_cursor_line_last == trace_log.get_line_count()-1:
+				trace_log_scroll(-1)
+				trace_log.cursor_set_line(cursor_line)				
+	if event is InputEventMouseButton:
+		if event.pressed:
+			match event.button_index:
+				BUTTON_WHEEL_UP:
+					trace_log.cursor_set_line(cursor_line - 1)
+					if cursor_line == 0 and trace_log_cursor_line_last == 0:
+						trace_log_scroll(1)
+				BUTTON_WHEEL_DOWN:
+					trace_log.cursor_set_line(cursor_line + 1)
+					if cursor_line == trace_log.get_line_count()-1 and trace_log_cursor_line_last == trace_log.get_line_count()-1:
+						trace_log_scroll(-1)
+						trace_log.cursor_set_line(cursor_line)
+	trace_log_cursor_line_last = cursor_line
 
 func _on_step_over_pressed():
 	var pc = get_reg_pc()
@@ -627,3 +683,6 @@ func _on_wp_value_size_pressed():
 		wp_value_size.text = "word"
 	else:
 		wp_value_size.text = "byte"
+
+func _on_trace_log_filter_item_selected(index):
+	trace_log_update(true)

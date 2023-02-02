@@ -818,7 +818,7 @@ godot_variant debug_get_global_addr(godot_object* p_instance, void* p_method_dat
 	return ret;
 }
 
-godot_variant debug_get_call_stack(godot_object* p_instance, void* p_method_data, 
+godot_variant debug_get_trace_log(godot_object* p_instance, void* p_method_data, 
 		void* p_user_data, int p_num_args, godot_variant** p_args)
 {
 	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
@@ -828,7 +828,10 @@ godot_variant debug_get_call_stack(godot_object* p_instance, void* p_method_data
 		return ret;
 	}
 
-	auto out = debug.get_call_stack(); 
+	godot_int offset = api->godot_variant_as_int(p_args[0]);
+	godot_int lines  = api->godot_variant_as_int(p_args[1]);
+	godot_int filter = api->godot_variant_as_int(p_args[2]);
+	auto out = debug.get_trace_log(offset, lines, filter); 
 
     godot_variant ret;
     godot_string ret_gd_str;

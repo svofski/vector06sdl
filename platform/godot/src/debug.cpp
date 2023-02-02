@@ -10,7 +10,7 @@
 #include <vector>
 
 Debug::Debug(Memory* _memoryP)
-: mem_runs(), mem_reads(), mem_writes(), memoryP(_memoryP), wp_break(false), call_stack()
+: mem_runs(), mem_reads(), mem_writes(), memoryP(_memoryP), wp_break(false), trace_log()
 {
 	auto read_func =
 		[this](const uint32_t _addr, const uint8_t _val, const bool _is_opcode)
@@ -33,7 +33,7 @@ void Debug::read(const size_t _global_addr, const uint8_t _val, const bool _is_o
 	if(_is_opcode)
 	{
 		mem_runs[_global_addr]++;
-		call_stack_update(_global_addr, _val);
+		trace_log_update(_global_addr, _val);
 	}
 	else
 	{
@@ -136,38 +136,42 @@ auto get_mnemonic(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _d
 	return out.str();
 }
 
-// 1 - call, c*
+// 0 - call
+// 1 - c*
 // 2 - rst
 // 3 - pchl
-// 4 - jmp, j*
-// 5 - ret, r*
-// 0 - other
+// 4 - jmp, 
+// 5 - j*
+// 6 - ret, r*
+// 7 - other
 static const uint8_t opcode_types[0x100] =
 {
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
 
-	5, 0, 4, 4, 1, 0, 0, 2, 5, 5, 4, 0, 1, 1, 0, 2,
-	5, 0, 4, 0, 1, 0, 0, 2, 5, 0, 4, 0, 1, 0, 0, 2,
-	5, 0, 4, 0, 1, 0, 0, 2, 5, 3, 4, 0, 1, 0, 0, 2,
-	5, 0, 4, 0, 1, 0, 0, 2, 5, 0, 4, 0, 1, 0, 0, 2
+	6, 7, 5, 4, 1, 7, 7, 2, 6, 6, 5, 7, 1, 0, 7, 2,
+	6, 7, 5, 7, 1, 7, 7, 2, 6, 7, 5, 7, 1, 7, 7, 2,
+	6, 7, 5, 7, 1, 7, 7, 2, 6, 3, 5, 7, 1, 7, 7, 2,
+	6, 7, 5, 7, 1, 7, 7, 2, 6, 7, 5, 7, 1, 7, 7, 2,
 };
 
-bool is_opcode_call_jmp(const uint8_t _opcode)
+#define OPCODE_TYPE_MAX 7
+
+inline uint8_t get_opcode_type(const uint8_t _opcode)
 {
-	return opcode_types[_opcode] > 0 && opcode_types[_opcode] <= 4;
+	return opcode_types[_opcode];
 }
 
 #define OPCODE_PCHL 0xE9
@@ -390,11 +394,12 @@ void Debug::reset()
 	std::fill(mem_reads, mem_reads + GLOBAL_MEM_SIZE, 0);
 	std::fill(mem_writes, mem_writes + GLOBAL_MEM_SIZE, 0);
 	
-	for (size_t i = 0; i < CALL_STACK_SIZE; i++)
+	for (size_t i = 0; i < TRACE_LOG_SIZE; i++)
 	{
-		call_stack[i].clear();
+		trace_log[i].clear();
 	}
-	call_stack_idx = CALL_STACK_SIZE - 1;
+	trace_log_idx = 0;
+	trace_log_idx_view_offset = 0;
 }
 
 void Debug::serialize(std::vector<uint8_t> &to) 
@@ -543,38 +548,31 @@ bool Debug::check_break()
 	return break_;
 }
 
-void Debug::call_stack_update(const size_t _global_addr, const uint8_t _val)
+void Debug::trace_log_update(const size_t _global_addr, const uint8_t _val)
 {
-	if (is_opcode_call_jmp(_val))
+	auto last_global_addr = trace_log[trace_log_idx].global_addr;
+	auto last_opcode = trace_log[trace_log_idx].opcode;
+
+	trace_log_idx = (trace_log_idx - 1) % TRACE_LOG_SIZE;
+	trace_log[trace_log_idx].global_addr = _global_addr;
+	trace_log[trace_log_idx].opcode = _val;
+	trace_log[trace_log_idx].data_l = memoryP->get_byte((_global_addr + 1) & 0xffff, false);
+	trace_log[trace_log_idx].data_h = memoryP->get_byte((_global_addr + 2) & 0xffff, false);
+
+	if (_val == OPCODE_PCHL)
 	{
-		auto last_global_addr = call_stack[call_stack_idx].global_addr;
-		auto last_opcode = call_stack[call_stack_idx].opcode;
-
-		if (last_global_addr != _global_addr || last_opcode != _val)
-		{
-			call_stack_idx = (call_stack_idx + 1) % CALL_STACK_SIZE;
-			call_stack[call_stack_idx].global_addr = _global_addr;
-			call_stack[call_stack_idx].opcode = _val;
-			call_stack[call_stack_idx].count = 0;
-		}
-		
-		call_stack[call_stack_idx].count++;
-		call_stack[call_stack_idx].data_l = memoryP->get_byte((_global_addr + 1) & 0xffff, false);
-		call_stack[call_stack_idx].data_h = memoryP->get_byte((_global_addr + 2) & 0xffff, false);
-
-		if (_val == OPCODE_PCHL)
-		{
-			call_stack[call_stack_idx].call_addr = i8080cpu::i8080_regs_hl() & 0xffff;
-		}
-		else
-		{
-			call_stack[call_stack_idx].call_addr = call_stack[call_stack_idx].data_h<<8 | call_stack[call_stack_idx].data_l;
-		}
-		
+		uint16_t pc = i8080cpu::i8080_regs_hl();
+		trace_log[trace_log_idx].data_l = pc & 0xff;
+		trace_log[trace_log_idx].data_h = pc>>8 & 0xff;
+	}
+	else
+	{
+		trace_log[trace_log_idx].data_l = memoryP->get_byte((_global_addr + 1) & 0xffff, false);
+		trace_log[trace_log_idx].data_h = memoryP->get_byte((_global_addr + 2) & 0xffff, false);
 	}
 }
 
-auto Debug::CallStackItem::to_str() const
+auto Debug::TraceLog::to_str() const
 ->std::string
 {	
 	std::stringstream out;
@@ -583,42 +581,125 @@ auto Debug::CallStackItem::to_str() const
 	out << std::setw(5) << std::setfill('0');
 	out << std::uppercase << std::hex << static_cast<int>(global_addr) << ": ";
 
-	out << get_mnemonic(opcode, data_l, data_h, 10) << std::dec << "(" << count << ", ";
+	out << get_mnemonic(opcode, data_l, data_h, 13);
 
 	return out.str();
 }
 
-void Debug::CallStackItem::clear()
+void Debug::TraceLog::clear()
 {
-	global_addr = 0;
+	global_addr = -1;
 	opcode = 0;
 	data_l = 0;
 	data_h = 0;
-	call_addr = 0;
-	count = 0;
 }
 
-auto Debug::get_call_stack() const 
+auto Debug::trace_log_next_line(const int _idx_offset, const bool _reverse, const size_t _filter) const 
+->int
+{
+	size_t filter = _filter > OPCODE_TYPE_MAX ? OPCODE_TYPE_MAX : _filter;
+
+	size_t idx = trace_log_idx + _idx_offset;
+	size_t idx_last = trace_log_idx + TRACE_LOG_SIZE - 1;
+
+	int dir = _reverse ? -1 : 1;
+	// for a forward scrolling we need to go to the second line if we were not exactly at the filtered line
+	bool forward_second_search = false;
+	size_t first_line_idx = idx;
+
+	for (; idx >= trace_log_idx && idx <= idx_last; idx += dir)
+	{
+		if (get_opcode_type(trace_log[idx % TRACE_LOG_SIZE].opcode) <= filter)
+		{
+			if ((!_reverse && !forward_second_search) || 
+				(_reverse && idx == first_line_idx && !forward_second_search))
+			{
+				forward_second_search = true;
+				continue;
+			}
+			else
+			{
+				return idx - trace_log_idx;
+			}
+		}
+	}
+
+	return _idx_offset; // fails to reach the next line
+}
+
+auto Debug::trace_log_nearest_forward_line(const size_t _idx, const size_t _filter) const
+->int
+{
+	size_t filter = _filter > OPCODE_TYPE_MAX ? OPCODE_TYPE_MAX : _filter;
+
+	size_t idx = _idx;
+	size_t idx_last = trace_log_idx + TRACE_LOG_SIZE - 1;
+
+	for (; idx >= trace_log_idx && idx <= idx_last; idx++)
+	{
+		if (get_opcode_type(trace_log[idx % TRACE_LOG_SIZE].opcode) <= filter)
+		{
+			return idx;
+		}
+	}
+
+	return _idx; // fails to reach the nearest line
+}
+
+auto Debug::get_trace_log(const int _offset, const size_t _lines, const size_t _filter) 
 ->std::string
 {
+	size_t filter = _filter > OPCODE_TYPE_MAX ? OPCODE_TYPE_MAX : _filter;
+	size_t offset = _offset < 0 ? -_offset : _offset;
+
 	std::string out;
-	auto idx = call_stack_idx;
-	for (size_t i = 0; i < CALL_STACK_SIZE; i++)
+	
+	for( int i=0; i<offset; i++ )
 	{
-		const size_t idx = (call_stack_idx - i) % CALL_STACK_SIZE;
-		
-		if (call_stack[idx].count == 0) break;
-
-		out += " " + call_stack[idx].to_str();
-		
-		const size_t call_addr = call_stack[idx].call_addr & 0xffff;
-
-		if (labels.find(call_addr) != labels.end())
-		{
-			out += labels.at(call_addr) + ")";
-		}
-		out += "\n";
+		trace_log_idx_view_offset = trace_log_next_line(trace_log_idx_view_offset, _offset < 0, filter);
 	}
+
+	size_t idx = trace_log_idx + trace_log_idx_view_offset;
+	size_t idx_last = trace_log_idx + TRACE_LOG_SIZE - 1;
+	size_t line = 0;
+
+	size_t first_line_idx = trace_log_nearest_forward_line(trace_log_idx, filter);
+
+	for (; idx <= idx_last && line < _lines; idx++)
+	{
+		if (trace_log[idx % TRACE_LOG_SIZE].global_addr < 0) break;
+
+		if (get_opcode_type(trace_log[idx % TRACE_LOG_SIZE].opcode) <= filter)
+		{
+			std::string line_s;
+
+			if (idx == first_line_idx)
+			{
+				line_s += ">";
+			}
+			else
+			{
+				line_s += " ";
+			}
+			line_s += trace_log[idx % TRACE_LOG_SIZE].to_str();
+			
+			const size_t operand_addr = trace_log[idx % TRACE_LOG_SIZE].data_h<<8 | trace_log[idx % TRACE_LOG_SIZE].data_l;
+
+			if (labels.find(operand_addr) != labels.end())
+			{
+				line_s += "(" + labels.at(operand_addr) + ")";
+			}
+			if ( line != 0 )
+			{
+				line_s += "\n";
+			}
+
+			out = line_s + out;
+
+			line++;
+		}
+	}
+
 	return out;
 }
 

@@ -2,7 +2,7 @@ extends TextEdit
 
 func _ready():
 	add_color_region(" 0x", ":", Color(0.437789, 0.714844, 0.435608))
-	#add_color_region(" > ", "  ", Color(1, 0.968627, 0.129412))
+	add_color_region(">", "", Color(1, 0.968627, 0.129412))
 	var key_words = [
 		"NOP", 
 		"XTHL", "PCHL", "XCHG", "SPHL",
