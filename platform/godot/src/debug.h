@@ -63,7 +63,7 @@ public:
 	static const constexpr size_t RAM_SIZE		= MEM_BANK_SIZE;
 	static const constexpr size_t RAM_DISK_SIZE	= MEM_BANK_SIZE * 4;
 	static const constexpr size_t GLOBAL_MEM_SIZE	= RAM_SIZE + RAM_DISK_SIZE;
-	static const constexpr size_t CALL_STACK_SIZE   = 1000;
+	static const constexpr size_t TRACE_LOG_SIZE   = 100000;
 
 
 	enum AddrSpace : size_t
@@ -92,7 +92,7 @@ public:
 	bool check_breakpoints(const size_t _global_addr);
 	bool check_watchpoint(const Watchpoint::Access _access, const size_t _global_addr, const uint8_t _value);
 	bool check_break();
-	auto get_call_stack() const ->std::string;
+	auto get_trace_log(const int _offset, const size_t _lines, const size_t _filter) ->std::string;
 	void set_labels(const char* _labels_c);
 
 private:
@@ -103,26 +103,27 @@ private:
 	auto watchpoints_find(const size_t global_addr) -> Watchpoints::iterator;
 	void watchpoints_erase(const size_t global_addr);
 	
-	void call_stack_update(const size_t _global_addr, const uint8_t _val);
+	void trace_log_update(const size_t _global_addr, const uint8_t _val);
+	auto trace_log_next_line(const int _idx_offset, const bool _reverse, const size_t _filter) const ->int;
+	auto trace_log_nearest_forward_line(const size_t _idx_offset, const size_t _filter) const ->int;
 
 	uint64_t mem_runs[GLOBAL_MEM_SIZE];
 	uint64_t mem_reads[GLOBAL_MEM_SIZE];
 	uint64_t mem_writes[GLOBAL_MEM_SIZE];
 
-	struct CallStackItem
+	struct TraceLog
 	{
-		size_t global_addr;
+		int64_t global_addr;
 		uint8_t opcode;
 		uint8_t data_l;
 		uint8_t data_h;
-		size_t call_addr;
-		size_t count;
 
 		auto to_str() const -> std::string;
 		void clear();
 	};
-	CallStackItem call_stack[CALL_STACK_SIZE];
-	size_t call_stack_idx = CALL_STACK_SIZE - 1;
+	TraceLog trace_log[TRACE_LOG_SIZE];
+	size_t trace_log_idx = 0;
+	int trace_log_idx_view_offset = 0;
 
 	std::map<size_t, std::string> labels;
 

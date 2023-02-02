@@ -1,6 +1,6 @@
 #pragma once
-#ifndef STRING_UTILS_H
-#define STRING_UTILS_H
+#ifndef UTILS_STRING_H
+#define UTILS_STRING_H
 #include <string>
 #include <vector>
 
@@ -21,4 +21,4 @@ namespace utils
 
 	str2int_errno str2int(int *out, char *s, int base);
 }
-#endif // !STRING_UTILS_H
+#endif // !UTILS_STRING_H
