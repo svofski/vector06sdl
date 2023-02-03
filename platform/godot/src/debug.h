@@ -10,7 +10,7 @@ class Debug
 public:
 	class Breakpoint
 	{
-	public: 
+	public:
 
 		Breakpoint(const size_t _global_addr, const bool _active = true)
 		: global_addr(_global_addr), active(_active)
