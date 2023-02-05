@@ -72,7 +72,7 @@ corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 
 [sub_resource type="AtlasTexture" id=41]
-flags = 4
+flags = 5
 atlas = ExtResource( 15 )
 region = Rect2( 175, 15, 150, 150 )
 

@@ -54,7 +54,9 @@ macos:	build/v06x stripped native-tests
 	# todo decide what goes into the package: scripts, shaders, README etc
 	cd build && zip ../../v06x-macos-$(version).zip v06x
 
-stripped-win:	$(WINBUILD)/v06x.exe
+unstripped-win:	$(WINDIST).exe
+
+stripped-win:	$(WINDIST).exe
 	strip $<
 
 windows:  stripped-win wine-tests

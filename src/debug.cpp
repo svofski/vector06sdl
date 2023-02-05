@@ -1,6 +1,6 @@
 #include "debug.h"
-#include "..\..\..\src\i8080.h"
-#include "..\..\..\src\serialize.h"
+#include "i8080.h"
+#include "serialize.h"
 #include "utils_string.h"
 
 #include <string>
@@ -8,6 +8,7 @@
 #include <sstream>
 #include <cstring>
 #include <vector>
+#include <mutex>
 
 Debug::Debug(Memory* _memoryP)
 : mem_runs(), mem_reads(), mem_writes(), memoryP(_memoryP), wp_break(false), trace_log()

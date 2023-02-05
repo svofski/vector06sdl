@@ -163,7 +163,9 @@ for f in ['boot/boot.c',
         '../../src/util.cpp',
         '../../src/sound.cpp',
         '../../src/resampler.cpp',
-        '../../src/fsimage.cpp'
+        '../../src/fsimage.cpp',
+        '../../src/debug.cpp',
+        '../../src/utils_string.cpp'
         # '../../src/scriptnik.cpp'
         ]:
     sources += Glob(f)

@@ -9,3 +9,8 @@ debian/vector06sdl*
 android/build
 *.os
 *.obj
+*.o
+build-i686-w64-mingw32/*
+test/out/*
+test/testlog*
+test/testresult*

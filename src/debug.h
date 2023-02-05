@@ -1,5 +1,5 @@
 #pragma once
-#include "..\..\..\src\memory.h"
+#include "memory.h"
 #include <memory>
 #include <mutex>
 #include <map>

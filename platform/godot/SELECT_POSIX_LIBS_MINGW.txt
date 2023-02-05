@@ -1,0 +1,13 @@
+select POSIX versions
+
+$ sudo update-alternatives --config i686-w64-mingw32-gcc
+<choose i686-w64-mingw32-gcc-posix from the list>
+
+$ sudo update-alternatives --config i686-w64-mingw32-g++
+<choose i686-w64-mingw32-g++-posix from the list>
+
+$ sudo update-alternatives --config x86_64-w64-mingw32-gcc
+<choose x86_64-w64-mingw32-gcc-posix from the list>
+
+$ sudo update-alternatives --config x86_64-w64-mingw32-g++
+<choose x86_64-w64-mingw32-g++-posix from the list>

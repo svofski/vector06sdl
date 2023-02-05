@@ -17,6 +17,7 @@
 #include "SDL.h"
 #include "util.h"
 #include "version.h"
+#include "debug.h"
 
 #if HAVE_GPERFTOOLS
 #include <gperftools/profiler.h>
@@ -60,6 +61,7 @@ void load_disks(FD1793 & fdc)
 
 /* This block must be de-staticized, but currently trying to do so breaks tests */
 Memory memory;
+Debug debug(&memory);
 FD1793 fdc;
 Wav wav;
 WavPlayer tape_player(wav);
@@ -72,7 +74,7 @@ Soundnik soundnik(tw, aw);
 IO io(memory, keyboard, timer, fdc, ay, tape_player);
 TV tv;
 PixelFiller filler(memory, io, tv);
-Board board(memory, io, filler, soundnik, tv, tape_player);
+Board board(memory, io, filler, soundnik, tv, tape_player, debug);
 
 GdbServer gdbserver(board);
 
