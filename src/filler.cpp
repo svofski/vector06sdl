@@ -167,7 +167,7 @@ int PixelFiller::fill1(int clocks, int commit_time, int commit_time_pal, bool up
         if (this->visible) {
             const int bmp_x = this->raster_pixel - this->center_offset;
             if (bmp_x >= 0 && bmp_x < this->screen_width) {
-                if (this->mode512 && !border) {
+                if (this->mode512) {// && !border -- border A/B alternation, see Cherezov page 7
                     bmp[this->bmpofs++] = this->io.Palette(index & 0x03);
                     bmp[this->bmpofs++] = this->io.Palette(index & 0x0c);
                 } else {
