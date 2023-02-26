@@ -164,7 +164,7 @@ margin_right = 782.0
 margin_bottom = 244.0
 custom_colors/font_color = Color( 0, 0, 0, 1 )
 custom_fonts/font = SubResource( 38 )
-text = "v06x by svofski https://github.com/svofski/v06x"
+text = "v06x by svofski | debugger by parallelno  https://github.com/svofski/v06x"
 align = 2
 
 [node name="ScopePanel" parent="HUD" instance=ExtResource( 13 )]
