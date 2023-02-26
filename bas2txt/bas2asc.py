@@ -339,7 +339,7 @@ def usagi():
 
 if len(sys.argv) == 1:
     usagi()
-    exit(1)
+    sys.exit(1)
 
 def filenames():
     ext1 = os.path.splitext(sys.argv[1])
@@ -384,4 +384,4 @@ elif len(sys.argv) in [2,3]:
             fob.write(bas)
     else:
         usagi()
-        exit(1)
+        sys.exit(1)
