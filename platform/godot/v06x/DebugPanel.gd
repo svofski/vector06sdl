@@ -592,10 +592,11 @@ func load_debug():
 	var err = cfg.load("user://v06x.debug")
 	if err == OK:
 		debug_labels.clear()
-		for key in cfg.get_section_keys("debug_labels"):
-			var val = cfg.get_value("debug_labels", key)
-			debug_labels[key] = val
-			labels_str += key + " " + val + "\n"
+		if cfg.has_section("debug_labels"):
+			for key in cfg.get_section_keys("debug_labels"):
+				var val = cfg.get_value("debug_labels", key)
+				debug_labels[key] = val
+				labels_str += key + " " + val + "\n"
 		main.debug_set_labels(labels_str)
 
 		last_total_v_cycles = cfg.get_value("debug_hw_info", "last_total_v_cycles", 0)
