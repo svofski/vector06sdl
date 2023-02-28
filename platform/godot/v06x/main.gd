@@ -88,8 +88,11 @@ func _ready():
 	Engine.iterations_per_second = 50
 	OS.set_use_vsync(false)
 	set_physics_process(true)
+	var script = v06x.SetScriptText('puts("Hello from script\n")')
+	script = v06x.AddScriptFile('../../../scripts/robotnik.chai')
+	script = v06x.AddScriptFile('../../../scripts/iohook.chai')	
 	var beef = v06x.Init()
-	print("beef: %08x" % beef)
+	print("beef: %08x script: %d" % [beef, script])
 	$VectorScreen.texture = texture
 	
 	get_tree().get_root().connect("size_changed", self, "_on_size_changed")	

@@ -19,7 +19,7 @@
 
 #include "debug.h"
 
-#if 0
+#if 1
 #include "scriptnik.h"
 #endif
 
@@ -44,8 +44,9 @@ Debug debug(&memory);
 Board board(memory, io, filler, soundnik, tv, tape_player, debug);
 Emulator lator(board);
 
-#if 0
+#if 1
 Scriptnik scriptnik;
+void bootstrap_scriptnik();
 #endif
 
 struct LoadKind {
@@ -88,47 +89,47 @@ void install_ruslat_handler(v06x_user_data * v)
 godot_variant V06X_Init(godot_object* p_instance, void* p_method_data, 
 		void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	WavRecorder rec;
-	WavRecorder * prec = 0;
+    WavRecorder rec;
+    WavRecorder * prec = 0;
 
-	if (Options.audio_rec_path.length()) {
-		rec.init(Options.audio_rec_path);
-		prec = &rec;
-	}
+    if (Options.audio_rec_path.length()) {
+        rec.init(Options.audio_rec_path);
+        prec = &rec;
+    }
 
-	filler.init();
-	soundnik.init(prec);    // this may switch the audio output off
-	tv.init();
-	board.init();
-	fdc.init();
-	if (Options.bootpalette) {
-		io.yellowblue();
-	}
+    filler.init();
+    soundnik.init(prec);    // this may switch the audio output off
+    tv.init();
+    board.init();
+    fdc.init();
+    if (Options.bootpalette) {
+        io.yellowblue();
+    }
 
 
-	auto v = static_cast<v06x_user_data *>(p_user_data);
-	keyboard.onreset = [v](bool blkvvod) {
-		board.reset(blkvvod ?
-				Board::ResetMode::BLKVVOD : Board::ResetMode::BLKSBR);
-		v->autostart_armed = blkvvod && Options.autostart;
-	};
+    auto v = static_cast<v06x_user_data *>(p_user_data);
+    keyboard.onreset = [v](bool blkvvod) {
+        board.reset(blkvvod ?
+                Board::ResetMode::BLKVVOD : Board::ResetMode::BLKSBR);
+        v->autostart_armed = blkvvod && Options.autostart;
+    };
 
-	install_ruslat_handler(v);
+    install_ruslat_handler(v);
 
-	board.reset(Board::ResetMode::BLKVVOD);
-	v->autostart_armed = Options.autostart;
+    board.reset(Board::ResetMode::BLKVVOD);
+    v->autostart_armed = Options.autostart;
 
-//    bootstrap_scriptnik();
+    bootstrap_scriptnik();
 
-	godot_variant hello;
-	api->godot_variant_new_uint(&hello, 0xdeadbeef);
-	return hello;
+    godot_variant hello;
+    api->godot_variant_new_uint(&hello, 0xdeadbeef);
+    return hello;
 }
 
 void load_rom(const uint8_t * bytes, size_t size, int org)
 {
-	std::vector<uint8_t> bin(bytes, bytes + size);
-	memory.init_from_vector(bin, org);
+    std::vector<uint8_t> bin(bytes, bytes + size);
+    memory.init_from_vector(bin, org);
 }
 
 void load_fdd(const uint8_t * bytes, size_t size, int drive)
@@ -481,6 +482,42 @@ godot_variant V06X_GetHeatmap(godot_object* p_instance, void* p_method_data,
 
 	api->godot_variant_new_pool_byte_array(&ret, &v->heatmap);
 	return ret;
+}
+
+godot_variant V06X_SetScriptText(godot_object* p_instance, void* p_method_data,
+        void* p_user_data, int p_num_arg, godot_variant** p_args)
+{
+    godot_string wtext = api->godot_variant_as_string(p_args[0]);
+    godot_char_string ctext = api->godot_string_ascii(&wtext);
+    const char * cstr = api->godot_char_string_get_data(&ctext);
+    std::string str(cstr);
+    int len = scriptnik.set_string(str);
+
+    godot_variant ret;
+    godot_string ret_gd_str;
+    api->godot_string_new(&ret_gd_str);
+    api->godot_string_parse_utf8(&ret_gd_str, scriptnik.script_text().c_str());
+    api->godot_variant_new_string(&ret, &ret_gd_str);
+    api->godot_string_destroy(&ret_gd_str);
+    return ret;
+}
+
+godot_variant V06X_AddScriptFile(godot_object* p_instance, void* p_method_data,
+        void* p_user_data, int p_num_arg, godot_variant** p_args)
+{
+    godot_string wtext = api->godot_variant_as_string(p_args[0]);
+    godot_char_string ctext = api->godot_string_ascii(&wtext);
+    const char * cstr = api->godot_char_string_get_data(&ctext);
+    std::string filename(cstr);
+    int len = scriptnik.append_from_file(filename);
+
+    godot_variant ret;
+    godot_string ret_gd_str;
+    api->godot_string_new(&ret_gd_str);
+    api->godot_string_parse_utf8(&ret_gd_str, scriptnik.script_text().c_str());
+    api->godot_variant_new_string(&ret, &ret_gd_str);
+    api->godot_string_destroy(&ret_gd_str);
+    return ret;
 }
 
 godot_variant debug_break(godot_object* p_instance, void* p_method_data, 
@@ -859,3 +896,109 @@ godot_variant debug_set_labels(godot_object* p_instance, void* p_method_data,
 	api->godot_variant_new_bool(&ret, 1);
 	return ret;
 }
+
+
+void bootstrap_scriptnik()
+{
+    using namespace i8080cpu;
+
+    int script_size = 0;
+    for (auto & scriptfile : Options.scriptfiles) {
+        script_size += scriptnik.append_from_file(scriptfile);
+    }
+
+
+    for (auto & arg : Options.scriptargs) {
+        scriptnik.append_arg(arg);
+    }
+
+    script_size = scriptnik.length();
+    fprintf(stderr, "bootstrap_scriptnik: size=%d\n", script_size);
+
+    if (script_size) {
+        printf("Bootstrapping scriptnik...\n");
+
+        scriptnik.loadwav = [](const std::string & filename) {
+            //load_wav(wav, filename);
+            throw "load_wav not implemented";
+            return 0;
+        };
+
+        board.hooks.frame = std::bind(&Scriptnik::onframe, &scriptnik,
+                std::placeholders::_1);
+
+        tape_player.hooks.finished = 
+            std::bind(&Scriptnik::onwavfinished, &scriptnik, std::placeholders::_1);
+
+        scriptnik.keydown = [](int scancode) {
+            SDL_KeyboardEvent e;
+            e.keysym.scancode = (SDL_Scancode)scancode;
+            io.the_keyboard().key_down(e);
+        };
+
+        scriptnik.keyup = [](int scancode) {
+            SDL_KeyboardEvent e;
+            e.keysym.scancode = (SDL_Scancode)scancode;
+            io.the_keyboard().key_up(e);
+        };
+
+        scriptnik.insert_breakpoint = [](int type, int addr, int kind) {
+            board.ioread = -1;
+            return board.insert_breakpoint(type, addr, kind);
+        };
+        scriptnik.debugger_attached = []() {
+            board.ioread = -1;
+            return board.debugger_attached();
+        };
+        scriptnik.debugger_detached = []() {
+            board.ioread = -1;
+            return board.debugger_detached();
+        };
+        scriptnik.debugger_break = []() {
+            board.ioread = -1;
+            return board.debugger_break();
+        };
+        scriptnik.debugger_continue = []() {
+            return board.debugger_continue();
+        };
+        board.onbreakpoint = []() {
+            scriptnik.onbreakpoint();
+        };
+        scriptnik.read_register = [](const std::string & reg) {
+            if (reg == "a") return i8080_regs_a();
+            if (reg == "f") return i8080_regs_f();
+            if (reg == "b") return i8080_regs_b();
+            if (reg == "c") return i8080_regs_c();
+            if (reg == "d") return i8080_regs_d();
+            if (reg == "e") return i8080_regs_e();
+            if (reg == "h") return i8080_regs_h();
+            if (reg == "l") return i8080_regs_l();
+            if (reg == "sp") return i8080_regs_sp();
+            if (reg == "pc") return i8080_pc();
+            return i8080_pc();
+        };
+        scriptnik.set_register = [](const std::string & reg, int val) {
+            if (reg == "a") i8080_setreg_a(val & 0xff);
+            if (reg == "f") i8080_setreg_f(val & 0xff);
+            if (reg == "b") i8080_setreg_b(val & 0xff);
+            if (reg == "c") i8080_setreg_c(val & 0xff);
+            if (reg == "d") i8080_setreg_d(val & 0xff);
+            if (reg == "e") i8080_setreg_e(val & 0xff);
+            if (reg == "h") i8080_setreg_h(val & 0xff);
+            if (reg == "l") i8080_setreg_l(val & 0xff);
+            if (reg == "sp") i8080_setreg_sp(val & 0xffff);
+            if (reg == "pc") i8080_jump(val & 0xffff);
+            if (reg == "ioread") board.ioread = val & 0xff;
+        };
+        scriptnik.read_memory = [](int addr, int stackrq) {
+            return (int)memory.read(addr, (bool)stackrq);
+        };
+        scriptnik.write_memory = [](int addr, int w8, int stackrq) {
+            memory.write(addr, w8, stackrq);
+        };
+
+        scriptnik.start();
+    }
+}
+
+

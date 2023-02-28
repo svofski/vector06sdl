@@ -17,6 +17,10 @@
 #include "SDL_keyboard.h"
 #endif
 
+#if defined(__GODOT__)
+#include "godot_scancodes.h"
+#endif
+
 std::vector<int> read_intvector(const std::string & path)
 {
     std::vector<int> dst;
@@ -57,8 +61,7 @@ struct scriptnik_engine {
 #if !defined(__GODOT__)
                         return (int)SDL_GetScancodeFromName(name.c_str());
 #else
-#warning TODO: implement GetGodotScancodeFromName(const char *)
-                        return 0;
+                        return GetScancodeFromName(name.c_str());
 #endif
                     }), 
                 "scancode_from_name");
@@ -158,6 +161,12 @@ void Scriptnik::onbreakpoint()
 int Scriptnik::append_from_file(const std::string & filename)
 {
     this->text = this->text + util::read_file(filename);
+    return this->text.length();
+}
+
+int Scriptnik::set_string(const std::string & text)
+{
+    this->text = text;
     return this->text.length();
 }
 

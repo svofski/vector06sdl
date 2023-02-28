@@ -33,6 +33,9 @@ public:
     ~Scriptnik();
 
     int append_from_file(const std::string & filename);
+    int set_string(const std::string & text);
+    size_t length() const { return this->text.length(); }
+    const std::string & script_text() const { return this->text; }
     int append_arg(const std::string &);
     void start();
 

@@ -11,28 +11,8 @@
 #include "board.h"
 #include "util.h"
 
-#if USED_XXD
-// boots.o made using xxd already has okay symbols
-extern "C" unsigned char * boots_bin;
-extern "C" unsigned int boots_bin_len;
-#else
-
-#if MSYS_MINGW32
-extern "C" uint8_t * binary_boots_bin_start;
-extern "C" uint8_t * binary_boots_bin_end;
-extern "C" size_t    binary_boots_bin_size;
-
-#define boots_bin (binary_boots_bin_start)
-#define boots_bin_len (&binary_boots_bin_size)
-#else
-extern "C" uint8_t * _binary_boots_bin_start;
-extern "C" uint8_t * _binary_boots_bin_end;
-extern "C" size_t    _binary_boots_bin_size;
-
-#define boots_bin (_binary_boots_bin_start)
-#define boots_bin_len (&_binary_boots_bin_size)
-#endif
-#endif
+extern "C" unsigned char * boot_bin;
+extern "C" unsigned int boot_bin_len;
 
 using namespace i8080cpu;
 
@@ -67,9 +47,9 @@ void Board::init_bootrom()
 #endif
     {
         // inialize bootrom using default boot
-        this->boot.resize((size_t)boots_bin_len);
-        uint8_t * src = (uint8_t *) &boots_bin;
-        size_t size = (size_t) boots_bin_len;
+        this->boot.resize((size_t)boot_bin_len);
+        uint8_t * src = (uint8_t *) &boot_bin;
+        size_t size = (size_t) boot_bin_len;
         for (unsigned i = 0; i < size; ++i) {
             this->boot[i] = src[i];
         }

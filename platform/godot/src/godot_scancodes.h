@@ -314,3 +314,6 @@
         SDL_JOY_ANALOG_L2 = 6,
         SDL_JOY_ANALOG_R2 = 7,
     };
+
+int GetScancodeFromName(const char * sdl_keyname);
+
