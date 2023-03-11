@@ -752,22 +752,26 @@ void Debug::set_labels(const char* _labels_c)
 
 void Debug::print_breakpoints()
 {
-	std::printf("breakpoints:\n");
-	std::lock_guard<std::mutex> mlock(breakpoints_mutex);
-    for (const auto& [addr, bp] : breakpoints)
-	{
-		bp.print();
-	}
+    std::printf("breakpoints:\n");
+    std::lock_guard<std::mutex> mlock(breakpoints_mutex);
+    if (breakpoints.size()) {
+        for (const auto& [addr, bp] : breakpoints)
+        {
+            bp.print();
+        }
+    }
 }
 
 void Debug::print_watchpoints()
 {
-	std::printf("watchpoints:\n");
-	std::lock_guard<std::mutex> mlock(watchpoints_mutex);
-    for (const auto& wp : watchpoints)
-	{
-		wp.print();
-	}
+    std::lock_guard<std::mutex> mlock(watchpoints_mutex);
+    if (watchpoints.size()) { 
+        std::printf("watchpoints:\n");
+        for (const auto& wp : watchpoints)
+        {
+            wp.print();
+        }
+    }
 }
 
 auto Debug::Breakpoint::is_active() const

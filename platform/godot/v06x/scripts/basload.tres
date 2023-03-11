@@ -3,6 +3,8 @@ def load_bas() {
     basfile = BASFile(scriptargs[0], 1)
     basfile.onfinished =
         fun(next) {
+          detach_bas25_hook()
+          finalize()
         }
 }
 
@@ -22,6 +24,7 @@ else {
     attach_bas25_hook()
     /* Подгружаем первый файл */
     load_bas()
-    keytyper.types(["\001F3", 50, "\002F3", 50, "F12", 50,
+    keytyper.types([
+        "\001F3", "F11", 50, "\002F3", 50, "F12", 50,
         "C","L","O","A","D","\001Left Shift","2","2","\002Left Shift","Return"])
 }

@@ -7,6 +7,7 @@ const EDD : int = 3
 const WAV : int = 4
 const DIR : int = 5
 const BIN : int = 6 # boot rom
+const BAS : int = 10 # script-supported BASIC file
 
 const MIX_SAMPLERATE : int = 48000
 
@@ -211,7 +212,7 @@ func _on_load_asset_pressed(which: int):
 	dialog_device = which
 	$FileDialog.current_dir = loadedFileDir[dialog_device]
 	$FileDialog.window_title = titles[dialog_device]
-	$FileDialog.filters = ["*.rom,*.r0m,*.vec,*.bin,*.fdd,*.wav"]
+	$FileDialog.filters = ["*.rom,*.r0m,*.vec,*.bin,*.fdd,*.wav,*.bas"]
 	if dialog_device == DialogDevice.B:
 		$FileDialog.filters = ["*.fdd"]
 	elif dialog_device == DialogDevice.BOOT:
@@ -336,6 +337,8 @@ func load_file(dev: int, path: String) -> bool:
 			v06x.InsertBootROM(content)
 		elif file_kind[dev][0] == FDD:
 			v06x.Mount(dev, path)
+		elif file_kind[dev][0] == BAS:
+			script_basload(path)
 		else:
 			v06x.LoadAsset(content, korg[0], korg[1])
 		update_load_asses()
@@ -385,6 +388,8 @@ func getKind(path : String):
 		ret = [WAV, 0, false]
 	elif ext == "bin":
 		ret = [BIN, 0, false]
+	elif ext == "bas":
+		ret = [BAS, 0, false]
 	return ret
 
 func _on_blkvvod_pressed():
@@ -566,7 +571,7 @@ func create_shader_list():
 				shaders.push_back(shadr)
 			file_name = dir.get_next()
 		dir.list_dir_end()
-
+		
 func _on_shader_selected(num):
 	shader_index = num
 	var shader_name = shaders[num]
@@ -658,6 +663,32 @@ func _bowser_calm():
 	bowser_button.rect_scale = Vector2(1, 1)
 	bowser_button.rect_position = bowser_centre - bowser_button.rect_size * bowser_button.rect_scale / 2
 
+# ==========================================================================
+#
+# S C R I P T S
+#
+# ==========================================================================
+func insert_big_bootrom() -> void:
+	var file = File.new()
+	if file.open("res://boot/boot.tres", File.READ) == OK:
+		var bootrom = file.get_buffer(file.get_len())
+		v06x.InsertBootROM(bootrom)
+
+func init_basload_scripts() -> void:
+	var scripts=["bas25hook", "robotnik", "basload"]
+	var fulltext = ""
+	for s in scripts:
+		var file = File.new()
+		if file.open("res://scripts/%s.tres" % s, File.READ) == OK:
+			var text = file.get_as_text()
+			fulltext = fulltext + text
+	v06x.SetScriptText(fulltext)
+	
+func script_basload(path: String) -> void:
+	insert_big_bootrom()
+	init_basload_scripts()
+	v06x.AppendScriptArg(path)
+	v06x.ExecuteScript()
 
 #==========================================================================
 #

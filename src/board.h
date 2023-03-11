@@ -64,8 +64,10 @@ private:
 
 public:
     std::function<void(void)> poll_debugger;
-    std::function<void(void)> onbreakpoint;
-    
+    std::function<void(void)> onbreakpoint = nullptr;
+    //void set_onbreakpoint(const std::function<void(void)>& hook) {
+    //    onbreakpoint = hook;
+    //}
     std::function<void(void)> onframetimer;
     
     struct {

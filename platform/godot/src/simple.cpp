@@ -39,6 +39,8 @@ V06X_DECL(V06X_GetHeatmap);
 V06X_DECL(V06X_InsertBootROM);
 V06X_DECL(V06X_SetScriptText);
 V06X_DECL(V06X_AddScriptFile);
+V06X_DECL(V06X_AppendScriptArg);
+V06X_DECL(V06X_ExecuteScript);
 V06X_DECL(debug_break);
 V06X_DECL(debug_continue);
 V06X_DECL(debug_read_registers);
@@ -121,6 +123,8 @@ extern "C" void GDN_EXPORT godot_nativescript_init(void* p_handle)
     V06X_METHOD("InsertBootROM", V06X_InsertBootROM);
     V06X_METHOD("SetScriptText", V06X_SetScriptText);
     V06X_METHOD("AddScriptFile", V06X_AddScriptFile);
+    V06X_METHOD("ExecuteScript", V06X_ExecuteScript);
+    V06X_METHOD("AppendScriptArg", V06X_AppendScriptArg);
     V06X_METHOD("debug_break", debug_break);
     V06X_METHOD("debug_continue", debug_continue);
     V06X_METHOD("debug_read_registers", debug_read_registers);

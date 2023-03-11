@@ -12,6 +12,9 @@ private:
     std::string text;
     std::vector<std::string> args;
 
+    bool api_registered;
+    bool finalizing;
+
 public:
     std::function<int(const std::string &)> loadwav;
     std::function<int(const std::string &)> scancode_from_name;
@@ -19,6 +22,7 @@ public:
     std::function<void(int)> keyup;
 
     std::function<void(int,int,int)> insert_breakpoint;
+    std::function<void(int,int,int)> remove_breakpoint;
     std::function<void()> debugger_attached;
     std::function<void()> debugger_detached;
     std::function<void()> debugger_break;
@@ -27,6 +31,7 @@ public:
     std::function<void(const std::string&, int)> set_register;
     std::function<int(int,int)> read_memory;
     std::function<void(int,int,int)> write_memory;
+    std::function<void()> finalize;
 
 public:
     Scriptnik();
@@ -36,8 +41,11 @@ public:
     int set_string(const std::string & text);
     size_t length() const { return this->text.length(); }
     const std::string & script_text() const { return this->text; }
+    void clear_args();
     int append_arg(const std::string &);
     void start();
+
+    bool is_finalizing() const { return finalizing; }
 
     void onframe(int frame);
     void onwavfinished(int dummy);

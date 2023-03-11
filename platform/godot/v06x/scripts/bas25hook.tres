@@ -56,6 +56,10 @@ class BASFile {
 				zeroseq = 3
 			}
 		}
+				// pad to 000 if terminal zeroes are missing in .bas file
+				for (var i = zeroseq; i > 0; --i) {
+					this.cas.push_back(0)
+				}
 		cs &= 0xffff
 
 		this.cas.push_back(cs & 0xff)
@@ -111,4 +115,8 @@ def attach_bas25_hook() {
 	debugger_continue()
 }
 
+def detach_bas25_hook() {
+	remove_breakpoint(0, 0x2b05, 1)
+	debugger_detached()
+}
 

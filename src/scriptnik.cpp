@@ -76,6 +76,9 @@ struct scriptnik_engine {
         chai.add(fun([this](int type, int addr, int kind) {
                     s.insert_breakpoint(type, addr, kind);
                     }), "insert_breakpoint");
+        chai.add(fun([this](int type, int addr, int kind) {
+                    s.remove_breakpoint(type, addr, kind);
+                    }), "remove_breakpoint");
         chai.add(fun([this]() {
                     s.debugger_attached();
                     }), "debugger_attached");
@@ -103,6 +106,9 @@ struct scriptnik_engine {
         chai.add(fun([this](const std::string & filename) {
                     return ::read_intvector(filename);
                     }), "read_file");
+        chai.add(fun([this]() {
+                    s.finalizing = true;
+                    }), "finalize");
     }
 
     void invoke(const std::string & named, int arg) 
@@ -132,7 +138,7 @@ struct scriptnik_engine {
     }
 };
 
-Scriptnik::Scriptnik() 
+Scriptnik::Scriptnik() : api_registered(false), finalizing(false)
 {
     engine = new scriptnik_engine(*this);
     text = "";
@@ -170,6 +176,11 @@ int Scriptnik::set_string(const std::string & text)
     return this->text.length();
 }
 
+void Scriptnik::clear_args()
+{
+    this->args.clear();
+}
+
 int Scriptnik::append_arg(const std::string & arg)
 {
     this->args.push_back(std::string(arg));
@@ -178,7 +189,10 @@ int Scriptnik::append_arg(const std::string & arg)
 
 void Scriptnik::start()
 {
-    engine->register_api();
+    if (!api_registered) {
+        engine->register_api();
+        api_registered = true;
+    }
 
     try {
         engine->chai.eval(this->text);

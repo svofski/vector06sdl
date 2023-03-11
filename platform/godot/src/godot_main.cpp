@@ -19,9 +19,7 @@
 
 #include "debug.h"
 
-#if 1
 #include "scriptnik.h"
-#endif
 
 #include "v06x_class.h"
 
@@ -44,10 +42,10 @@ Debug debug(&memory);
 Board board(memory, io, filler, soundnik, tv, tape_player, debug);
 Emulator lator(board);
 
-#if 1
-Scriptnik scriptnik;
+Scriptnik * scriptnik = nullptr;
 void bootstrap_scriptnik();
-#endif
+
+//bool scriptnik_bootstrapped = false;
 
 struct LoadKind {
 	enum {
@@ -190,6 +188,15 @@ godot_variant V06X_ExecuteFrame(godot_object* p_instance, void* p_method_data,
 
 	godot_variant ret;
 	api->godot_variant_new_pool_byte_array(&ret, &v->bitmap);
+
+        // kill off used up scriptnik
+        if (scriptnik && scriptnik->is_finalizing()) {
+            board.hooks.frame = nullptr;
+            tape_player.hooks.finished = nullptr;
+            board.onbreakpoint = nullptr;
+            delete scriptnik;
+            scriptnik = nullptr;
+        }
 
 	return ret;
 }
@@ -511,12 +518,18 @@ godot_variant V06X_SetScriptText(godot_object* p_instance, void* p_method_data,
     godot_char_string ctext = api->godot_string_ascii(&wtext);
     const char * cstr = api->godot_char_string_get_data(&ctext);
     std::string str(cstr);
-    int len = scriptnik.set_string(str);
+
+    if (scriptnik) {
+        delete scriptnik;
+    }
+    scriptnik = new Scriptnik();
+
+    int len = scriptnik->set_string(str);
 
     godot_variant ret;
     godot_string ret_gd_str;
     api->godot_string_new(&ret_gd_str);
-    api->godot_string_parse_utf8(&ret_gd_str, scriptnik.script_text().c_str());
+    api->godot_string_parse_utf8(&ret_gd_str, scriptnik->script_text().c_str());
     api->godot_variant_new_string(&ret, &ret_gd_str);
     api->godot_string_destroy(&ret_gd_str);
     return ret;
@@ -529,14 +542,44 @@ godot_variant V06X_AddScriptFile(godot_object* p_instance, void* p_method_data,
     godot_char_string ctext = api->godot_string_ascii(&wtext);
     const char * cstr = api->godot_char_string_get_data(&ctext);
     std::string filename(cstr);
-    int len = scriptnik.append_from_file(filename);
+
+    if (!scriptnik) {
+        scriptnik = new Scriptnik();
+    }
+
+    int len = scriptnik->append_from_file(filename);
 
     godot_variant ret;
     godot_string ret_gd_str;
     api->godot_string_new(&ret_gd_str);
-    api->godot_string_parse_utf8(&ret_gd_str, scriptnik.script_text().c_str());
+    api->godot_string_parse_utf8(&ret_gd_str, scriptnik->script_text().c_str());
     api->godot_variant_new_string(&ret, &ret_gd_str);
     api->godot_string_destroy(&ret_gd_str);
+    return ret;
+}
+
+// AppendScriptArg('argument')
+godot_variant V06X_AppendScriptArg(godot_object* p_instance, void* p_method_data,
+        void* p_user_data, int p_num_arg, godot_variant** p_args)
+{
+    godot_string wtext = api->godot_variant_as_string(p_args[0]);
+    godot_char_string ctext = api->godot_string_ascii(&wtext);
+    const char * cstr = api->godot_char_string_get_data(&ctext);
+    std::string str(cstr);
+    scriptnik->append_arg(str);
+
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
+}
+
+godot_variant V06X_ExecuteScript(godot_object* p_instance, void* p_method_data,
+        void* p_user_data, int p_num_arg, godot_variant** p_args)
+{
+    bootstrap_scriptnik();
+
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
     return ret;
 }
 
@@ -922,69 +965,79 @@ void bootstrap_scriptnik()
 {
     using namespace i8080cpu;
 
+    if (!scriptnik) {
+        return;
+    }
+
     int script_size = 0;
     for (auto & scriptfile : Options.scriptfiles) {
-        script_size += scriptnik.append_from_file(scriptfile);
+        script_size += scriptnik->append_from_file(scriptfile);
     }
-
 
     for (auto & arg : Options.scriptargs) {
-        scriptnik.append_arg(arg);
+        scriptnik->append_arg(arg);
     }
 
-    script_size = scriptnik.length();
+    script_size = scriptnik->length();
     fprintf(stderr, "bootstrap_scriptnik: size=%d\n", script_size);
 
     if (script_size) {
         printf("Bootstrapping scriptnik...\n");
 
-        scriptnik.loadwav = [](const std::string & filename) {
+        //scriptnik_bootstrapped = true;
+
+        scriptnik->loadwav = [](const std::string & filename) {
             //load_wav(wav, filename);
             throw "load_wav not implemented";
             return 0;
         };
 
-        board.hooks.frame = std::bind(&Scriptnik::onframe, &scriptnik,
+        board.hooks.frame = std::bind(&Scriptnik::onframe, scriptnik,
                 std::placeholders::_1);
 
         tape_player.hooks.finished = 
-            std::bind(&Scriptnik::onwavfinished, &scriptnik, std::placeholders::_1);
+            std::bind(&Scriptnik::onwavfinished, scriptnik, std::placeholders::_1);
 
-        scriptnik.keydown = [](int scancode) {
+        scriptnik->keydown = [](int scancode) {
             SDL_KeyboardEvent e;
             e.keysym.scancode = (SDL_Scancode)scancode;
             io.the_keyboard().key_down(e);
         };
 
-        scriptnik.keyup = [](int scancode) {
+        scriptnik->keyup = [](int scancode) {
             SDL_KeyboardEvent e;
             e.keysym.scancode = (SDL_Scancode)scancode;
             io.the_keyboard().key_up(e);
         };
 
-        scriptnik.insert_breakpoint = [](int type, int addr, int kind) {
+        scriptnik->insert_breakpoint = [](int type, int addr, int kind) {
             board.ioread = -1;
             return board.insert_breakpoint(type, addr, kind);
         };
-        scriptnik.debugger_attached = []() {
+        scriptnik->remove_breakpoint = [](int type, int addr, int kind) {
+            board.ioread = -1;
+            return board.remove_breakpoint(type, addr, kind);
+        };
+        scriptnik->debugger_attached = []() {
             board.ioread = -1;
             return board.debugger_attached();
         };
-        scriptnik.debugger_detached = []() {
+        scriptnik->debugger_detached = []() {
             board.ioread = -1;
             return board.debugger_detached();
         };
-        scriptnik.debugger_break = []() {
+        scriptnik->debugger_break = []() {
             board.ioread = -1;
             return board.debugger_break();
         };
-        scriptnik.debugger_continue = []() {
+        scriptnik->debugger_continue = []() {
             return board.debugger_continue();
         };
-        board.onbreakpoint = []() {
-            scriptnik.onbreakpoint();
-        };
-        scriptnik.read_register = [](const std::string & reg) {
+        board.onbreakpoint = 
+            []() {
+                scriptnik->onbreakpoint();
+            };
+        scriptnik->read_register = [](const std::string & reg) {
             if (reg == "a") return i8080_regs_a();
             if (reg == "f") return i8080_regs_f();
             if (reg == "b") return i8080_regs_b();
@@ -997,7 +1050,7 @@ void bootstrap_scriptnik()
             if (reg == "pc") return i8080_pc();
             return i8080_pc();
         };
-        scriptnik.set_register = [](const std::string & reg, int val) {
+        scriptnik->set_register = [](const std::string & reg, int val) {
             if (reg == "a") i8080_setreg_a(val & 0xff);
             if (reg == "f") i8080_setreg_f(val & 0xff);
             if (reg == "b") i8080_setreg_b(val & 0xff);
@@ -1010,14 +1063,16 @@ void bootstrap_scriptnik()
             if (reg == "pc") i8080_jump(val & 0xffff);
             if (reg == "ioread") board.ioread = val & 0xff;
         };
-        scriptnik.read_memory = [](int addr, int stackrq) {
+        scriptnik->read_memory = [](int addr, int stackrq) {
             return (int)memory.read(addr, (bool)stackrq);
         };
-        scriptnik.write_memory = [](int addr, int w8, int stackrq) {
+        scriptnik->write_memory = [](int addr, int w8, int stackrq) {
             memory.write(addr, w8, stackrq);
         };
+    }
 
-        scriptnik.start();
+    if (script_size) {
+        scriptnik->start();
     }
 }
 

@@ -135,13 +135,16 @@ int Board::execute_frame(bool update_screen)
         this->check_interrupt();
         this->filler.irq = false;
         //DBG_FRM(F1,F2,printf("%05d %04x: ", this->between + this->instr_time, i8080_pc()));
-        if (this->debugging && debug.check_break()) {
+        if (this->debugging && (debug.check_break() || check_breakpoint())) {
             this->debugger_interrupt = true;
-            
-            printf("Board::execute_frame: break \n");
-
-            if (this->onbreakpoint) this->onbreakpoint();
-            break;
+            //printf("Board::execute_frame: break \n");
+            if (this->onbreakpoint) {
+                this->onbreakpoint(); // a script hook
+            }
+            // the hook can perform a quick task and continue, no need to pause frame then
+            if (this->debugger_interrupt) {
+                break;
+            }
         }
 
         this->single_step(update_screen);
@@ -473,7 +476,7 @@ int Board::is_break()
 
 void Board::set_debugging(const bool _debugging)
 {
-	debugging = _debugging;
+    debugging = _debugging;
 }
 
 void Board::debugger_attached()
@@ -617,7 +620,7 @@ std::string Board::remove_breakpoint(int type, int addr, int kind)
             Breakpoint needle(addr, kind);
             auto & v = this->breakpoints;
             v.erase(std::remove(v.begin(), v.end(), needle), v.end());
-            printf("deleted breakpoint @%04x, kind=%d\n", addr, kind);
+            printf("deleted breakpoint @%04x, kind=%d, total %d\n", addr, kind, v.size());
             }
             return "OK";
         case 2:
