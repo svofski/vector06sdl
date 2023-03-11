@@ -100,10 +100,15 @@ void Emulator::start_emulator_thread()
 {
 }
 
-void Emulator::save_state(vector <uint8_t> &to) {
+void Emulator::save_state(vector<uint8_t>& to) {
     this->board.serialize(to);
 }
 
-bool Emulator::restore_state(vector <uint8_t> &from) {
+bool Emulator::restore_state(vector<uint8_t>& from) {
     return this->board.deserialize(from);
+}
+
+void Emulator::set_bootrom(const vector<uint8_t>& bootbytes)
+{
+    this->board.set_bootrom(bootbytes);
 }

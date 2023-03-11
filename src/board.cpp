@@ -11,8 +11,8 @@
 #include "board.h"
 #include "util.h"
 
-extern "C" unsigned char * boot_bin;
-extern "C" unsigned int boot_bin_len;
+extern "C" unsigned char * boots_bin;
+extern "C" unsigned int boots_bin_len;
 
 using namespace i8080cpu;
 
@@ -34,7 +34,7 @@ void Board::init()
     create_timer();
 }
 
-void Board::init_bootrom()
+void Board::init_bootrom(const uint8_t * src, size_t size)
 {
 #if !defined(_MSC_VER)
     std::vector<uint8_t> userboot = util::load_binfile(Options.bootromfile);
@@ -46,14 +46,19 @@ void Board::init_bootrom()
     else 
 #endif
     {
-        // inialize bootrom using default boot
-        this->boot.resize((size_t)boot_bin_len);
-        uint8_t * src = (uint8_t *) &boot_bin;
-        size_t size = (size_t) boot_bin_len;
+        this->boot.resize(size);
         for (unsigned i = 0; i < size; ++i) {
             this->boot[i] = src[i];
         }
+        printf("init_bootrom: size=%d\n", this->boot.size());
     }
+}
+
+void Board::set_bootrom(const std::vector<uint8_t>& bootbytes)
+{
+    printf("Board::set_bootrom bootbytes.size()=%d\n", bootbytes.size());
+    this->boot = bootbytes;
+    printf("Board::set_bootrom boot.size()=%d\n", boot.size());
 }
 
 void Board::reset(Board::ResetMode mode)
@@ -63,7 +68,7 @@ void Board::reset(Board::ResetMode mode)
     switch (mode) {
         case ResetMode::BLKVVOD:
             if (this->boot.size() == 0) {
-                this->init_bootrom();
+                this->init_bootrom((const uint8_t *)&boots_bin, (size_t)boots_bin_len);
             }
             this->memory.attach_boot(boot);
             printf("Board::reset() attached boot, size=%u\n",

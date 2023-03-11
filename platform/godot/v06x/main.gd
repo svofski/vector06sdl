@@ -6,6 +6,7 @@ const FDD : int = 2
 const EDD : int = 3
 const WAV : int = 4
 const DIR : int = 5
+const BIN : int = 6 # boot rom
 
 const MIX_SAMPLERATE : int = 48000
 
@@ -28,7 +29,7 @@ onready var osk_panel = find_node("OnScreenKeyboard")
 onready var scope_panel = find_node("ScopePanel")
 onready var debug_view = find_node("DebugView")
 onready var nice_tooltip = find_node("NiceTooltip")
-onready var loadass = [find_node("LoadAss2"), find_node("LoadAss3")]
+onready var loadass = [find_node("LoadAss2"), find_node("LoadAss3"), find_node("LoadAssBoot")]
 onready var debug_panel = find_node("debug_panel")
 
 onready var tape_texture = loadass[0].texture
@@ -45,9 +46,10 @@ onready var resume_timer: Timer = $ResumeTimer
 onready var click_timer: Timer = $ClickTimer
 
 # for saving / restoring config
-var file_path = ["", ""]
-var file_kind = [[ROM, 256, false], [ROM, 256, false]]
-var loadedFilePath = ""
+var file_path = ["", "", ""]
+var file_kind = [[ROM, 256, false], [ROM, 256, false], [BIN, 0, false]]
+var loadedFilePath = ["", "", ""]
+var loadedFileDir = ["", "", ""]
 
 const DYNAMIC_SHADER_LIST = false
 
@@ -55,7 +57,10 @@ const SCOPE_SMALL: int = 0
 const SCOPE_BIG: int = 1
 var scope_state: int = SCOPE_SMALL
 
+# file open dialog target: disk A/tape or B
+enum DialogDevice {A = 0, B = 1, BOOT = 2}
 var dialog_device: int = 0 # A: or B: for file dialog
+
 var debug_ui_break = false
 
 func updateTexture(buttmap : PoolByteArray):
@@ -88,11 +93,11 @@ func _ready():
 	Engine.iterations_per_second = 50
 	OS.set_use_vsync(false)
 	set_physics_process(true)
-	var script = v06x.SetScriptText('puts("Hello from script\n")')
-	script = v06x.AddScriptFile('../../../scripts/robotnik.chai')
-	script = v06x.AddScriptFile('../../../scripts/iohook.chai')	
+	#var script = v06x.SetScriptText('puts("Hello from script\n")')
+	#script = v06x.AddScriptFile('../../../scripts/robotnik.chai')
+	#script = v06x.AddScriptFile('../../../scripts/iohook.chai')
 	var beef = v06x.Init()
-	print("beef: %08x script: %d" % [beef, script])
+	print("beef: %08x" % [beef])
 	$VectorScreen.texture = texture
 	
 	get_tree().get_root().connect("size_changed", self, "_on_size_changed")	
@@ -202,10 +207,15 @@ func _on_files_dropped(files: PoolStringArray, screen: int):
 		_on_FileDialog_file_selected(files[0])
 
 func _on_load_asset_pressed(which: int):
+	var titles = ["Select ROM image, WAV file, floppy A: image, or directory", "Select floppy B: image or directory", "Boot ROM image"]
 	dialog_device = which
+	$FileDialog.current_dir = loadedFileDir[dialog_device]
+	$FileDialog.window_title = titles[dialog_device]
 	$FileDialog.filters = ["*.rom,*.r0m,*.vec,*.bin,*.fdd,*.wav"]
-	if which > 0:
+	if dialog_device == DialogDevice.B:
 		$FileDialog.filters = ["*.fdd"]
+	elif dialog_device == DialogDevice.BOOT:
+		$FileDialog.filters = ["*.bin"]
 	$FileDialog.popup()
 
 func update_debugger_size():
@@ -293,13 +303,14 @@ func hide_shader_panel():
 
 func make_load_hint(dev: int) -> String:
 	match dev:
-		0:  return "WAV/ROM/A: (%s)" % file_path[dev].get_file()
-		1:  return "B: (%s)" % file_path[dev].get_file()
+		DialogDevice.A:  return "WAV/ROM/A: (%s)" % file_path[dev].get_file()
+		DialogDevice.B:  return "B: (%s)" % file_path[dev].get_file()
+		DialogDevice.BOOT: return "Boot ROM image (%s)" % file_path[dev].get_file()
 	return ""
 
 func update_load_asses() -> void:
 	var middle_x = rus_lat.rect_position.x + rus_lat.rect_size.x / 2
-	loadass[0].hint_tooltip = make_load_hint(0)
+	loadass[0].hint_tooltip = make_load_hint(DialogDevice.A)
 	if file_kind[0][0] in [DIR, FDD]:
 		loadass[0].texture = floppy_texture
 		loadass[0].rect_size = floppy_size
@@ -308,7 +319,8 @@ func update_load_asses() -> void:
 		loadass[0].texture = tape_texture
 		loadass[0].rect_size = tape_size
 		loadass[0].rect_position.x = middle_x - tape_size.x / 2
-	loadass[1].hint_tooltip = make_load_hint(1)
+	loadass[1].hint_tooltip = make_load_hint(DialogDevice.B)
+	loadass[DialogDevice.BOOT].hint_tooltip = make_load_hint(DialogDevice.BOOT)
 
 # return true if should autostart
 func load_file(dev: int, path: String) -> bool:
@@ -319,8 +331,10 @@ func load_file(dev: int, path: String) -> bool:
 		var korg = getKind(path)
 		file_kind[dev] = korg
 		file_path[dev] = path
-		
-		if file_kind[0][0] == FDD:
+
+		if dev == DialogDevice.BOOT && file_kind[dev][0] == BIN:
+			v06x.InsertBootROM(content)
+		elif file_kind[dev][0] == FDD:
 			v06x.Mount(dev, path)
 		else:
 			v06x.LoadAsset(content, korg[0], korg[1])
@@ -331,13 +345,14 @@ func load_file(dev: int, path: String) -> bool:
 		if dir.dir_exists(path):
 			file_path[dev] = path
 			file_kind[dev] = [DIR, 0, false]
-			v06x.Mount(dev, path)	
+			v06x.Mount(dev, path)
 			update_load_asses()
 	return false
 
 func _on_FileDialog_file_selected(path: String):
 	print("File selected: ", path)
-	loadedFilePath = path
+	loadedFilePath[dialog_device] = path
+	loadedFileDir[dialog_device] = $FileDialog.current_dir
 	if load_file(dialog_device, path):
 		v06x.Reset(false)
 	
@@ -345,12 +360,12 @@ func _on_FileDialog_file_selected(path: String):
 		path.get_file())
 
 func reload_file():
-	if load_file(dialog_device, loadedFilePath):
+	if load_file(dialog_device, loadedFilePath[dialog_device]):
 		v06x.Reset(false)
 	
 func _on_FileDialog_dir_selected(dir):
 	print("Directory selected: ", dir)
-	loadedFilePath = dir
+	loadedFilePath[dialog_device] = dir
 	load_file(dialog_device, dir)
 	nice_tooltip.showTooltip(loadass[dialog_device].rect_global_position,
 		dir.get_file())
@@ -368,6 +383,8 @@ func getKind(path : String):
 		ret = [EDD, 0, true]
 	elif ext == "wav":
 		ret = [WAV, 0, false]
+	elif ext == "bin":
+		ret = [BIN, 0, false]
 	return ret
 
 func _on_blkvvod_pressed():
@@ -450,17 +467,26 @@ func load_state():
 func save_config():
 	var cfg = ConfigFile.new()
 	cfg.load("user://v06x.settings")
-	cfg.set_value("FileDialog", "current_dir", $FileDialog.current_dir)
-	cfg.set_value("FileDialog", "current_path", $FileDialog.current_path)
-	cfg.set_value("asset0", "file", file_path[0])
-	cfg.set_value("asset0", "kind", file_kind[0][0])
-	cfg.set_value("asset0", "org", file_kind[0][1])
-	cfg.set_value("asset0", "autostart", file_kind[0][2])
+	cfg.set_value("FileDialog", "current_dir", loadedFileDir[DialogDevice.A])
+	cfg.set_value("FileDialog", "current_path", loadedFilePath[DialogDevice.A])
+	cfg.set_value("FileDialog", "current_dir_b", loadedFileDir[DialogDevice.B])
+	cfg.set_value("FileDialog", "current_path_b", loadedFilePath[DialogDevice.B])
+	cfg.set_value("FileDialog", "current_dir_boot", loadedFileDir[DialogDevice.BOOT])
+	cfg.set_value("FileDialog", "current_path_boot", loadedFilePath[DialogDevice.BOOT])
+	cfg.set_value("asset0", "file", file_path[DialogDevice.A])
+	cfg.set_value("asset0", "kind", file_kind[DialogDevice.A][0])
+	cfg.set_value("asset0", "org", file_kind[DialogDevice.A][1])
+	cfg.set_value("asset0", "autostart", file_kind[DialogDevice.A][2])
 
-	cfg.set_value("asset1", "file", file_path[1])
-	cfg.set_value("asset1", "kind", file_kind[1][0])
-	cfg.set_value("asset1", "org", file_kind[1][1])
-	cfg.set_value("asset1", "autostart", file_kind[1][2])
+	cfg.set_value("asset1", "file", file_path[DialogDevice.B])
+	cfg.set_value("asset1", "kind", file_kind[DialogDevice.B][0])
+	cfg.set_value("asset1", "org", file_kind[DialogDevice.B][1])
+	cfg.set_value("asset1", "autostart", file_kind[DialogDevice.B][2])
+
+	cfg.set_value("asset2", "file", file_path[DialogDevice.BOOT])
+	cfg.set_value("asset2", "kind", file_kind[DialogDevice.BOOT][0])
+	cfg.set_value("asset2", "org", file_kind[DialogDevice.BOOT][1])
+	cfg.set_value("asset2", "autostart", file_kind[DialogDevice.BOOT][2])
 
 	cfg.set_value("sound", "volume_8253", sound_panel.get_volume(0))
 	cfg.set_value("sound", "volume_beep", sound_panel.get_volume(1))
@@ -478,11 +504,26 @@ func load_config():
 		var dir = cfg.get_value("FileDialog", "current_dir")
 		if dir != null:
 			$FileDialog.current_dir = dir
-			loadedFilePath = dir
+			loadedFileDir[DialogDevice.A] = dir
 		var path = cfg.get_value("FileDialog", "current_path")
 		if path != null:
 			$FileDialog.current_path = path
-			loadedFilePath = path
+			loadedFilePath[DialogDevice.A] = path
+
+		dir = cfg.get_value("FileDialog", "current_dir_b")
+		if dir != null:
+			loadedFileDir[DialogDevice.B] = dir
+		path = cfg.get_value("FileDialog", "current_path_b")
+		if path != null:
+			loadedFilePath[DialogDevice.B] = path
+
+		dir = cfg.get_value("FileDialog", "current_dir_boot")
+		if dir != null:
+			loadedFileDir[DialogDevice.BOOT] = dir
+		path = cfg.get_value("FileDialog", "current_path_boot")
+		if path != null:
+			loadedFilePath[DialogDevice.BOOT] = path
+			
 		shader_index = cfg.get_value("shader", "index", 0)
 		_on_shader_selected(shader_index)
 		
@@ -493,20 +534,26 @@ func load_config():
 		sound_panel.set_volume(4, cfg.get_value("sound", "volume_db", 0))
 		_on_SoundPanel_volumes_changed()
 
-		file_path[0] = cfg.get_value("asset0", "file", "")
-		file_kind[0][0] = cfg.get_value("asset0", "kind", ROM)
-		file_kind[0][1] = cfg.get_value("asset0", "org", 256)
-		file_kind[0][2] = cfg.get_value("asset0", "autostart", false)
+		file_path[DialogDevice.A] = cfg.get_value("asset0", "file", "")
+		file_kind[DialogDevice.A][0] = cfg.get_value("asset0", "kind", ROM)
+		file_kind[DialogDevice.A][1] = cfg.get_value("asset0", "org", 256)
+		file_kind[DialogDevice.A][2] = cfg.get_value("asset0", "autostart", false)
 		
-		if file_kind[0][0] in [FDD, DIR]:
-			load_file(0, file_path[0]) # load but no restart
+		if file_kind[DialogDevice.A][0] in [FDD, DIR]:
+			load_file(DialogDevice.A, file_path[DialogDevice.A]) # load but no restart
 
-		file_path[1] = cfg.get_value("asset1", "file", "")
-		file_kind[1][0] = cfg.get_value("asset1", "kind", FDD)
-		file_kind[1][1] = cfg.get_value("asset1", "org", 256)
-		file_kind[1][2] = cfg.get_value("asset1", "autostart", false)
-		if file_kind[1][0] in [FDD, DIR]:
-			load_file(1, file_path[1])
+		file_path[DialogDevice.B] = cfg.get_value("asset1", "file", "")
+		file_kind[DialogDevice.B][0] = cfg.get_value("asset1", "kind", FDD)
+		file_kind[DialogDevice.B][1] = cfg.get_value("asset1", "org", 256)
+		file_kind[DialogDevice.B][2] = cfg.get_value("asset1", "autostart", false)
+		if file_kind[DialogDevice.B][0] in [FDD, DIR]:
+			load_file(DialogDevice.B, file_path[DialogDevice.B])
+			
+		file_path[DialogDevice.BOOT] = cfg.get_value("asset2", "file", "")
+		file_kind[DialogDevice.BOOT][0] = cfg.get_value("asset2", "kind", BIN)
+		file_kind[DialogDevice.BOOT][1] = cfg.get_value("asset2", "org", 0)
+		file_kind[DialogDevice.BOOT][2] = cfg.get_value("asset2", "autostart", false)
+		load_file(DialogDevice.BOOT, file_path[DialogDevice.BOOT])
 
 func create_shader_list():
 	var dir = Directory.new()

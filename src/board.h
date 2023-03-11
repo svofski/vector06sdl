@@ -78,9 +78,7 @@ public:
 
 private:
     void refresh_watchpoint_listeners(void);
-
-private:
-    void init_bootrom();
+    void init_bootrom(const uint8_t * src, size_t size);
 
 public:
     Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd, 
@@ -134,6 +132,8 @@ public:
     bool deserialize(std::vector<uint8_t> & from);
     void serialize_self(SerializeChunk::stype_t & to) const;
     void deserialize_self(SerializeChunk::stype_t::iterator from, uint32_t size);
+
+    void set_bootrom(const std::vector<uint8_t>& bootbytes);
 
 private:
     /* Fuses together inner CPU logic and Vector-06c interrupt logic */

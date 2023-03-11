@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=2]
+[gd_scene load_steps=32 format=2]
 
 [ext_resource path="res://main.gd" type="Script" id=1]
 [ext_resource path="res://theme.theme" type="Theme" id=2]
@@ -75,6 +75,10 @@ corner_radius_bottom_left = 2
 flags = 5
 atlas = ExtResource( 15 )
 region = Rect2( 175, 15, 150, 150 )
+
+[sub_resource type="StreamTexture" id=46]
+flags = 5
+load_path = "res://.import/bootrom-icon.png-409740fd48ea5633c08291789acb780a.stex"
 
 [sub_resource type="StyleBoxFlat" id=42]
 content_margin_left = 10.0
@@ -231,6 +235,16 @@ hint_tooltip = "ROM/WAV/FDD A:"
 custom_styles/panel = SubResource( 32 )
 texture = ExtResource( 12 )
 
+[node name="LoadAssBoot" parent="HUD" instance=ExtResource( 9 )]
+margin_left = 81.0
+margin_top = 227.0
+margin_right = 113.0
+margin_bottom = 249.0
+rect_min_size = Vector2( 32, 22 )
+hint_tooltip = "ROM/WAV/FDD A:"
+custom_styles/panel = SubResource( 32 )
+texture = SubResource( 46 )
+
 [node name="LoadAss3" parent="HUD" instance=ExtResource( 9 )]
 margin_left = 19.0
 margin_top = 93.0
@@ -285,5 +299,6 @@ visible = false
 [connection signal="mouse_exited" from="HUD/BowserButton" to="." method="_on_BowserButton_mouse_entered" binds= [ 1 ]]
 [connection signal="pressed" from="HUD/BowserButton" to="." method="_on_BowserButton_pressed"]
 [connection signal="pressed" from="HUD/LoadAss2" to="." method="_on_load_asset_pressed" binds= [ 0 ]]
+[connection signal="pressed" from="HUD/LoadAssBoot" to="." method="_on_load_asset_pressed" binds= [ 2 ]]
 [connection signal="pressed" from="HUD/LoadAss3" to="." method="_on_load_asset_pressed" binds= [ 1 ]]
 [connection signal="volumes_changed" from="HUD/SoundPanel" to="." method="_on_SoundPanel_volumes_changed"]

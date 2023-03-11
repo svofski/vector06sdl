@@ -484,6 +484,26 @@ godot_variant V06X_GetHeatmap(godot_object* p_instance, void* p_method_data,
 	return ret;
 }
 
+// InsertBootROM
+godot_variant V06X_InsertBootROM(godot_object* p_instance, void* p_method_data,
+        void* p_user_data, int p_num_arg, godot_variant** p_args)
+{
+    godot_pool_byte_array bytes = api->godot_variant_as_pool_byte_array(p_args[0]);
+    godot_int size = api->godot_pool_byte_array_size(&bytes);
+    auto ra = api->godot_pool_byte_array_read(&bytes);
+    const uint8_t * ptr = api->godot_pool_byte_array_read_access_ptr(ra);
+
+    std::vector<uint8_t> bootbytes((uint8_t *)ptr, (uint8_t *)ptr + size);
+    lator.set_bootrom(bootbytes);
+
+    api->godot_pool_byte_array_read_access_destroy(ra);
+
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, true);
+    return ret;
+}
+
+// SetScriptText('text')
 godot_variant V06X_SetScriptText(godot_object* p_instance, void* p_method_data,
         void* p_user_data, int p_num_arg, godot_variant** p_args)
 {

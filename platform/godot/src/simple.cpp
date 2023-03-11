@@ -36,6 +36,7 @@ V06X_DECL(V06X_SetJoysticks);
 V06X_DECL(V06X_SetVolumes);
 V06X_DECL(V06X_GetMem);
 V06X_DECL(V06X_GetHeatmap);
+V06X_DECL(V06X_InsertBootROM);
 V06X_DECL(V06X_SetScriptText);
 V06X_DECL(V06X_AddScriptFile);
 V06X_DECL(debug_break);
@@ -117,6 +118,7 @@ extern "C" void GDN_EXPORT godot_nativescript_init(void* p_handle)
     V06X_METHOD("SetVolumes", V06X_SetVolumes);
     V06X_METHOD("GetMem", V06X_GetMem);
     V06X_METHOD("GetHeatmap", V06X_GetHeatmap);
+    V06X_METHOD("InsertBootROM", V06X_InsertBootROM);
     V06X_METHOD("SetScriptText", V06X_SetScriptText);
     V06X_METHOD("AddScriptFile", V06X_AddScriptFile);
     V06X_METHOD("debug_break", debug_break);

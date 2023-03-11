@@ -107,4 +107,5 @@ public:
         
     void save_state(vector<uint8_t> & to);
     bool restore_state(vector<uint8_t> & to);
+    void set_bootrom(const vector<uint8_t>& bootbytes);
 };
