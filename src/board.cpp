@@ -11,16 +11,22 @@
 #include "board.h"
 #include "util.h"
 
-extern "C" unsigned char * boots_bin;
+extern "C" unsigned char* boots_bin;
 extern "C" unsigned int boots_bin_len;
 
 using namespace i8080cpu;
 
-Board::Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd,
-        TV & _tv, WavPlayer & _tape_player, Debug& _debug)
-    : memory(_memory), io(_io), filler(_filler), soundnik(_snd), tv(_tv),
-    tape_player(_tape_player),
-    debugging(0), debugger_interrupt(0), debug(_debug)
+Board::Board(Memory& _memory, IO& _io, PixelFiller& _filler, Soundnik& _snd,
+  TV& _tv, WavPlayer& _tape_player, Debug& _debug)
+  : memory(_memory)
+  , io(_io)
+  , filler(_filler)
+  , soundnik(_snd)
+  , tv(_tv)
+  , tape_player(_tape_player)
+  , debugging(0)
+  , debugger_interrupt(0)
+  , debug(_debug)
 {
     this->inte = false;
 }
@@ -28,22 +34,21 @@ Board::Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd,
 void Board::init()
 {
     i8080_hal_bind(memory, io, *this);
-    cadence::set_cadence(this->tv.get_refresh_rate(), cadence_frames,
-            cadence_length);
+    cadence::set_cadence(
+      this->tv.get_refresh_rate(), cadence_frames, cadence_length);
     io.rgb2pixelformat = tv.get_rgb2pixelformat();
     create_timer();
 }
 
-void Board::init_bootrom(const uint8_t * src, size_t size)
+void Board::init_bootrom(const uint8_t* src, size_t size)
 {
 #if !defined(_MSC_VER)
     std::vector<uint8_t> userboot = util::load_binfile(Options.bootromfile);
     if (userboot.size() > 0) {
         printf("User bootrom: %s (%d bytes)\n", Options.bootromfile.c_str(),
-                (int)userboot.size());
+          (int)userboot.size());
         this->boot = userboot;
-    }
-    else 
+    } else
 #endif
     {
         this->boot.resize(size);
@@ -68,11 +73,12 @@ void Board::reset(Board::ResetMode mode)
     switch (mode) {
         case ResetMode::BLKVVOD:
             if (this->boot.size() == 0) {
-                this->init_bootrom((const uint8_t *)&boots_bin, (size_t)boots_bin_len);
+                this->init_bootrom(
+                  (const uint8_t*)&boots_bin, (size_t)boots_bin_len);
             }
             this->memory.attach_boot(boot);
             printf("Board::reset() attached boot, size=%u\n",
-                    (unsigned int)boot.size());
+              (unsigned int)boot.size());
             break;
         case ResetMode::BLKSBR:
             this->memory.detach_boot();
@@ -83,7 +89,7 @@ void Board::reset(Board::ResetMode mode)
             i8080_jump(Options.pc);
             i8080_setreg_sp(0xc300);
             printf("Board::reset() detached boot, pc=%04x sp=%04x\n",
-                    i8080_pc(), i8080_regs_sp());
+              i8080_pc(), i8080_regs_sp());
             break;
     }
 
@@ -103,11 +109,11 @@ void Board::interrupt(bool on)
 bool Board::check_interrupt()
 {
     if (this->irq && i8080_iff()) {
-        this->interrupt(false);     // lower INTE which clears INT request on D65.2
+        this->interrupt(false); // lower INTE which clears INT request on D65.2
         if (this->last_opcode == 0x76) {
             i8080_jump(i8080_pc() + 1);
         }
-        this->instr_time += i8080_execute(0xff);    // rst7
+        this->instr_time += i8080_execute(0xff); // rst7
 
         return true;
     }
@@ -117,12 +123,15 @@ bool Board::check_interrupt()
 #define F1 8
 #define F2 370
 //#define DBG_FRM(a,b,bob) if (frame_no>=a && frame_no<=b) {bob;}
-#define DBG_FRM(a,b,bob) {};
+#define DBG_FRM(a, b, bob) {};
 int Board::execute_frame(bool update_screen)
 {
-    if (this->hooks.frame) this->hooks.frame(this->frame_no);
-    if (this->poll_debugger) this->poll_debugger();
-    if (this->debugger_interrupt) return 0;
+    if (this->hooks.frame)
+        this->hooks.frame(this->frame_no);
+    if (this->poll_debugger)
+        this->poll_debugger();
+    if (this->debugger_interrupt)
+        return 0;
 
     ++this->frame_no;
     this->filler.reset();
@@ -130,18 +139,20 @@ int Board::execute_frame(bool update_screen)
 
     // 59904
     this->between = 0;
-    DBG_FRM(F1,F2, printf("--- %d ---\n", this->frame_no));
+    DBG_FRM(F1, F2, printf("--- %d ---\n", this->frame_no));
     while (!this->filler.brk) {
         this->check_interrupt();
         this->filler.irq = false;
-        //DBG_FRM(F1,F2,printf("%05d %04x: ", this->between + this->instr_time, i8080_pc()));
+        // DBG_FRM(F1,F2,printf("%05d %04x: ", this->between + this->instr_time,
+        // i8080_pc()));
         if (this->debugging && (debug.check_break() || check_breakpoint())) {
             this->debugger_interrupt = true;
-            //printf("Board::execute_frame: break \n");
+            // printf("Board::execute_frame: break \n");
             if (this->onbreakpoint) {
                 this->onbreakpoint(); // a script hook
             }
-            // the hook can perform a quick task and continue, no need to pause frame then
+            // the hook can perform a quick task and continue, no need to pause
+            // frame then
             if (this->debugger_interrupt) {
                 break;
             }
@@ -149,7 +160,7 @@ int Board::execute_frame(bool update_screen)
 
         this->single_step(update_screen);
     }
-    //printf("between = %d\n", this->between);
+    // printf("between = %d\n", this->between);
     return 1;
 }
 
@@ -162,17 +173,13 @@ int Board::execute_frame_with_cadence(bool update_screen, bool use_cadence)
 void Board::single_step(bool update_screen)
 {
 #if MEGATRACE
-    printf("PC=%04x %02x %02x %02x A=%02x BC=%04x DE=%04x HL=%04x SP=%04x M=%02x\n", i8080_pc(),
-                this->memory.read(i8080_pc(), false),
-                this->memory.read(i8080_pc()+1, false),
-                this->memory.read(i8080_pc()+2, false),
-                i8080_regs_a(),
-                i8080_regs_bc(),
-                i8080_regs_de(),
-                i8080_regs_hl(),
-                i8080_regs_sp(),
-                this->memory.read(i8080_regs_hl(), false),
-                );
+    printf(
+      "PC=%04x %02x %02x %02x A=%02x BC=%04x DE=%04x HL=%04x SP=%04x M=%02x\n",
+      i8080_pc(), this->memory.read(i8080_pc(), false),
+      this->memory.read(i8080_pc() + 1, false),
+      this->memory.read(i8080_pc() + 2, false), i8080_regs_a(), i8080_regs_bc(),
+      i8080_regs_de(), i8080_regs_hl(), i8080_regs_sp(),
+      this->memory.read(i8080_regs_hl(), false), );
 #endif
     if (this->instr_time && this->between == 0) {
         this->between += this->instr_time;
@@ -190,12 +197,12 @@ void Board::single_step(bool update_screen)
     }
 
     /* afterbrk counts extra 12MHz cycles spent after the screen end */
-    int afterbrk12 = this->filler.fill(this->instr_time << 2, commit_time,
-            commit_time_pal, update_screen);
+    int afterbrk12 = this->filler.fill(
+      this->instr_time << 2, commit_time, commit_time_pal, update_screen);
 
-    DBG_FRM(F1,F2, if(this->filler.irq) {
-            printf("irq_clk=%d\n", this->filler.irq_clk);
-            });
+    DBG_FRM(
+      F1, F2,
+      if (this->filler.irq) { printf("irq_clk=%d\n", this->filler.irq_clk); });
 
     /* Interrupt logic
      *  interrupt request is "pushed through" by VSYNC on /C if INTE (D65.2)
@@ -214,19 +221,26 @@ void Board::single_step(bool update_screen)
         int thresh = i8080_cycles();
         /* Adjust threshold of the last M-cycle of long instructions */
         /* test: vst */
-        switch(thresh) {
-            case 11:    thresh = 15; break; // T533
-            case 13:    thresh = 15; break; // T4333
-            case 17:    thresh = 23; break; // T53333
-            case 18:    thresh = 21; break; // T43335
+        switch (thresh) {
+            case 11:
+                thresh = 15;
+                break; // T533
+            case 13:
+                thresh = 15;
+                break; // T4333
+            case 17:
+                thresh = 23;
+                break; // T53333
+            case 18:
+                thresh = 21;
+                break; // T43335
         }
         if (this->filler.irq_clk > thresh * 4) {
             this->irq_carry = true;
         } else {
             this->irq |= this->inte && this->filler.irq;
         }
-    }
-    else if (this->irq_carry) {
+    } else if (this->irq_carry) {
         this->irq_carry = false;
         this->irq |= this->inte;
     }
@@ -234,8 +248,8 @@ void Board::single_step(bool update_screen)
     if (this->frame_no > 60) {
         this->tape_player.advance(this->instr_time);
     }
-    this->soundnik.soundSteps(this->instr_time/2, this->io.TapeOut(),
-            this->io.Covox(), this->tape_player.sample());
+    this->soundnik.soundSteps(this->instr_time / 2, this->io.TapeOut(),
+      this->io.Covox(), this->tape_player.sample());
 
     /* Edge conditions at the end of screen:
      * if instruction time does not fit within screen time, filler returns
@@ -244,14 +258,14 @@ void Board::single_step(bool update_screen)
     this->between += this->instr_time;
     this->instr_time = afterbrk12 >> 2;
     this->between -= this->instr_time;
-/*
-    if (debug_on_single_step) 
-    {
-        auto addr = i8080cpu::i8080_pc();
-        auto bigaddr = memory.bigram_select(addr & 0xffff, false);
-        debug_on_single_step(bigaddr);
-    }
-*/    
+    /*
+        if (debug_on_single_step)
+        {
+            auto addr = i8080cpu::i8080_pc();
+            auto bigaddr = memory.bigram_select(addr & 0xffff, false);
+            debug_on_single_step(bigaddr);
+        }
+    */
 }
 
 #if 0
@@ -288,10 +302,10 @@ bool Board::cadence_allows()
     return true;
 }
 
-void Board::handle_event(SDL_Event & event)
+void Board::handle_event(SDL_Event& event)
 {
-    //printf("handle_event: event.type=%d\n", event.type);
-    switch(event.type) {
+    // printf("handle_event: event.type=%d\n", event.type);
+    switch (event.type) {
         case SDL_KEYDOWN:
             this->handle_keydown(event.key);
             break;
@@ -310,13 +324,13 @@ void Board::handle_event(SDL_Event & event)
 }
 
 /* emulator thread */
-void Board::handle_keydown(SDL_KeyboardEvent & key)
+void Board::handle_keydown(SDL_KeyboardEvent& key)
 {
     this->io.the_keyboard().key_down(key);
 }
 
 /* emulator thread */
-void Board::handle_keyup(SDL_KeyboardEvent & key)
+void Board::handle_keyup(SDL_KeyboardEvent& key)
 {
     this->io.the_keyboard().key_up(key);
 }
@@ -328,7 +342,7 @@ void Board::handle_quit()
 }
 
 /* ui thread */
-void Board::handle_window_event(SDL_Event & event)
+void Board::handle_window_event(SDL_Event& event)
 {
     this->tv.handle_window_event(event);
 }
@@ -337,50 +351,45 @@ void Board::handle_window_event(SDL_Event & event)
 void Board::render_frame(const int frame, const bool executed)
 {
     tv.render(executed);
-    if (Options.save_frames.size() && frame == Options.save_frames[0])
-    {
-        fprintf(stderr, "Saving frame %d to %s\n",
-                frame, Options.path_for_frame(frame).c_str());
+    if (Options.save_frames.size() && frame == Options.save_frames[0]) {
+        fprintf(stderr, "Saving frame %d to %s\n", frame,
+          Options.path_for_frame(frame).c_str());
         tv.save_frame(Options.path_for_frame(frame));
         Options.save_frames.erase(Options.save_frames.begin());
     }
 }
 
-auto Board::read_stack(const size_t _len) const
-->std::vector<uint16_t>
+auto Board::read_stack(const size_t _len) const -> std::vector<uint16_t>
 {
-	auto sp = i8080_regs_sp();
-	std::vector<uint16_t> out;
+    auto sp = i8080_regs_sp();
+    std::vector<uint16_t> out;
 
-	for (int i = 0; i < _len; i++)
-	{
-		uint16_t db_l = memory.get_byte(sp, true);
+    for (int i = 0; i < _len; i++) {
+        uint16_t db_l = memory.get_byte(sp, true);
         sp = (sp + 1) & 0xffff;
         uint16_t db_h = memory.get_byte(sp, true);
         sp = (sp + 1) & 0xffff;
-        out.push_back(db_h<<8 | db_l);
-	}
-	return out;
+        out.push_back(db_h << 8 | db_l);
+    }
+    return out;
 }
 
-auto Board::debug_read_executed_memory(uint16_t _addr, const size_t _len) const 
--> std::vector<uint8_t>
+auto Board::debug_read_executed_memory(uint16_t _addr, const size_t _len) const
+  -> std::vector<uint8_t>
 {
-	std::vector<uint8_t> out;
+    std::vector<uint8_t> out;
 
-	for (int i = 0; i < _len; i++)
-	{
+    for (int i = 0; i < _len; i++) {
         uint8_t db = memory.get_byte(_addr, false);
         _addr = (_addr + 1) & 0xffff;
         out.push_back(db);
-	}
-	return out;
+    }
+    return out;
 }
 
-auto Board::debug_read_hw_info() const 
--> std::vector<int>
+auto Board::debug_read_hw_info() const -> std::vector<int>
 {
-	std::vector<int> out;
+    std::vector<int> out;
 
     out.push_back(total_v_cycles);
     out.push_back(i8080_iff());
@@ -391,7 +400,7 @@ auto Board::debug_read_hw_info() const
     out.push_back(memory.get_mode_map());
     out.push_back(memory.get_page_map());
 
-	return out;
+    return out;
 }
 
 void Board::dump_memory(const int start, const int count)
@@ -409,7 +418,7 @@ const std::string Board::read_memory(const int start, const int count)
     // VLA: char buf[count * 2 + 1];
     std::string buf;
     buf.reserve(count * 2 + 1);
-    for (int i = start, k = 0; i < start + count; ++i, k+=2) {
+    for (int i = start, k = 0; i < start + count; ++i, k += 2) {
         sprintf(&buf[k], "%02x", memory.read(i, false));
     }
     return buf;
@@ -427,25 +436,30 @@ std::string Board::read_registers()
     char buf[26 * 2 + 1];
     int o = 0;
 
-    sprintf(&buf[o], "%02x%02x", i8080_regs_a(), i8080_regs_f()); o += 4;
-    sprintf(&buf[o], "%02x%02x", i8080_regs_c(), i8080_regs_b());   o += 4;
-    sprintf(&buf[o], "%02x%02x", i8080_regs_e(), i8080_regs_d());   o += 4;
-    sprintf(&buf[o], "%02x%02x", i8080_regs_l(), i8080_regs_h());   o += 4;
-    sprintf(&buf[o], "00000000");                                   o += 8;
+    sprintf(&buf[o], "%02x%02x", i8080_regs_a(), i8080_regs_f());
+    o += 4;
+    sprintf(&buf[o], "%02x%02x", i8080_regs_c(), i8080_regs_b());
+    o += 4;
+    sprintf(&buf[o], "%02x%02x", i8080_regs_e(), i8080_regs_d());
+    o += 4;
+    sprintf(&buf[o], "%02x%02x", i8080_regs_l(), i8080_regs_h());
+    o += 4;
+    sprintf(&buf[o], "00000000");
+    o += 8;
     sprintf(&buf[o], "%02x%02x", i8080_regs_sp() & 0377,
-            (i8080_regs_sp() >> 8) & 0377);                         o += 4;
-    sprintf(&buf[o], "00000000000000000000");                       o += 20;
-    sprintf(&buf[o], "%02x%02x", i8080_pc() & 0377,
-            (i8080_pc() >> 8) & 0377);
+      (i8080_regs_sp() >> 8) & 0377);
+    o += 4;
+    sprintf(&buf[o], "00000000000000000000");
+    o += 20;
+    sprintf(&buf[o], "%02x%02x", i8080_pc() & 0377, (i8080_pc() >> 8) & 0377);
 
     return std::string(buf);
 }
 
-auto Board::read_registers_b()
-->const std::vector<int>
+auto Board::read_registers_b() -> const std::vector<int>
 {
     std::vector<int> out;
-    out.push_back(i8080_regs_a()<<8 | i8080_regs_f());
+    out.push_back(i8080_regs_a() << 8 | i8080_regs_f());
     out.push_back(i8080_regs_bc());
     out.push_back(i8080_regs_de());
     out.push_back(i8080_regs_hl());
@@ -455,7 +469,7 @@ auto Board::read_registers_b()
     return out;
 }
 
-void Board::write_registers(uint8_t * regs)
+void Board::write_registers(uint8_t* regs)
 {
     i8080_setreg_a(regs[0]);
     i8080_setreg_f(regs[1]);
@@ -508,48 +522,46 @@ static bool iospace(uint32_t addr)
 
 void Board::check_watchpoint(uint32_t addr, uint8_t value, int how)
 {
-    //if (addr == 0x100) {
+    // if (addr == 0x100) {
     //    printf("check_watchpoint how=%d\n", how);
     //}
     auto found = std::find_if(this->memory_watchpoints.begin(),
-            this->memory_watchpoints.end(),
-            [addr, how](Watchpoint const & item) {
-                if (item.type == Watchpoint::ACCESS || item.type == how) {
-                    return addr >= item.addr && addr < (item.addr + item.length);
-                }
-                return false;
-            });
+      this->memory_watchpoints.end(), [addr, how](Watchpoint const& item) {
+          if (item.type == Watchpoint::ACCESS || item.type == how) {
+              return addr >= item.addr && addr < (item.addr + item.length);
+          }
+          return false;
+      });
     if (found != this->memory_watchpoints.end()) {
         this->debugger_interrupt = true;
-        if (this->onbreakpoint) this->onbreakpoint();
+        if (this->onbreakpoint)
+            this->onbreakpoint();
     }
 }
 
 void Board::refresh_watchpoint_listeners()
 {
-    auto check_wp_read =
-        [this](uint32_t addr, uint32_t phys, bool stack, uint8_t value) {
-            this->check_watchpoint(addr, value, Watchpoint::READ);
-        };
-    auto check_wp_write =
-        [this](uint32_t addr, uint32_t phys, bool stack, uint8_t value) {
-            this->check_watchpoint(addr, value, Watchpoint::WRITE);
-        };
-    auto check_wp_ioread =
-        [this](uint32_t addr, uint8_t value) {
-            this->ioread = -1;
-            this->check_watchpoint(0x80000000|addr, value, Watchpoint::READ);
-            return this->ioread;
-        };
-    auto check_wp_iowrite =
-        [this](uint32_t addr, uint8_t value) {
-            this->check_watchpoint(0x80000000|addr, value, Watchpoint::WRITE);
-        };
+    auto check_wp_read = [this](uint32_t addr, uint32_t phys, bool stack,
+                           uint8_t value) {
+        this->check_watchpoint(addr, value, Watchpoint::READ);
+    };
+    auto check_wp_write = [this](uint32_t addr, uint32_t phys, bool stack,
+                            uint8_t value) {
+        this->check_watchpoint(addr, value, Watchpoint::WRITE);
+    };
+    auto check_wp_ioread = [this](uint32_t addr, uint8_t value) {
+        this->ioread = -1;
+        this->check_watchpoint(0x80000000 | addr, value, Watchpoint::READ);
+        return this->ioread;
+    };
+    auto check_wp_iowrite = [this](uint32_t addr, uint8_t value) {
+        this->check_watchpoint(0x80000000 | addr, value, Watchpoint::WRITE);
+    };
 
     printf("--- watchpoint inventory ---\n");
     this->memory.onwrite = this->memory.onread = nullptr;
     this->io.onwrite = this->io.onread = nullptr;
-    for (auto &w : this->memory_watchpoints) {
+    for (auto& w : this->memory_watchpoints) {
         if (this->memory.onwrite == nullptr &&
             (w.type == Watchpoint::WRITE || w.type == Watchpoint::ACCESS)) {
             if (iospace(w.addr)) {
@@ -577,7 +589,7 @@ std::string Board::insert_breakpoint(int type, int addr, int kind)
 {
     auto add_memory_watchpoint = [this](Watchpoint w) {
         this->memory_watchpoints.push_back(w);
-	this->refresh_watchpoint_listeners();
+        this->refresh_watchpoint_listeners();
     };
 
     switch (type) {
@@ -606,22 +618,21 @@ std::string Board::insert_breakpoint(int type, int addr, int kind)
 
 std::string Board::remove_breakpoint(int type, int addr, int kind)
 {
-    auto del_memory_watchpoint = [this](Watchpoint w)
-    {
-        auto & v = this->memory_watchpoints;
+    auto del_memory_watchpoint = [this](Watchpoint w) {
+        auto& v = this->memory_watchpoints;
         v.erase(std::remove(v.begin(), v.end(), w), v.end());
-	    this->refresh_watchpoint_listeners();
+        this->refresh_watchpoint_listeners();
     };
 
     switch (type) {
         case 0:
-        case 1:
-            {
+        case 1: {
             Breakpoint needle(addr, kind);
-            auto & v = this->breakpoints;
+            auto& v = this->breakpoints;
             v.erase(std::remove(v.begin(), v.end(), needle), v.end());
-            printf("deleted breakpoint @%04x, kind=%d, total %d\n", addr, kind, v.size());
-            }
+            printf("deleted breakpoint @%04x, kind=%d, total %d\n", addr, kind,
+              v.size());
+        }
             return "OK";
         case 2:
             printf("deleting write watchpoint @%04x, length=%d\n", addr, kind);
@@ -642,12 +653,13 @@ std::string Board::remove_breakpoint(int type, int addr, int kind)
 bool Board::check_breakpoint()
 {
     return std::find(this->breakpoints.begin(), this->breakpoints.end(),
-            Breakpoint(i8080_pc(), 1)) != this->breakpoints.end();
+             Breakpoint(i8080_pc(), 1)) != this->breakpoints.end();
 }
 
 #include "serialize.h"
 
-void Board::serialize(std::vector<uint8_t> &to) {
+void Board::serialize(std::vector<uint8_t>& to)
+{
     this->memory.serialize(to);
     this->io.serialize(to);
     i8080cpu::serialize(to);
@@ -655,44 +667,44 @@ void Board::serialize(std::vector<uint8_t> &to) {
     this->debug.serialize(to);
 }
 
-void Board::serialize_self(SerializeChunk::stype_t & to) const
+void Board::serialize_self(SerializeChunk::stype_t& to) const
 {
     SerializeChunk::stype_t chunk;
     chunk.push_back(static_cast<uint8_t>(this->inte));
     chunk.push_back(static_cast<uint8_t>(this->irq));
     chunk.push_back(static_cast<uint8_t>(this->irq_carry));
-    
-    size_t total_v_cycles_m[1] = {total_v_cycles};
+
+    size_t total_v_cycles_m[1] = { total_v_cycles };
     auto total_v_cycles_p = reinterpret_cast<uint8_t*>(total_v_cycles_m);
-    chunk.insert(std::end(chunk), total_v_cycles_p, total_v_cycles_p + sizeof(size_t));
-    
+    chunk.insert(
+      std::end(chunk), total_v_cycles_p, total_v_cycles_p + sizeof(size_t));
+
     SerializeChunk::insert_chunk(to, SerializeChunk::BOARD, chunk);
 }
 
-void Board::deserialize_self(SerializeChunk::stype_t::iterator from, uint32_t size)
+void Board::deserialize_self(
+  SerializeChunk::stype_t::iterator from, uint32_t size)
 {
     this->inte = static_cast<bool>(*from++);
     this->irq = static_cast<bool>(*from++);
     this->irq_carry = static_cast<bool>(*from++);
 
-    
     size_t total_v_cycles_m[1];
     auto total_v_cycles_p = reinterpret_cast<uint8_t*>(total_v_cycles_m);
-	size_t total_v_cycles_sizeof = sizeof(size_t);
+    size_t total_v_cycles_sizeof = sizeof(size_t);
 
     std::copy(from, from + total_v_cycles_sizeof, total_v_cycles_p);
-    
+
     total_v_cycles = total_v_cycles_m[0];
     from += total_v_cycles_sizeof;
-    
-   
 }
 
-bool Board::deserialize(std::vector<uint8_t> &from) {
+bool Board::deserialize(std::vector<uint8_t>& from)
+{
     auto it = from.begin();
     uint32_t size;
     bool result = true;
-    for(;it != from.end();) {
+    for (; it != from.end();) {
         SerializeChunk::id signature;
         auto begin = SerializeChunk::take_chunk(it, signature, size);
         it = begin + size;
@@ -712,7 +724,7 @@ bool Board::deserialize(std::vector<uint8_t> &from) {
                     break;
                 case SerializeChunk::DEBUG:
                     this->debug.deserialize(begin, size);
-                    break;                    
+                    break;
                 default:
                     it = from.end();
                     result = false;
@@ -725,5 +737,5 @@ bool Board::deserialize(std::vector<uint8_t> &from) {
 
 void Board::set_joysticks(int joy_0e, int joy_0f)
 {
-  this->io.set_joysticks(joy_0e, joy_0f);
+    this->io.set_joysticks(joy_0e, joy_0f);
 }

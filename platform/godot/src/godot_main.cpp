@@ -35,60 +35,62 @@ TimerWrapper tw(timer);
 AY ay;
 AYWrapper aw(ay);
 Soundnik soundnik(tw, aw);
-IO io(memory, keyboard, timer, fdc, ay, tape_player);//Options.nofdc ? fdc_dummy : fdc);
+IO io(memory, keyboard, timer, fdc, ay, tape_player);
 TV tv;
 PixelFiller filler(memory, io, tv);
 Debug debug(&memory);
 Board board(memory, io, filler, soundnik, tv, tape_player, debug);
 Emulator lator(board);
 
-Scriptnik * scriptnik = nullptr;
+Scriptnik* scriptnik = nullptr;
 void bootstrap_scriptnik();
 
-//bool scriptnik_bootstrapped = false;
+// bool scriptnik_bootstrapped = false;
 
-struct LoadKind {
-	enum {
-		ROM = 0,
-		COM = 1,
-		FDD = 2,
-		EDD = 3,
-		WAV = 4
-	};
+struct LoadKind
+{
+    enum
+    {
+        ROM = 0,
+        COM = 1,
+        FDD = 2,
+        EDD = 3,
+        WAV = 4
+    };
 } LOADKIND;
 
-void install_ruslat_handler(v06x_user_data * v)
+void install_ruslat_handler(v06x_user_data* v)
 {
-	io.onruslat = [v](bool ruslat_new) {
-		if (v->autostart_armed) {
-			v->autostart_seq = (v->autostart_seq << 1) | (ruslat_new ? 1 : 0);
-			if ((v->autostart_seq & 15) == 6) {
-				board.reset(Board::ResetMode::BLKSBR);
-				v->autostart_armed = false;
-			}
-		}
-		v->ruslat = ruslat_new;
-	};
+    io.onruslat = [v](bool ruslat_new) {
+        if (v->autostart_armed) {
+            v->autostart_seq = (v->autostart_seq << 1) | (ruslat_new ? 1 : 0);
+            if ((v->autostart_seq & 15) == 6) {
+                board.reset(Board::ResetMode::BLKSBR);
+                v->autostart_armed = false;
+            }
+        }
+        v->ruslat = ruslat_new;
+    };
 
-//    if (Options.autostart) {
-//        int seq = 0;
-//        io.onruslat = [&seq](bool ruslat) {
-//            seq = (seq << 1) | (ruslat ? 1 : 0);
-//            if ((seq & 15) == 6) {
-//                board.reset(Board::ResetMode::BLKSBR);
-//                io.onruslat = nullptr;
-//            }
-//        };
-//    }
+    //    if (Options.autostart) {
+    //        int seq = 0;
+    //        io.onruslat = [&seq](bool ruslat) {
+    //            seq = (seq << 1) | (ruslat ? 1 : 0);
+    //            if ((seq & 15) == 6) {
+    //                board.reset(Board::ResetMode::BLKSBR);
+    //                io.onruslat = nullptr;
+    //            }
+    //        };
+    //    }
 }
 
-//extern "C" JNIEXPORT jint JNICALL
-//Java_com_svofski_v06x_cpp_Emulator_Init(JNIEnv *env, jobject /* this */)
-godot_variant V06X_Init(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+// extern "C" JNIEXPORT jint JNICALL
+// Java_com_svofski_v06x_cpp_Emulator_Init(JNIEnv *env, jobject /* this */)
+godot_variant V06X_Init(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
     WavRecorder rec;
-    WavRecorder * prec = 0;
+    WavRecorder* prec = 0;
 
     if (Options.audio_rec_path.length()) {
         rec.init(Options.audio_rec_path);
@@ -96,7 +98,7 @@ godot_variant V06X_Init(godot_object* p_instance, void* p_method_data,
     }
 
     filler.init();
-    soundnik.init(prec);    // this may switch the audio output off
+    soundnik.init(prec); // this may switch the audio output off
     tv.init();
     board.init();
     fdc.init();
@@ -104,11 +106,10 @@ godot_variant V06X_Init(godot_object* p_instance, void* p_method_data,
         io.yellowblue();
     }
 
-
-    auto v = static_cast<v06x_user_data *>(p_user_data);
+    auto v = static_cast<v06x_user_data*>(p_user_data);
     keyboard.onreset = [v](bool blkvvod) {
-        board.reset(blkvvod ?
-                Board::ResetMode::BLKVVOD : Board::ResetMode::BLKSBR);
+        board.reset(
+          blkvvod ? Board::ResetMode::BLKVVOD : Board::ResetMode::BLKSBR);
         v->autostart_armed = blkvvod && Options.autostart;
     };
 
@@ -124,383 +125,388 @@ godot_variant V06X_Init(godot_object* p_instance, void* p_method_data,
     return hello;
 }
 
-void load_rom(const uint8_t * bytes, size_t size, int org)
+void load_rom(const uint8_t* bytes, size_t size, int org)
 {
     std::vector<uint8_t> bin(bytes, bytes + size);
     memory.init_from_vector(bin, org);
 }
 
-void load_fdd(const uint8_t * bytes, size_t size, int drive)
+void load_fdd(const uint8_t* bytes, size_t size, int drive)
 {
-	std::vector<uint8_t> fdd_image(bytes, bytes + size);
-	fdc.disk(drive).attach(fdd_image);
+    std::vector<uint8_t> fdd_image(bytes, bytes + size);
+    fdc.disk(drive).attach(fdd_image);
 }
 
-void load_edd(const uint8_t * bytes, size_t size, int slot)
+void load_edd(const uint8_t* bytes, size_t size, int slot)
 {
-	std::vector<uint8_t> edd(bytes, bytes+size);
-	memory.init_from_vector(edd, 0x10000 + slot * 0x40000);
+    std::vector<uint8_t> edd(bytes, bytes + size);
+    memory.init_from_vector(edd, 0x10000 + slot * 0x40000);
 }
 
-void load_wav(const uint8_t * bytes, size_t size)
+void load_wav(const uint8_t* bytes, size_t size)
 {
-	std::vector<uint8_t> v(bytes, bytes+size);
-	wav.set_bytes(v);
+    std::vector<uint8_t> v(bytes, bytes + size);
+    wav.set_bytes(v);
 }
 
-//Java_com_svofski_v06x_cpp_Emulator_ExecuteFrame(JNIEnv *env, jobject self,  jbyteArray pixels, jfloatArray samples)
-godot_variant V06X_ExecuteFrame(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+// Java_com_svofski_v06x_cpp_Emulator_ExecuteFrame(JNIEnv *env, jobject self,
+// jbyteArray pixels, jfloatArray samples)
+godot_variant V06X_ExecuteFrame(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	lator.execute_frame();
+    lator.execute_frame();
 
-	// obtain instance user data
-	v06x_user_data * v = static_cast<v06x_user_data *>(p_user_data);
-	// initialize the arrays if this is the first frame
-	if (!v->initialized) {
-		api->godot_pool_byte_array_new(&v->bitmap);
-		api->godot_pool_byte_array_resize(&v->bitmap, lator.pixel_bytes_size());
+    // obtain instance user data
+    v06x_user_data* v = static_cast<v06x_user_data*>(p_user_data);
+    // initialize the arrays if this is the first frame
+    if (!v->initialized) {
+        api->godot_pool_byte_array_new(&v->bitmap);
+        api->godot_pool_byte_array_resize(&v->bitmap, lator.pixel_bytes_size());
 
-		api->godot_pool_vector2_array_new(&v->sound); // but set size...
+        api->godot_pool_vector2_array_new(&v->sound); // but set size...
 
-		api->godot_pool_byte_array_new(&v->state); // for serializing
+        api->godot_pool_byte_array_new(&v->state); // for serializing
 
-		api->godot_pool_byte_array_new(&v->memory); // for dump / debug
-		api->godot_pool_byte_array_resize(&v->memory, memory.buffer_size());
+        api->godot_pool_byte_array_new(&v->memory); // for dump / debug
+        api->godot_pool_byte_array_resize(&v->memory, memory.buffer_size());
 
-		api->godot_pool_byte_array_new(&v->heatmap);
-		api->godot_pool_byte_array_resize(&v->heatmap, memory.get_heatmap().size());
+        api->godot_pool_byte_array_new(&v->heatmap);
+        api->godot_pool_byte_array_resize(
+          &v->heatmap, memory.get_heatmap().size());
 
-		v->initialized = true;
-	}
+        v->initialized = true;
+    }
 
-	// obtain the pointer to bytes
-	godot_pool_byte_array_write_access * wraccess = 
-		api->godot_pool_byte_array_write(&v->bitmap);
-	uint8_t * wrptr = api->godot_pool_byte_array_write_access_ptr(wraccess);
+    // obtain the pointer to bytes
+    godot_pool_byte_array_write_access* wraccess =
+      api->godot_pool_byte_array_write(&v->bitmap);
+    uint8_t* wrptr = api->godot_pool_byte_array_write_access_ptr(wraccess);
 
-	lator.export_pixel_bytes(wrptr);
+    lator.export_pixel_bytes(wrptr);
 
-	memory.cool_off_heatmap();
+    memory.cool_off_heatmap();
 
-	// destroy write_access
-	api->godot_pool_byte_array_write_access_destroy(wraccess);
+    // destroy write_access
+    api->godot_pool_byte_array_write_access_destroy(wraccess);
 
-	godot_variant ret;
-	api->godot_variant_new_pool_byte_array(&ret, &v->bitmap);
+    godot_variant ret;
+    api->godot_variant_new_pool_byte_array(&ret, &v->bitmap);
 
-        // kill off used up scriptnik
-        if (scriptnik && scriptnik->is_finalizing()) {
-            board.hooks.frame = nullptr;
-            tape_player.hooks.finished = nullptr;
-            board.onbreakpoint = nullptr;
-            delete scriptnik;
-            scriptnik = nullptr;
-        }
+    // kill off used up scriptnik
+    if (scriptnik && scriptnik->is_finalizing()) {
+        board.hooks.frame = nullptr;
+        tape_player.hooks.finished = nullptr;
+        board.onbreakpoint = nullptr;
+        delete scriptnik;
+        scriptnik = nullptr;
+    }
 
-	return ret;
+    return ret;
 }
 
 // arg0: int sample size in funny units
 // returns Vector2 array
-godot_variant V06X_GetSound(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant V06X_GetSound(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	godot_int nsamples = api->godot_variant_as_int(p_args[0]);
+    godot_int nsamples = api->godot_variant_as_int(p_args[0]);
 
-	// obtain instance user data
-	v06x_user_data * v = static_cast<v06x_user_data *>(p_user_data);
+    // obtain instance user data
+    v06x_user_data* v = static_cast<v06x_user_data*>(p_user_data);
 
-	godot_int current_size = api->godot_pool_vector2_array_size(&v->sound);
-	if (current_size != nsamples) {
-		api->godot_pool_vector2_array_resize(&v->sound, nsamples);
-	}
+    godot_int current_size = api->godot_pool_vector2_array_size(&v->sound);
+    if (current_size != nsamples) {
+        api->godot_pool_vector2_array_resize(&v->sound, nsamples);
+    }
 
-	// get the write ptr
-	auto wraccess = api->godot_pool_vector2_array_write(&v->sound);
-	godot_vector2 * wrptr = api->godot_pool_vector2_array_write_access_ptr(wraccess);
+    // get the write ptr
+    auto wraccess = api->godot_pool_vector2_array_write(&v->sound);
+    godot_vector2* wrptr =
+      api->godot_pool_vector2_array_write_access_ptr(wraccess);
 
-	lator.export_audio_frame(reinterpret_cast<float *>(wrptr), (size_t) nsamples * 2);
+    lator.export_audio_frame(
+      reinterpret_cast<float*>(wrptr), (size_t)nsamples * 2);
 
-	api->godot_pool_vector2_array_write_access_destroy(wraccess);
+    api->godot_pool_vector2_array_write_access_destroy(wraccess);
 
-	godot_variant ret;
-	api->godot_variant_new_pool_vector2_array(&ret, &v->sound);
-	return ret;
+    godot_variant ret;
+    api->godot_variant_new_pool_vector2_array(&ret, &v->sound);
+    return ret;
 }
 
-/** 
+/**
  * Args: ()
  * Returns: bool, true if Rus/Lat LED is on
  */
-godot_variant V06X_GetRusLat(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant V06X_GetRusLat(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	godot_variant ret;
-	v06x_user_data * v = static_cast<v06x_user_data *>(p_user_data);
-	api->godot_variant_new_bool(&ret, v->ruslat);
-	return ret;
+    godot_variant ret;
+    v06x_user_data* v = static_cast<v06x_user_data*>(p_user_data);
+    api->godot_variant_new_bool(&ret, v->ruslat);
+    return ret;
 }
 
-
-//extern "C" JNIEXPORT void JNICALL
-//Java_com_svofski_v06x_cpp_Emulator_KeyDown(JNIEnv *env, jobject self, jint scancode)
-godot_variant V06X_KeyDown(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+// extern "C" JNIEXPORT void JNICALL
+// Java_com_svofski_v06x_cpp_Emulator_KeyDown(JNIEnv *env, jobject self, jint
+// scancode)
+godot_variant V06X_KeyDown(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	godot_int scancode = api->godot_variant_as_int(p_args[0]);
-	lator.keydown((int)scancode);
+    godot_int scancode = api->godot_variant_as_int(p_args[0]);
+    lator.keydown((int)scancode);
 
-	godot_variant ret;
-	api->godot_variant_new_bool(&ret, 1);
-	return ret;
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
 
-//extern "C" JNIEXPORT void JNICALL
-//Java_com_svofski_v06x_cpp_Emulator_KeyUp(JNIEnv *env, jobject self, jint scancode)
-godot_variant V06X_KeyUp(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+// extern "C" JNIEXPORT void JNICALL
+// Java_com_svofski_v06x_cpp_Emulator_KeyUp(JNIEnv *env, jobject self, jint
+// scancode)
+godot_variant V06X_KeyUp(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	godot_int scancode = api->godot_variant_as_int(p_args[0]);
-	lator.keyup((int)scancode);
+    godot_int scancode = api->godot_variant_as_int(p_args[0]);
+    lator.keyup((int)scancode);
 
-	godot_variant ret;
-	api->godot_variant_new_bool(&ret, 1);
-	return ret;
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
 
-godot_variant V06X_SetJoysticks(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant V06X_SetJoysticks(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	godot_int joy_0e = api->godot_variant_as_int(p_args[0]);
-	godot_int joy_0f = api->godot_variant_as_int(p_args[1]);
-	lator.set_joysticks((int)joy_0e, (int)joy_0f);
+    godot_int joy_0e = api->godot_variant_as_int(p_args[0]);
+    godot_int joy_0f = api->godot_variant_as_int(p_args[1]);
+    lator.set_joysticks((int)joy_0e, (int)joy_0f);
 
-	godot_variant ret;
-	api->godot_variant_new_bool(&ret, 1);
-	return ret;
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
 
-//extern "C" JNIEXPORT void JNICALL
-//Java_com_svofski_v06x_cpp_Emulator_LoadAsset(JNIEnv *env, jobject self, jbyteArray asset, jint kind,
+// extern "C" JNIEXPORT void JNICALL
+// Java_com_svofski_v06x_cpp_Emulator_LoadAsset(JNIEnv *env, jobject self,
+// jbyteArray asset, jint kind,
 //    jint org)
-godot_variant V06X_LoadAsset(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant V06X_LoadAsset(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	godot_pool_byte_array bytes = api->godot_variant_as_pool_byte_array(p_args[0]);
-	godot_int kind = api->godot_variant_as_int(p_args[1]);
-	godot_int org  = api->godot_variant_as_int(p_args[2]);
+    godot_pool_byte_array bytes =
+      api->godot_variant_as_pool_byte_array(p_args[0]);
+    godot_int kind = api->godot_variant_as_int(p_args[1]);
+    godot_int org = api->godot_variant_as_int(p_args[2]);
 
-	godot_int size = api->godot_pool_byte_array_size(&bytes);
-	auto ra = api->godot_pool_byte_array_read(&bytes);
-	const uint8_t * ptr = api->godot_pool_byte_array_read_access_ptr(ra);
+    godot_int size = api->godot_pool_byte_array_size(&bytes);
+    auto ra = api->godot_pool_byte_array_read(&bytes);
+    const uint8_t* ptr = api->godot_pool_byte_array_read_access_ptr(ra);
 
-	switch (kind) {
-		case LOADKIND.COM:
-		case LOADKIND.ROM:
-			load_rom(ptr, size, org);
-			break;
-		case LOADKIND.FDD:
-			load_fdd(ptr, size, org);
-			break;
-		case LOADKIND.EDD:
-			load_edd(ptr, size, org);
-			break;
-		case LOADKIND.WAV:
-			load_wav(ptr, size);
-	}
+    switch (kind) {
+        case LOADKIND.COM:
+        case LOADKIND.ROM:
+            load_rom(ptr, size, org);
+            break;
+        case LOADKIND.FDD:
+            load_fdd(ptr, size, org);
+            break;
+        case LOADKIND.EDD:
+            load_edd(ptr, size, org);
+            break;
+        case LOADKIND.WAV:
+            load_wav(ptr, size);
+    }
 
-	api->godot_pool_byte_array_read_access_destroy(ra);
+    api->godot_pool_byte_array_read_access_destroy(ra);
 
-	godot_variant ret;
-	api->godot_variant_new_bool(&ret, 1);
-	return ret;
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
 
 // dir or fdd
-godot_variant V06X_Mount(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant V06X_Mount(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	godot_int device = api->godot_variant_as_int(p_args[0]);
-	godot_string wpath = api->godot_variant_as_string(p_args[1]);
-	godot_char_string cpath = api->godot_string_ascii(&wpath);
-	
-	const char * path = api->godot_char_string_get_data(&cpath);
+    godot_int device = api->godot_variant_as_int(p_args[0]);
+    godot_string wpath = api->godot_variant_as_string(p_args[1]);
+    godot_char_string cpath = api->godot_string_ascii(&wpath);
 
-	try
-	{
-		fdc.disk(device).attach(path);
-	}
-	catch(...)
-	{
-		printf("Mount: dev=%d path=%s failed\n", device, path);
-	}
+    const char* path = api->godot_char_string_get_data(&cpath);
 
-	api->godot_char_string_destroy(&cpath);
+    try {
+        fdc.disk(device).attach(path);
+    } catch (...) {
+        printf("Mount: dev=%d path=%s failed\n", device, path);
+    }
 
-	godot_variant ret;
-	api->godot_variant_new_bool(&ret, 1);
-	return ret;
+    api->godot_char_string_destroy(&cpath);
+
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
 
-//extern "C" JNIEXPORT void JNICALL
-//Java_com_svofski_v06x_cpp_Emulator_reset(JNIEnv *env, jobject /* this */, jboolean blkvvod)
-godot_variant V06X_Reset(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+// extern "C" JNIEXPORT void JNICALL
+// Java_com_svofski_v06x_cpp_Emulator_reset(JNIEnv *env, jobject /* this */,
+// jboolean blkvvod)
+godot_variant V06X_Reset(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	godot_bool blkvvod = api->godot_variant_as_bool(p_args[0]);
-	board.reset(blkvvod ?
-				Board::ResetMode::BLKVVOD : Board::ResetMode::BLKSBR);
-	debug.reset();
+    godot_bool blkvvod = api->godot_variant_as_bool(p_args[0]);
+    board.reset(blkvvod ? Board::ResetMode::BLKVVOD : Board::ResetMode::BLKSBR);
+    debug.reset();
 
-	auto v = static_cast<v06x_user_data *>(p_user_data);
-	v->autostart_armed = blkvvod && Options.autostart;
+    auto v = static_cast<v06x_user_data*>(p_user_data);
+    v->autostart_armed = blkvvod && Options.autostart;
 
-	godot_variant ret;
-	api->godot_variant_new_bool(&ret, 1);
-	return ret;
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
 
-//extern "C" JNIEXPORT jbyteArray JNICALL
-//Java_com_svofski_v06x_cpp_Emulator_ExportState(JNIEnv * env, jobject) {
-godot_variant V06X_ExportState(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+// extern "C" JNIEXPORT jbyteArray JNICALL
+// Java_com_svofski_v06x_cpp_Emulator_ExportState(JNIEnv * env, jobject) {
+godot_variant V06X_ExportState(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	std::vector<uint8_t> state;
-	lator.save_state(state);
+    std::vector<uint8_t> state;
+    lator.save_state(state);
 
-	auto v = static_cast<v06x_user_data *>(p_user_data);
-	api->godot_pool_byte_array_resize(&v->state, state.size());
-	auto wraccess = api->godot_pool_byte_array_write(&v->state);
-	uint8_t * wrptr = api->godot_pool_byte_array_write_access_ptr(wraccess);
-	
-	std::copy(state.begin(), state.end(), wrptr);
-	
-	api->godot_pool_byte_array_write_access_destroy(wraccess);
-	godot_variant ret;
-	api->godot_variant_new_pool_byte_array(&ret, &v->state);
-	return ret;
+    auto v = static_cast<v06x_user_data*>(p_user_data);
+    api->godot_pool_byte_array_resize(&v->state, state.size());
+    auto wraccess = api->godot_pool_byte_array_write(&v->state);
+    uint8_t* wrptr = api->godot_pool_byte_array_write_access_ptr(wraccess);
+
+    std::copy(state.begin(), state.end(), wrptr);
+
+    api->godot_pool_byte_array_write_access_destroy(wraccess);
+    godot_variant ret;
+    api->godot_variant_new_pool_byte_array(&ret, &v->state);
+    return ret;
 }
 
-//extern "C" JNIEXPORT jboolean JNICALL
-//Java_com_svofski_v06x_cpp_Emulator_RestoreState(JNIEnv * env, jobject, jbyteArray in_state) {
-godot_variant V06X_RestoreState(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+// extern "C" JNIEXPORT jboolean JNICALL
+// Java_com_svofski_v06x_cpp_Emulator_RestoreState(JNIEnv * env, jobject,
+// jbyteArray in_state) {
+godot_variant V06X_RestoreState(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	godot_pool_byte_array bytes = api->godot_variant_as_pool_byte_array(p_args[0]);
-	godot_int size = api->godot_pool_byte_array_size(&bytes);
-	auto ra = api->godot_pool_byte_array_read(&bytes);
-	const uint8_t * ptr = api->godot_pool_byte_array_read_access_ptr(ra);
+    godot_pool_byte_array bytes =
+      api->godot_variant_as_pool_byte_array(p_args[0]);
+    godot_int size = api->godot_pool_byte_array_size(&bytes);
+    auto ra = api->godot_pool_byte_array_read(&bytes);
+    const uint8_t* ptr = api->godot_pool_byte_array_read_access_ptr(ra);
 
-	std::vector<uint8_t> state((uint8_t *)ptr, (uint8_t *)ptr + size);
-	bool result = lator.restore_state(state);
+    std::vector<uint8_t> state((uint8_t*)ptr, (uint8_t*)ptr + size);
+    bool result = lator.restore_state(state);
 
-	api->godot_pool_byte_array_read_access_destroy(ra);
+    api->godot_pool_byte_array_read_access_destroy(ra);
 
-	godot_variant ret;
-	api->godot_variant_new_bool(&ret, result);
-	return ret;
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, result);
+    return ret;
 }
 
-godot_variant V06X_SetVolumes(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant V06X_SetVolumes(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	double vol8253 = api->godot_variant_as_real(p_args[0]);
-	double volBeep = api->godot_variant_as_real(p_args[1]);
-	double volAY   = api->godot_variant_as_real(p_args[2]);
-	double volCovox= api->godot_variant_as_real(p_args[3]);
-	double volMaster= api->godot_variant_as_real(p_args[4]);
+    double vol8253 = api->godot_variant_as_real(p_args[0]);
+    double volBeep = api->godot_variant_as_real(p_args[1]);
+    double volAY = api->godot_variant_as_real(p_args[2]);
+    double volCovox = api->godot_variant_as_real(p_args[3]);
+    double volMaster = api->godot_variant_as_real(p_args[4]);
 
-	bool tch0 = api->godot_variant_as_bool(p_args[5]);
-	bool tch1 = api->godot_variant_as_bool(p_args[6]);
-	bool tch2 = api->godot_variant_as_bool(p_args[7]);
+    bool tch0 = api->godot_variant_as_bool(p_args[5]);
+    bool tch1 = api->godot_variant_as_bool(p_args[6]);
+    bool tch2 = api->godot_variant_as_bool(p_args[7]);
 
-	bool aych0 = api->godot_variant_as_bool(p_args[8]);
-	bool aych1 = api->godot_variant_as_bool(p_args[9]);
-	bool aych2 = api->godot_variant_as_bool(p_args[10]);
+    bool aych0 = api->godot_variant_as_bool(p_args[8]);
+    bool aych1 = api->godot_variant_as_bool(p_args[9]);
+    bool aych2 = api->godot_variant_as_bool(p_args[10]);
 
-	lator.set_volumes(vol8253, volBeep, volAY, volCovox, volMaster);
-	lator.enable_timer_channels(tch0, tch1, tch2);
-	lator.enable_ay_channels(aych0, aych1, aych2);
+    lator.set_volumes(vol8253, volBeep, volAY, volCovox, volMaster);
+    lator.enable_timer_channels(tch0, tch1, tch2);
+    lator.enable_ay_channels(aych0, aych1, aych2);
 
-	godot_variant ret;
-	api->godot_variant_new_bool(&ret, 1);
-	return ret;
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
 
 // GetMem(int addr, int length) -> PoolArrayBytes
-godot_variant V06X_GetMem(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant V06X_GetMem(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	godot_variant ret;
-	// obtain instance user data
-	v06x_user_data * v = static_cast<v06x_user_data *>(p_user_data);
+    godot_variant ret;
+    // obtain instance user data
+    v06x_user_data* v = static_cast<v06x_user_data*>(p_user_data);
 
-	if (!v->initialized) {
-		api->godot_variant_new_bool(&ret, 0);
-		return ret;
-	}
+    if (!v->initialized) {
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
 
-	godot_int addr = api->godot_variant_as_int(p_args[0]);
-	godot_int size = api->godot_variant_as_int(p_args[1]);
+    godot_int addr = api->godot_variant_as_int(p_args[0]);
+    godot_int size = api->godot_variant_as_int(p_args[1]);
 
-	// obtain the pointer to bytes
-	godot_pool_byte_array_write_access * wraccess = 
-		api->godot_pool_byte_array_write(&v->memory);
-	uint8_t * wrptr = api->godot_pool_byte_array_write_access_ptr(wraccess);
+    // obtain the pointer to bytes
+    godot_pool_byte_array_write_access* wraccess =
+      api->godot_pool_byte_array_write(&v->memory);
+    uint8_t* wrptr = api->godot_pool_byte_array_write_access_ptr(wraccess);
 
-	memory.export_bytes(wrptr, addr, size);
+    memory.export_bytes(wrptr, addr, size);
 
-	// destroy write_access
-	api->godot_pool_byte_array_write_access_destroy(wraccess);
+    // destroy write_access
+    api->godot_pool_byte_array_write_access_destroy(wraccess);
 
-	api->godot_variant_new_pool_byte_array(&ret, &v->memory);
-	
-	return ret;
+    api->godot_variant_new_pool_byte_array(&ret, &v->memory);
+
+    return ret;
 }
 
 // GetHeatmap(addr, length) -> PoolIntArray
-godot_variant V06X_GetHeatmap(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant V06X_GetHeatmap(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	godot_variant ret;
-	// obtain instance user data
-	v06x_user_data * v = static_cast<v06x_user_data *>(p_user_data);
+    godot_variant ret;
+    // obtain instance user data
+    v06x_user_data* v = static_cast<v06x_user_data*>(p_user_data);
 
-	if (!v->initialized) {
-		api->godot_variant_new_bool(&ret, 0);
-		return ret;
-	}
+    if (!v->initialized) {
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
 
-	godot_int addr = api->godot_variant_as_int(p_args[0]);
-	godot_int size = api->godot_variant_as_int(p_args[1]);
+    godot_int addr = api->godot_variant_as_int(p_args[0]);
+    godot_int size = api->godot_variant_as_int(p_args[1]);
 
-	// obtain the pointer to ints
-	godot_pool_byte_array_write_access * wraccess = 
-		api->godot_pool_byte_array_write(&v->heatmap);
-	uint8_t * wrptr = api->godot_pool_byte_array_write_access_ptr(wraccess);
+    // obtain the pointer to ints
+    godot_pool_byte_array_write_access* wraccess =
+      api->godot_pool_byte_array_write(&v->heatmap);
+    uint8_t* wrptr = api->godot_pool_byte_array_write_access_ptr(wraccess);
 
-	std::copy(memory.get_heatmap().begin(), memory.get_heatmap().end(),
-			wrptr);
+    std::copy(memory.get_heatmap().begin(), memory.get_heatmap().end(), wrptr);
 
+    // destroy write_access
+    api->godot_pool_byte_array_write_access_destroy(wraccess);
 
-	// destroy write_access
-	api->godot_pool_byte_array_write_access_destroy(wraccess);
-
-	api->godot_variant_new_pool_byte_array(&ret, &v->heatmap);
-	return ret;
+    api->godot_variant_new_pool_byte_array(&ret, &v->heatmap);
+    return ret;
 }
 
 // InsertBootROM
 godot_variant V06X_InsertBootROM(godot_object* p_instance, void* p_method_data,
-        void* p_user_data, int p_num_arg, godot_variant** p_args)
+  void* p_user_data, int p_num_arg, godot_variant** p_args)
 {
-    godot_pool_byte_array bytes = api->godot_variant_as_pool_byte_array(p_args[0]);
+    godot_pool_byte_array bytes =
+      api->godot_variant_as_pool_byte_array(p_args[0]);
     godot_int size = api->godot_pool_byte_array_size(&bytes);
     auto ra = api->godot_pool_byte_array_read(&bytes);
-    const uint8_t * ptr = api->godot_pool_byte_array_read_access_ptr(ra);
+    const uint8_t* ptr = api->godot_pool_byte_array_read_access_ptr(ra);
 
-    std::vector<uint8_t> bootbytes((uint8_t *)ptr, (uint8_t *)ptr + size);
+    std::vector<uint8_t> bootbytes((uint8_t*)ptr, (uint8_t*)ptr + size);
     lator.set_bootrom(bootbytes);
 
     api->godot_pool_byte_array_read_access_destroy(ra);
@@ -512,11 +518,11 @@ godot_variant V06X_InsertBootROM(godot_object* p_instance, void* p_method_data,
 
 // SetScriptText('text')
 godot_variant V06X_SetScriptText(godot_object* p_instance, void* p_method_data,
-        void* p_user_data, int p_num_arg, godot_variant** p_args)
+  void* p_user_data, int p_num_arg, godot_variant** p_args)
 {
     godot_string wtext = api->godot_variant_as_string(p_args[0]);
     godot_char_string ctext = api->godot_string_ascii(&wtext);
-    const char * cstr = api->godot_char_string_get_data(&ctext);
+    const char* cstr = api->godot_char_string_get_data(&ctext);
     std::string str(cstr);
 
     if (scriptnik) {
@@ -536,11 +542,11 @@ godot_variant V06X_SetScriptText(godot_object* p_instance, void* p_method_data,
 }
 
 godot_variant V06X_AddScriptFile(godot_object* p_instance, void* p_method_data,
-        void* p_user_data, int p_num_arg, godot_variant** p_args)
+  void* p_user_data, int p_num_arg, godot_variant** p_args)
 {
     godot_string wtext = api->godot_variant_as_string(p_args[0]);
     godot_char_string ctext = api->godot_string_ascii(&wtext);
-    const char * cstr = api->godot_char_string_get_data(&ctext);
+    const char* cstr = api->godot_char_string_get_data(&ctext);
     std::string filename(cstr);
 
     if (!scriptnik) {
@@ -559,12 +565,12 @@ godot_variant V06X_AddScriptFile(godot_object* p_instance, void* p_method_data,
 }
 
 // AppendScriptArg('argument')
-godot_variant V06X_AppendScriptArg(godot_object* p_instance, void* p_method_data,
-        void* p_user_data, int p_num_arg, godot_variant** p_args)
+godot_variant V06X_AppendScriptArg(godot_object* p_instance,
+  void* p_method_data, void* p_user_data, int p_num_arg, godot_variant** p_args)
 {
     godot_string wtext = api->godot_variant_as_string(p_args[0]);
     godot_char_string ctext = api->godot_string_ascii(&wtext);
-    const char * cstr = api->godot_char_string_get_data(&ctext);
+    const char* cstr = api->godot_char_string_get_data(&ctext);
     std::string str(cstr);
     scriptnik->append_arg(str);
 
@@ -574,7 +580,7 @@ godot_variant V06X_AppendScriptArg(godot_object* p_instance, void* p_method_data
 }
 
 godot_variant V06X_ExecuteScript(godot_object* p_instance, void* p_method_data,
-        void* p_user_data, int p_num_arg, godot_variant** p_args)
+  void* p_user_data, int p_num_arg, godot_variant** p_args)
 {
     bootstrap_scriptnik();
 
@@ -583,129 +589,131 @@ godot_variant V06X_ExecuteScript(godot_object* p_instance, void* p_method_data,
     return ret;
 }
 
-godot_variant debug_break(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant debug_break(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
-	if (!user_data_p->initialized) {
-		godot_variant ret;
-		api->godot_variant_new_bool(&ret, 0);
-		return ret;
-	}
+    v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+    if (!user_data_p->initialized) {
+        godot_variant ret;
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
 
-	board.debugger_attached();
+    board.debugger_attached();
 
-	godot_variant ret;
-	api->godot_variant_new_bool(&ret, 1);
-	return ret;
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
 
-godot_variant debug_continue(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant debug_continue(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
-	if (!user_data_p->initialized) {
-		godot_variant ret;
-		api->godot_variant_new_bool(&ret, 0);
-		return ret;
-	}
+    v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+    if (!user_data_p->initialized) {
+        godot_variant ret;
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
 
-	board.debugger_continue();
+    board.debugger_continue();
 
-	godot_variant ret;
-	api->godot_variant_new_bool(&ret, 1);
-	return ret;
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
 
-godot_variant debug_read_registers(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant debug_read_registers(godot_object* p_instance,
+  void* p_method_data, void* p_user_data, int p_num_args,
+  godot_variant** p_args)
 {
-	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
-	if (!user_data_p->initialized) {
-		godot_variant ret;
-		api->godot_variant_new_bool(&ret, 0);
-		return ret;
-	}
-	auto regsV = board.read_registers_b();
+    v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+    if (!user_data_p->initialized) {
+        godot_variant ret;
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
+    auto regsV = board.read_registers_b();
 
     godot_pool_int_array int_array_gd;
     api->godot_pool_int_array_new(&int_array_gd);
-	api->godot_pool_int_array_resize(&int_array_gd, regsV.size());
+    api->godot_pool_int_array_resize(&int_array_gd, regsV.size());
 
-	godot_pool_int_array_write_access * int_array_gd_wa = 
-		api->godot_pool_int_array_write(&int_array_gd);
-	godot_int* int_array_gd_waptr = api->godot_pool_int_array_write_access_ptr(int_array_gd_wa);
+    godot_pool_int_array_write_access* int_array_gd_wa =
+      api->godot_pool_int_array_write(&int_array_gd);
+    godot_int* int_array_gd_waptr =
+      api->godot_pool_int_array_write_access_ptr(int_array_gd_wa);
 
-	std::copy(regsV.begin(), regsV.end(), int_array_gd_waptr);
+    std::copy(regsV.begin(), regsV.end(), int_array_gd_waptr);
 
+    api->godot_pool_int_array_write_access_destroy(int_array_gd_wa);
+    godot_variant ret;
+    api->godot_variant_new_pool_int_array(&ret, &int_array_gd);
 
-	api->godot_pool_int_array_write_access_destroy(int_array_gd_wa);
-	godot_variant ret;
-	api->godot_variant_new_pool_int_array(&ret, &int_array_gd);
-
-	return ret;
+    return ret;
 }
 
-godot_variant debug_read_stack(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant debug_read_stack(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
-	if (!user_data_p->initialized) {
-		godot_variant ret;
-		api->godot_variant_new_bool(&ret, 0);
-		return ret;
-	}
-	godot_int len = api->godot_variant_as_int(p_args[0]);
-	auto stackV = board.read_stack(len);
+    v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+    if (!user_data_p->initialized) {
+        godot_variant ret;
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
+    godot_int len = api->godot_variant_as_int(p_args[0]);
+    auto stackV = board.read_stack(len);
 
     godot_pool_int_array int_array_gd;
     api->godot_pool_int_array_new(&int_array_gd);
-	api->godot_pool_int_array_resize(&int_array_gd, stackV.size());
+    api->godot_pool_int_array_resize(&int_array_gd, stackV.size());
 
-	godot_pool_int_array_write_access * int_array_gd_wa = 
-		api->godot_pool_int_array_write(&int_array_gd);
-	godot_int* int_array_gd_waptr = api->godot_pool_int_array_write_access_ptr(int_array_gd_wa);
+    godot_pool_int_array_write_access* int_array_gd_wa =
+      api->godot_pool_int_array_write(&int_array_gd);
+    godot_int* int_array_gd_waptr =
+      api->godot_pool_int_array_write_access_ptr(int_array_gd_wa);
 
-	std::copy(stackV.begin(), stackV.end(), int_array_gd_waptr);
+    std::copy(stackV.begin(), stackV.end(), int_array_gd_waptr);
 
-	api->godot_pool_int_array_write_access_destroy(int_array_gd_wa);
-	godot_variant ret;
-	api->godot_variant_new_pool_int_array(&ret, &int_array_gd);
-	return ret;
+    api->godot_pool_int_array_write_access_destroy(int_array_gd_wa);
+    godot_variant ret;
+    api->godot_variant_new_pool_int_array(&ret, &int_array_gd);
+    return ret;
 }
 
-godot_variant debug_step_into(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant debug_step_into(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
-	if (!user_data_p->initialized) {
-		godot_variant ret;
-		api->godot_variant_new_bool(&ret, 0);
-		return ret;
-	}
+    v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+    if (!user_data_p->initialized) {
+        godot_variant ret;
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
 
-	board.single_step(true);
+    board.single_step(true);
 
-	godot_variant ret;
-	api->godot_variant_new_bool(&ret, 1);
-	return ret;
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
 
-godot_variant debug_get_disasm(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant debug_get_disasm(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
-	if (!user_data_p->initialized) {
-		godot_variant ret;
-		api->godot_variant_new_bool(&ret, 0);
-		return ret;
-	}
+    v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+    if (!user_data_p->initialized) {
+        godot_variant ret;
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
 
-	godot_int addr = api->godot_variant_as_int(p_args[0]);
-	godot_int lines = api->godot_variant_as_int(p_args[1]);
-	godot_int lines_before_addr = api->godot_variant_as_int(p_args[2]);
+    godot_int addr = api->godot_variant_as_int(p_args[0]);
+    godot_int lines = api->godot_variant_as_int(p_args[1]);
+    godot_int lines_before_addr = api->godot_variant_as_int(p_args[2]);
 
-	auto out = debug.get_disasm(addr, lines, lines_before_addr); 
+    auto out = debug.get_disasm(addr, lines, lines_before_addr);
 
     godot_variant ret;
     godot_string ret_gd_str;
@@ -713,225 +721,241 @@ godot_variant debug_get_disasm(godot_object* p_instance, void* p_method_data,
     api->godot_string_parse_utf8(&ret_gd_str, out.c_str());
     api->godot_variant_new_string(&ret, &ret_gd_str);
     api->godot_string_destroy(&ret_gd_str);
-	return ret;
+    return ret;
 }
 
-godot_variant debug_add_breakpoint(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant debug_add_breakpoint(godot_object* p_instance,
+  void* p_method_data, void* p_user_data, int p_num_args,
+  godot_variant** p_args)
 {
-	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
-	if (!user_data_p->initialized) {
-		godot_variant ret;
-		api->godot_variant_new_bool(&ret, 0);
-		return ret;
-	}
+    v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+    if (!user_data_p->initialized) {
+        godot_variant ret;
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
 
-	godot_int addr = api->godot_variant_as_int(p_args[0]);
-	auto active = static_cast<bool>(api->godot_variant_as_int(p_args[1]));
-	auto addr_space = static_cast<Debug::AddrSpace>(api->godot_variant_as_int(p_args[2]));
-	debug.add_breakpoint(addr, active, addr_space);
+    godot_int addr = api->godot_variant_as_int(p_args[0]);
+    auto active = static_cast<bool>(api->godot_variant_as_int(p_args[1]));
+    auto addr_space =
+      static_cast<Debug::AddrSpace>(api->godot_variant_as_int(p_args[2]));
+    debug.add_breakpoint(addr, active, addr_space);
 
-	debug.print_breakpoints();
+    debug.print_breakpoints();
 
-	godot_variant ret;
-	api->godot_variant_new_bool(&ret, 1);
-	return ret;
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
 
-godot_variant debug_del_breakpoint(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant debug_del_breakpoint(godot_object* p_instance,
+  void* p_method_data, void* p_user_data, int p_num_args,
+  godot_variant** p_args)
 {
-	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
-	if (!user_data_p->initialized) {
-		godot_variant ret;
-		api->godot_variant_new_bool(&ret, 0);
-		return ret;
-	}
+    v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+    if (!user_data_p->initialized) {
+        godot_variant ret;
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
 
-	godot_int addr = api->godot_variant_as_int(p_args[0]);
-	auto addr_space = static_cast<Debug::AddrSpace>(api->godot_variant_as_int(p_args[1]));
-	debug.del_breakpoint(addr, addr_space);
+    godot_int addr = api->godot_variant_as_int(p_args[0]);
+    auto addr_space =
+      static_cast<Debug::AddrSpace>(api->godot_variant_as_int(p_args[1]));
+    debug.del_breakpoint(addr, addr_space);
 
-	debug.print_breakpoints(); 
+    debug.print_breakpoints();
 
-	godot_variant ret;
-	api->godot_variant_new_bool(&ret, 1);
-	return ret;
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
 
-godot_variant debug_add_watchpoint(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant debug_add_watchpoint(godot_object* p_instance,
+  void* p_method_data, void* p_user_data, int p_num_args,
+  godot_variant** p_args)
 {
-	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
-	if (!user_data_p->initialized) {
-		godot_variant ret;
-		api->godot_variant_new_bool(&ret, 0);
-		return ret;
-	}
+    v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+    if (!user_data_p->initialized) {
+        godot_variant ret;
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
 
-	auto access = static_cast<Debug::Watchpoint::Access>(api->godot_variant_as_int(p_args[0]));
-	auto addr = api->godot_variant_as_int(p_args[1]);
-	auto cond = static_cast<Debug::Watchpoint::Condition>(api->godot_variant_as_int(p_args[2]));
-	auto value = static_cast<uint16_t>(api->godot_variant_as_int(p_args[3]));
-	auto value_size = static_cast<size_t>(api->godot_variant_as_int(p_args[4]));
-	auto active = static_cast<bool>(api->godot_variant_as_int(p_args[5]));
-	auto addr_space = static_cast<Debug::AddrSpace>(api->godot_variant_as_int(p_args[6]));
-	debug.add_watchpoint(access, addr, cond, value, value_size, active, addr_space);
+    auto access = static_cast<Debug::Watchpoint::Access>(
+      api->godot_variant_as_int(p_args[0]));
+    auto addr = api->godot_variant_as_int(p_args[1]);
+    auto cond = static_cast<Debug::Watchpoint::Condition>(
+      api->godot_variant_as_int(p_args[2]));
+    auto value = static_cast<uint16_t>(api->godot_variant_as_int(p_args[3]));
+    auto value_size = static_cast<size_t>(api->godot_variant_as_int(p_args[4]));
+    auto active = static_cast<bool>(api->godot_variant_as_int(p_args[5]));
+    auto addr_space =
+      static_cast<Debug::AddrSpace>(api->godot_variant_as_int(p_args[6]));
+    debug.add_watchpoint(
+      access, addr, cond, value, value_size, active, addr_space);
 
-	debug.print_watchpoints();
+    debug.print_watchpoints();
 
-	godot_variant ret;
-	api->godot_variant_new_bool(&ret, 1);
-	return ret;
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
 
-godot_variant debug_del_watchpoint(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant debug_del_watchpoint(godot_object* p_instance,
+  void* p_method_data, void* p_user_data, int p_num_args,
+  godot_variant** p_args)
 {
-	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
-	if (!user_data_p->initialized) {
-		godot_variant ret;
-		api->godot_variant_new_bool(&ret, 0);
-		return ret;
-	}
+    v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+    if (!user_data_p->initialized) {
+        godot_variant ret;
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
 
-	godot_int addr = api->godot_variant_as_int(p_args[0]);
-	auto addr_space = static_cast<Debug::AddrSpace>(api->godot_variant_as_int(p_args[1]));
-	debug.del_watchpoint(addr, addr_space);
+    godot_int addr = api->godot_variant_as_int(p_args[0]);
+    auto addr_space =
+      static_cast<Debug::AddrSpace>(api->godot_variant_as_int(p_args[1]));
+    debug.del_watchpoint(addr, addr_space);
 
-	debug.print_watchpoints(); 
+    debug.print_watchpoints();
 
-	godot_variant ret;
-	api->godot_variant_new_bool(&ret, 1);
-	return ret;
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
 
-godot_variant debug_is_break(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant debug_is_break(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
-	if (!user_data_p->initialized) {
-		godot_variant ret;
-		api->godot_variant_new_bool(&ret, 0);
-		return ret;
-	}
+    v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+    if (!user_data_p->initialized) {
+        godot_variant ret;
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
 
-	auto out = (bool)board.is_break();
+    auto out = (bool)board.is_break();
 
-	godot_variant ret;
-	api->godot_variant_new_bool(&ret, out);
-	return ret;
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, out);
+    return ret;
 }
 
-godot_variant debug_read_executed_memory(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant debug_read_executed_memory(godot_object* p_instance,
+  void* p_method_data, void* p_user_data, int p_num_args,
+  godot_variant** p_args)
 {
-	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
-	if (!user_data_p->initialized) {
-		godot_variant ret;
-		api->godot_variant_new_bool(&ret, 0);
-		return ret;
-	}
-	godot_int addr = api->godot_variant_as_int(p_args[0]);
-	godot_int len = api->godot_variant_as_int(p_args[1]);
-	auto outV = board.debug_read_executed_memory(addr, len);
+    v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+    if (!user_data_p->initialized) {
+        godot_variant ret;
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
+    godot_int addr = api->godot_variant_as_int(p_args[0]);
+    godot_int len = api->godot_variant_as_int(p_args[1]);
+    auto outV = board.debug_read_executed_memory(addr, len);
 
     godot_pool_int_array int_array_gd;
     api->godot_pool_int_array_new(&int_array_gd);
-	api->godot_pool_int_array_resize(&int_array_gd, outV.size());
+    api->godot_pool_int_array_resize(&int_array_gd, outV.size());
 
-	godot_pool_int_array_write_access * int_array_gd_wa = 
-		api->godot_pool_int_array_write(&int_array_gd);
-	godot_int* int_array_gd_waptr = api->godot_pool_int_array_write_access_ptr(int_array_gd_wa);
+    godot_pool_int_array_write_access* int_array_gd_wa =
+      api->godot_pool_int_array_write(&int_array_gd);
+    godot_int* int_array_gd_waptr =
+      api->godot_pool_int_array_write_access_ptr(int_array_gd_wa);
 
-	std::copy(outV.begin(), outV.end(), int_array_gd_waptr);
+    std::copy(outV.begin(), outV.end(), int_array_gd_waptr);
 
-	api->godot_pool_int_array_write_access_destroy(int_array_gd_wa);
-	godot_variant ret;
-	api->godot_variant_new_pool_int_array(&ret, &int_array_gd);
-	return ret;
+    api->godot_pool_int_array_write_access_destroy(int_array_gd_wa);
+    godot_variant ret;
+    api->godot_variant_new_pool_int_array(&ret, &int_array_gd);
+    return ret;
 }
 
-godot_variant debug_read_hw_info(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant debug_read_hw_info(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
-	if (!user_data_p->initialized) {
-		godot_variant ret;
-		api->godot_variant_new_bool(&ret, 0);
-		return ret;
-	}
+    v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+    if (!user_data_p->initialized) {
+        godot_variant ret;
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
 
-	auto outV = board.debug_read_hw_info();
+    auto outV = board.debug_read_hw_info();
 
     godot_pool_int_array int_array_gd;
     api->godot_pool_int_array_new(&int_array_gd);
-	api->godot_pool_int_array_resize(&int_array_gd, outV.size());
+    api->godot_pool_int_array_resize(&int_array_gd, outV.size());
 
-	godot_pool_int_array_write_access * int_array_gd_wa = 
-		api->godot_pool_int_array_write(&int_array_gd);
-	godot_int* int_array_gd_waptr = api->godot_pool_int_array_write_access_ptr(int_array_gd_wa);
+    godot_pool_int_array_write_access* int_array_gd_wa =
+      api->godot_pool_int_array_write(&int_array_gd);
+    godot_int* int_array_gd_waptr =
+      api->godot_pool_int_array_write_access_ptr(int_array_gd_wa);
 
-	std::copy(outV.begin(), outV.end(), int_array_gd_waptr);
+    std::copy(outV.begin(), outV.end(), int_array_gd_waptr);
 
-	api->godot_pool_int_array_write_access_destroy(int_array_gd_wa);
-	godot_variant ret;
-	api->godot_variant_new_pool_int_array(&ret, &int_array_gd);
-	return ret;
+    api->godot_pool_int_array_write_access_destroy(int_array_gd_wa);
+    godot_variant ret;
+    api->godot_variant_new_pool_int_array(&ret, &int_array_gd);
+    return ret;
 }
 
-godot_variant debug_set_debugging(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant debug_set_debugging(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
-	if (!user_data_p->initialized) {
-		godot_variant ret;
-		api->godot_variant_new_bool(&ret, 0);
-		return ret;
-	}
+    v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+    if (!user_data_p->initialized) {
+        godot_variant ret;
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
 
-	godot_bool debugging = api->godot_variant_as_int(p_args[0]);
+    godot_bool debugging = api->godot_variant_as_int(p_args[0]);
 
-	board.set_debugging(debugging);
+    board.set_debugging(debugging);
 
-	godot_variant ret;
-	api->godot_variant_new_bool(&ret, 1);
-	return ret;
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
-godot_variant debug_get_global_addr(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant debug_get_global_addr(godot_object* p_instance,
+  void* p_method_data, void* p_user_data, int p_num_args,
+  godot_variant** p_args)
 {
-	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
-	if (!user_data_p->initialized) {
-		godot_variant ret;
-		api->godot_variant_new_bool(&ret, 0);
-		return ret;
-	}
+    v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+    if (!user_data_p->initialized) {
+        godot_variant ret;
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
 
-	godot_int addr = api->godot_variant_as_int(p_args[0]);
-	auto addr_space = static_cast<Debug::AddrSpace>(api->godot_variant_as_int(p_args[1]));
+    godot_int addr = api->godot_variant_as_int(p_args[0]);
+    auto addr_space =
+      static_cast<Debug::AddrSpace>(api->godot_variant_as_int(p_args[1]));
 
-	auto global_addr = debug.get_global_addr(addr, addr_space);
+    auto global_addr = debug.get_global_addr(addr, addr_space);
 
-	godot_variant ret;
-	api->godot_variant_new_int(&ret, global_addr);
-	return ret;
+    godot_variant ret;
+    api->godot_variant_new_int(&ret, global_addr);
+    return ret;
 }
 
-godot_variant debug_get_trace_log(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant debug_get_trace_log(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
-	if (!user_data_p->initialized) {
-		godot_variant ret;
-		api->godot_variant_new_bool(&ret, 0);
-		return ret;
-	}
+    v06x_user_data* user_data_p = static_cast<v06x_user_data*>(p_user_data);
+    if (!user_data_p->initialized) {
+        godot_variant ret;
+        api->godot_variant_new_bool(&ret, 0);
+        return ret;
+    }
 
-	godot_int offset = api->godot_variant_as_int(p_args[0]);
-	godot_int lines  = api->godot_variant_as_int(p_args[1]);
-	godot_int filter = api->godot_variant_as_int(p_args[2]);
-	auto out = debug.get_trace_log(offset, lines, filter); 
+    godot_int offset = api->godot_variant_as_int(p_args[0]);
+    godot_int lines = api->godot_variant_as_int(p_args[1]);
+    godot_int filter = api->godot_variant_as_int(p_args[2]);
+    auto out = debug.get_trace_log(offset, lines, filter);
 
     godot_variant ret;
     godot_string ret_gd_str;
@@ -939,27 +963,27 @@ godot_variant debug_get_trace_log(godot_object* p_instance, void* p_method_data,
     api->godot_string_parse_utf8(&ret_gd_str, out.c_str());
     api->godot_variant_new_string(&ret, &ret_gd_str);
     api->godot_string_destroy(&ret_gd_str);
-	return ret;
+    return ret;
 }
 
-godot_variant debug_set_labels(godot_object* p_instance, void* p_method_data, 
-		void* p_user_data, int p_num_args, godot_variant** p_args)
+godot_variant debug_set_labels(godot_object* p_instance, void* p_method_data,
+  void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-	godot_dictionary labels_gd_dict = api->godot_variant_as_dictionary(p_args[0]);
+    godot_dictionary labels_gd_dict =
+      api->godot_variant_as_dictionary(p_args[0]);
 
-	
-	godot_string labels_gd_str = api->godot_variant_as_string(p_args[0]);
-	godot_char_string labels_ch_gd_str = api->godot_string_ascii(&labels_gd_str);
-	const char* labels_c = api->godot_char_string_get_data(&labels_ch_gd_str);
-	debug.set_labels(labels_c);
+    godot_string labels_gd_str = api->godot_variant_as_string(p_args[0]);
+    godot_char_string labels_ch_gd_str =
+      api->godot_string_ascii(&labels_gd_str);
+    const char* labels_c = api->godot_char_string_get_data(&labels_ch_gd_str);
+    debug.set_labels(labels_c);
 
-	api->godot_char_string_destroy(&labels_ch_gd_str);
+    api->godot_char_string_destroy(&labels_ch_gd_str);
 
-	godot_variant ret;
-	api->godot_variant_new_bool(&ret, 1);
-	return ret;
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, 1);
+    return ret;
 }
-
 
 void bootstrap_scriptnik()
 {
@@ -970,11 +994,11 @@ void bootstrap_scriptnik()
     }
 
     int script_size = 0;
-    for (auto & scriptfile : Options.scriptfiles) {
+    for (auto& scriptfile : Options.scriptfiles) {
         script_size += scriptnik->append_from_file(scriptfile);
     }
 
-    for (auto & arg : Options.scriptargs) {
+    for (auto& arg : Options.scriptargs) {
         scriptnik->append_arg(arg);
     }
 
@@ -984,19 +1008,19 @@ void bootstrap_scriptnik()
     if (script_size) {
         printf("Bootstrapping scriptnik...\n");
 
-        //scriptnik_bootstrapped = true;
+        // scriptnik_bootstrapped = true;
 
-        scriptnik->loadwav = [](const std::string & filename) {
-            //load_wav(wav, filename);
+        scriptnik->loadwav = [](const std::string& filename) {
+            // load_wav(wav, filename);
             throw "load_wav not implemented";
             return 0;
         };
 
-        board.hooks.frame = std::bind(&Scriptnik::onframe, scriptnik,
-                std::placeholders::_1);
+        board.hooks.frame =
+          std::bind(&Scriptnik::onframe, scriptnik, std::placeholders::_1);
 
-        tape_player.hooks.finished = 
-            std::bind(&Scriptnik::onwavfinished, scriptnik, std::placeholders::_1);
+        tape_player.hooks.finished = std::bind(
+          &Scriptnik::onwavfinished, scriptnik, std::placeholders::_1);
 
         scriptnik->keydown = [](int scancode) {
             SDL_KeyboardEvent e;
@@ -1033,35 +1057,53 @@ void bootstrap_scriptnik()
         scriptnik->debugger_continue = []() {
             return board.debugger_continue();
         };
-        board.onbreakpoint = 
-            []() {
-                scriptnik->onbreakpoint();
-            };
-        scriptnik->read_register = [](const std::string & reg) {
-            if (reg == "a") return i8080_regs_a();
-            if (reg == "f") return i8080_regs_f();
-            if (reg == "b") return i8080_regs_b();
-            if (reg == "c") return i8080_regs_c();
-            if (reg == "d") return i8080_regs_d();
-            if (reg == "e") return i8080_regs_e();
-            if (reg == "h") return i8080_regs_h();
-            if (reg == "l") return i8080_regs_l();
-            if (reg == "sp") return i8080_regs_sp();
-            if (reg == "pc") return i8080_pc();
+        board.onbreakpoint = []() { scriptnik->onbreakpoint(); };
+        scriptnik->read_register = [](const std::string& reg) {
+            if (reg == "a")
+                return i8080_regs_a();
+            if (reg == "f")
+                return i8080_regs_f();
+            if (reg == "b")
+                return i8080_regs_b();
+            if (reg == "c")
+                return i8080_regs_c();
+            if (reg == "d")
+                return i8080_regs_d();
+            if (reg == "e")
+                return i8080_regs_e();
+            if (reg == "h")
+                return i8080_regs_h();
+            if (reg == "l")
+                return i8080_regs_l();
+            if (reg == "sp")
+                return i8080_regs_sp();
+            if (reg == "pc")
+                return i8080_pc();
             return i8080_pc();
         };
-        scriptnik->set_register = [](const std::string & reg, int val) {
-            if (reg == "a") i8080_setreg_a(val & 0xff);
-            if (reg == "f") i8080_setreg_f(val & 0xff);
-            if (reg == "b") i8080_setreg_b(val & 0xff);
-            if (reg == "c") i8080_setreg_c(val & 0xff);
-            if (reg == "d") i8080_setreg_d(val & 0xff);
-            if (reg == "e") i8080_setreg_e(val & 0xff);
-            if (reg == "h") i8080_setreg_h(val & 0xff);
-            if (reg == "l") i8080_setreg_l(val & 0xff);
-            if (reg == "sp") i8080_setreg_sp(val & 0xffff);
-            if (reg == "pc") i8080_jump(val & 0xffff);
-            if (reg == "ioread") board.ioread = val & 0xff;
+        scriptnik->set_register = [](const std::string& reg, int val) {
+            if (reg == "a")
+                i8080_setreg_a(val & 0xff);
+            if (reg == "f")
+                i8080_setreg_f(val & 0xff);
+            if (reg == "b")
+                i8080_setreg_b(val & 0xff);
+            if (reg == "c")
+                i8080_setreg_c(val & 0xff);
+            if (reg == "d")
+                i8080_setreg_d(val & 0xff);
+            if (reg == "e")
+                i8080_setreg_e(val & 0xff);
+            if (reg == "h")
+                i8080_setreg_h(val & 0xff);
+            if (reg == "l")
+                i8080_setreg_l(val & 0xff);
+            if (reg == "sp")
+                i8080_setreg_sp(val & 0xffff);
+            if (reg == "pc")
+                i8080_jump(val & 0xffff);
+            if (reg == "ioread")
+                board.ioread = val & 0xff;
         };
         scriptnik->read_memory = [](int addr, int stackrq) {
             return (int)memory.read(addr, (bool)stackrq);
@@ -1075,5 +1117,4 @@ void bootstrap_scriptnik()
         scriptnik->start();
     }
 }
-
 

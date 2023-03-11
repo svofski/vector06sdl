@@ -19,39 +19,40 @@
 
 class Board;
 
-void i8080_hal_bind(Memory & _mem, IO & _io, Board & _board);
+void i8080_hal_bind(Memory& _mem, IO& _io, Board& _board);
 void create_timer();
 
 class Board
 {
-public:
-    enum ResetMode {
+  public:
+    enum ResetMode
+    {
         BLKSBR,
         BLKVVOD,
         LOADROM
     };
 
-private:
+  private:
     int between;
     int instr_time;
     size_t total_v_cycles;
     int last_opcode;
     int frame_no;
 
-    const int * cadence_frames; 
+    const int* cadence_frames;
     int cadence_length = 1;
     int cadence_seq = 0;
 
     bool irq;
-    bool inte;          /* CPU INTE pin */
-    bool irq_carry;     /* imitates cpu waiting after T2 when INTE */
+    bool inte;      /* CPU INTE pin */
+    bool irq_carry; /* imitates cpu waiting after T2 when INTE */
 
     Memory& memory;
-    IO & io;
-    PixelFiller & filler;
-    Soundnik & soundnik;
-    TV & tv;
-    WavPlayer & tape_player;
+    IO& io;
+    PixelFiller& filler;
+    Soundnik& soundnik;
+    TV& tv;
+    WavPlayer& tape_player;
     Debug& debug;
 
     std::vector<uint8_t> boot;
@@ -62,63 +63,63 @@ private:
     std::vector<Watchpoint> memory_watchpoints;
     std::vector<Watchpoint> io_watchpoints;
 
-public:
+  public:
     std::function<void(void)> poll_debugger;
     std::function<void(void)> onbreakpoint = nullptr;
-    //void set_onbreakpoint(const std::function<void(void)>& hook) {
-    //    onbreakpoint = hook;
-    //}
     std::function<void(void)> onframetimer;
-    
-    struct {
+
+    struct
+    {
         std::function<void(int)> frame;
         std::function<void(int)> jump;
     } hooks;
 
-    // a hack to pass return value from io.onread 
+    // a hack to pass return value from io.onread
     int ioread;
 
-private:
+  private:
     void refresh_watchpoint_listeners(void);
-    void init_bootrom(const uint8_t * src, size_t size);
+    void init_bootrom(const uint8_t* src, size_t size);
 
-public:
-    Board(Memory & _memory, IO & _io, PixelFiller & _filler, Soundnik & _snd, 
-            TV & _tv, WavPlayer & _tape_player, Debug& _debug);
+  public:
+    Board(Memory& _memory, IO& _io, PixelFiller& _filler, Soundnik& _snd,
+      TV& _tv, WavPlayer& _tape_player, Debug& _debug);
 
     void init();
-    void reset(Board::ResetMode blkvvod);    // true: power-on reset, false: boot loaded prog
+    void reset(Board::ResetMode
+        blkvvod); // true: power-on reset, false: boot loaded prog
     int get_frame_no() const { return frame_no; }
     void handle_quit();
     bool terminating() const { return io.the_keyboard().terminate; };
     void interrupt(bool on);
 
-    void handle_event(SDL_Event & event);
-    void handle_keyup(SDL_KeyboardEvent & key);
-    void handle_keydown(SDL_KeyboardEvent & key);
-    void handle_window_event(SDL_Event & event);
+    void handle_event(SDL_Event& event);
+    void handle_keyup(SDL_KeyboardEvent& key);
+    void handle_keydown(SDL_KeyboardEvent& key);
+    void handle_window_event(SDL_Event& event);
     void set_joysticks(int joy_0e, int joy_0f);
 
     void toggle_fullscreen() { tv.toggle_fullscreen(); }
-    void render_frame(const int frame, const bool executed); 
+    void render_frame(const int frame, const bool executed);
     void pause_sound(bool topause) { soundnik.pause((int)topause); }
     int execute_frame_with_cadence(bool update_screen, bool use_cadence);
     void single_step(bool update_screen);
 
-    TV & get_tv() const { return tv; }
-    Soundnik & get_soundnik() const { return soundnik; }
+    TV& get_tv() const { return tv; }
+    Soundnik& get_soundnik() const { return soundnik; }
 
-public:
+  public:
     auto read_stack(const size_t _len) const -> std::vector<uint16_t>;
-    auto debug_read_executed_memory(uint16_t _addr, const size_t _len) const -> std::vector<uint8_t>;
+    auto debug_read_executed_memory(uint16_t _addr, const size_t _len) const
+      -> std::vector<uint8_t>;
     auto debug_read_hw_info() const -> std::vector<int>;
     auto read_memory(const int start, const int count) -> const std::string;
     void write_memory_byte(int addr, int value);
-    /* AA FF BB CC DD EE HH LL 00 00 00 00 SS PP 
+    /* AA FF BB CC DD EE HH LL 00 00 00 00 SS PP
      * 00 00 00 00 00 00 00 00 00 00 PP CC */
     std::string read_registers();
     auto read_registers_b() -> const std::vector<int>;
-    void write_registers(uint8_t * regs);
+    void write_registers(uint8_t* regs);
     int is_break();
     void set_debugging(const bool _debugging);
     void debugger_attached();
@@ -130,19 +131,19 @@ public:
     bool check_breakpoint();
     void check_watchpoint(uint32_t addr, uint8_t value, int how);
 
-    void serialize(std::vector<uint8_t> & to);
-    bool deserialize(std::vector<uint8_t> & from);
-    void serialize_self(SerializeChunk::stype_t & to) const;
-    void deserialize_self(SerializeChunk::stype_t::iterator from, uint32_t size);
+    void serialize(std::vector<uint8_t>& to);
+    bool deserialize(std::vector<uint8_t>& from);
+    void serialize_self(SerializeChunk::stype_t& to) const;
+    void deserialize_self(
+      SerializeChunk::stype_t::iterator from, uint32_t size);
 
     void set_bootrom(const std::vector<uint8_t>& bootbytes);
 
-private:
+  private:
     /* Fuses together inner CPU logic and Vector-06c interrupt logic */
     bool check_interrupt();
     int execute_frame(bool update_screen);
     bool cadence_allows();
     void dump_memory(const int start, const int count);
 };
-
 
