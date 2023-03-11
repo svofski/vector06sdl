@@ -31,7 +31,8 @@
 import sys
 import os
 
-ENCODING=None # try 'utf-8' or 'cp1251'
+ENCODING='utf-8'#None # try 'utf-8' or 'cp1251'
+ENCODINGS=['utf-8', 'cp1251']
 
 class State:
     DUMMY0 = 0
@@ -286,11 +287,17 @@ def enbas(path):
     result = []
     size = 0
     addr = 0x4301
-    with open(path, 'r', encoding=ENCODING) as fi:
-        for text in fi:
-            #print("Input=["+text.strip("\n")+"]")
-            tokens,addr=tokenize2(text.strip("\n"), addr)
-            result = result + tokens
+    for enc in ENCODINGS:
+        try:
+            print(f'Trying encoding {enc}...')
+            with open(path, 'r', encoding=ENCODING) as fi:
+                for text in fi:
+                    print("Input=["+text.strip("\n")+"]")
+                    tokens,addr=tokenize2(text.strip("\n"), addr)
+                    result = result + tokens
+            break
+        except:
+            print('Failed...')
 
     result.append(0)
     result.append(0)

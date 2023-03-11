@@ -1,0 +1,77 @@
+/* 
+ * Робот-жонглер позволяет печатать на клавиатуре заданную последовательность,
+ * делать паузы и вызывать колбеки. 
+ */
+class Robotnik {
+    var queue
+    var busy
+    var release_at
+    var scancode
+
+    def Robotnik() {
+        this.queue = Vector()
+        this.busy = 0
+        this.release_at = -1
+        this.scancode = 0
+    }
+
+    /* Массив keys может содержать:
+     *    строки                    - названия сканкодов из SDL_Keys
+     *    целые числа               - задержки в кадрах
+     *    функции без аргументов    - колбеки
+     */
+    def types(keys) {
+        for (what : keys) {
+            this.queue.push_back(what)
+        }
+    }
+
+    /* Эта функция вызывается каждый кадр */
+    def onframe() {
+        if (this.busy == 0) {
+            if (!this.queue.empty()) {
+                var bu = this.queue[0]
+                this.queue.erase_at(0);
+
+                switch (bu.get_type_info().name()) {
+                    case("string") {
+                        this.release_at = 3
+                        this.busy = 5
+                        if (bu[0] == '\001') {   // keydown
+                            bu = bu.substr(1, bu.size())
+                            this.release_at = -1 
+                            this.busy = 0 
+                        }
+                        else if (bu[0] == '\002') { // keyup 
+                            bu = bu.substr(1, bu.size())
+                            this.release_at = 0
+                            this.busy = 0
+                        }
+                        this.scancode = scancode_from_name(bu)
+                        keydown(this.scancode)
+                        break
+                    }
+                    case ("int") {
+                        this.busy = bu
+                        break
+                    }
+                    case ("Function") {
+                        bu() 
+                        this.busy = 5
+                        break
+                    }
+                }
+            }
+        }
+        if (this.busy == this.release_at) {
+            keyup(this.scancode)
+            this.release_at = -1
+        }
+        if (this.busy > 0) {
+            --this.busy
+        }
+    }
+}
+
+global keytyper = Robotnik()
+

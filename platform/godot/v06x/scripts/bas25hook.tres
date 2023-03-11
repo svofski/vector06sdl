@@ -1,0 +1,114 @@
+/*
+ * Пример использования API отладчика для реализации перехвата
+ * загрузки магнитофонного файла BASIC 2.5
+ */
+
+global basfile
+
+class BASFile {
+	var cas
+	var index
+	var onfinished
+	var next
+
+	def BASFile(name, next_) {
+		this.next = next_
+		var mem = read_file(name)
+		this.index = 0
+		this.onfinished = fun() {}
+
+		puts("BASFile: " + name + " size=" + to_string(mem.size()) + "\n")
+
+		this.cas = VectorInt()
+		for (var i = 0; i < 4; ++i) {
+			this.cas.push_back(0xd3)
+		}
+
+		var namestart = 0
+		if (name.size() > 13) {
+			namestart = name.size() - 13
+		}
+		var basname = name.substr(namestart, namestart + 13)
+		for (var i = 0; i < basname.size(); ++i) {
+			this.cas.push_back(int(basname[i]))
+		}
+		this.cas.push_back(0)
+		this.cas.push_back(0)
+		this.cas.push_back(0)
+
+		this.cas.push_back(0xd3)
+		this.cas.push_back(0xd3)
+		this.cas.push_back(0xd3)
+		this.cas.push_back(0)
+
+		var cs = 0
+		var zeroseq = 3
+		for (var i = 0; i < mem.size(); ++i) {
+			this.cas.push_back(mem[i])
+			cs += mem[i]
+			if (mem[i] == 0) {
+				--zeroseq
+				if (zeroseq == 0) {
+					break
+				}
+			}
+			else {
+				zeroseq = 3
+			}
+		}
+		cs &= 0xffff
+
+		this.cas.push_back(cs & 0xff)
+		this.cas.push_back(cs >> 8)
+
+		puts("Loaded, this.cas.size() = " + to_string(this.cas.size()) + " checksum=" + to_string(cs) + "\n")
+	}
+
+	def nextbyte(sync) {
+		var b = sync
+		if (this.index < this.cas.size()) {
+			b = this.cas[this.index]
+			++this.index
+
+			if (this.index == this.cas.size()) {
+				this.onfinished(this.next)
+			}
+		}
+		return b
+	}
+}
+
+def exit_intercept()
+{
+	// return from the intercepted hook:
+	// load return address from stack
+	var sp = read_register("sp")
+	var ret = read_memory(sp, 1) + read_memory(sp+1, 1) * 256
+	// advance SP
+	sp += 2
+	set_register("sp", sp)
+	// set PC to return address
+	set_register("pc", ret)
+	// continue execution
+	debugger_continue()
+}
+
+def breakfunc(dummy)
+{
+	var a = read_register("a")
+
+	// return next byte in A
+	set_register("a", basfile.nextbyte(a))
+
+	// return to the caller
+	exit_intercept()
+}
+
+def attach_bas25_hook() {
+	insert_breakpoint(0, 0x2b05, 1) // load byte (see also 0xfb74 for load file)
+	add_callback("breakpoint", breakfunc)
+	debugger_attached()
+	debugger_continue()
+}
+
+
