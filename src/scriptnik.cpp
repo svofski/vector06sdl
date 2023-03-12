@@ -30,6 +30,30 @@ std::vector<int> read_intvector(const std::string & path)
     return dst;
 }
 
+// -- a couple of string utilities from ChaiScript extras
+/**
+ * Convert the given string to lowercase letters.
+ */
+std::string toLowerCase(const std::string& subject) {
+    std::string result(subject);
+    std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c) {
+            return std::tolower(c);
+            });
+    return result;
+}
+
+/**
+ * Convert the given string to uppercase letters.
+ */
+std::string toUpperCase(const std::string& subject) {
+    std::string result(subject);
+    std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c) {
+            return std::toupper(c);
+            });
+    return result;
+}
+
+
 
 struct scriptnik_engine {
     chaiscript::ChaiScript chai;
@@ -109,6 +133,8 @@ struct scriptnik_engine {
         chai.add(fun([this]() {
                     s.finalizing = true;
                     }), "finalize");
+        chai.add(fun(toUpperCase), "toUpperCase");
+        chai.add(fun(toLowerCase), "toLowerCase");
     }
 
     void invoke(const std::string & named, int arg) 

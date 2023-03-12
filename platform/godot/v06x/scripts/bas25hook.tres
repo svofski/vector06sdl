@@ -24,11 +24,11 @@ class BASFile {
 			this.cas.push_back(0xd3)
 		}
 
-		var namestart = 0
-		if (name.size() > 13) {
+		var namestart = name.rfind("/") + 1
+		if (name.size() - namestart > 13) {
 			namestart = name.size() - 13
 		}
-		var basname = name.substr(namestart, namestart + 13)
+		var basname = name.substr(namestart, namestart + 13).toUpperCase()
 		for (var i = 0; i < basname.size(); ++i) {
 			this.cas.push_back(int(basname[i]))
 		}

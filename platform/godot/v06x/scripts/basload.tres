@@ -1,5 +1,4 @@
 def load_bas() {
-    /* Первым аргументом должен быть файл музыкальной системы MSVec.rk */
     basfile = BASFile(scriptargs[0], 1)
     basfile.onfinished =
         fun(next) {
