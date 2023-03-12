@@ -19,7 +19,10 @@ var texture : ImageTexture
 var textureImage : Image
 var playback : AudioStreamPlayback
 
+var maintained_aspect_index = 2
 var maintained_aspect = 5.0/4
+var pixel_scale = 2
+var pixel_scale_index = 2
 
 onready var hud_panel = find_node("HUD")
 onready var gamepad_label = find_node("GamepadLabel")
@@ -148,7 +151,7 @@ func _ready():
 		
 	update_load_asses()
 		
-	nice_tooltip.enabled = true
+	nice_tooltip.enabled = true	
 
 func _notification(what):
 	if what == MainLoop.NOTIFICATION_WM_QUIT_REQUEST:
@@ -289,8 +292,12 @@ func place_shader_panel_please():
 func shader_panel_visibility_changed():
 	if shader_select_panel.visible:
 		shader_select_panel.rect_position = $VectorScreen.rect_position
+		shader_select_panel.rect_position.x = hud_panel.rect_position.x
 		shader_select_panel.rect_size = $VectorScreen.rect_size
 		shader_select_panel.rect_size.y = 0
+		shader_select_panel.rect_size.x = hud_panel.rect_size.x * 0.75
+		shader_select_panel.rect_position.x += hud_panel.rect_size.x * 0.25 / 2
+		shader_select_panel.rect_position.y = hud_panel.rect_position.y - shader_select_panel.rect_size.y
 	else:
 		if DYNAMIC_SHADER_LIST:
 			shader_select_panel.set_shader_list([])
@@ -505,6 +512,8 @@ func save_config():
 	cfg.set_value("sound", "volume_db", sound_panel.get_volume(4))
 	
 	cfg.set_value("shader", "index", shader_index)
+	cfg.set_value("aspect", "aspect_ratio_index", maintained_aspect_index)
+	cfg.set_value("aspect", "pixel_scale_index", pixel_scale_index)
 	cfg.save("user://v06x.settings")
 
 func load_config():
@@ -536,6 +545,13 @@ func load_config():
 			
 		shader_index = cfg.get_value("shader", "index", 0)
 		_on_shader_selected(shader_index)
+		
+		maintained_aspect_index = cfg.get_value("aspect", "aspect_ratio_index", maintained_aspect_index)
+		pixel_scale_index = cfg.get_value("aspect", "pixel_scale_index", pixel_scale_index)
+		shader_select_panel.set_aspect_index(maintained_aspect_index)
+		shader_select_panel.set_pixelscale_index(pixel_scale_index)
+		shader_select_panel.call_deferred("_on_aspect_ratio_selected", maintained_aspect_index)
+		shader_select_panel.call_deferred("_on_pixelscale_selected", pixel_scale_index)
 		
 		sound_panel.set_volume(0, cfg.get_value("sound", "volume_8253", 10))
 		sound_panel.set_volume(1, cfg.get_value("sound", "volume_beep", 10))
@@ -583,6 +599,18 @@ func _on_shader_selected(num):
 	var mat:ShaderMaterial = $VectorScreen.material
 	mat.shader = load("res://shaders/%s.shader" % shader_name)
 	shader_select_panel.visible = false
+
+func _on_aspect_ratio_selected(index, aspect):
+	maintained_aspect_index = index
+	maintained_aspect = aspect
+	_on_size_changed()
+	_on_pixel_scale_selected(pixel_scale_index, pixel_scale)
+
+func _on_pixel_scale_selected(index, scale):
+	pixel_scale = scale
+	pixel_scale_index = index
+	OS.set_window_size(pixel_scale * Vector2(576/2 * maintained_aspect,288))
+	# see also OS.set_windows_resizable(bool enabled)
 
 func _on_SoundPanel_volumes_changed():
 	v06x.SetVolumes(sound_panel.get_volume(0),
@@ -776,12 +804,3 @@ func debug_get_trace_log(offset, lines, filter):
 	
 func debug_set_labels(labels):
 	return v06x.debug_set_labels(labels)
-
-
-
-
-
-
-
-
-

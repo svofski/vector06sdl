@@ -291,6 +291,8 @@ visible = false
 [connection signal="gui_input" from="." to="." method="_on_main_gui_input"]
 [connection signal="dir_selected" from="FileDialog" to="." method="_on_FileDialog_dir_selected"]
 [connection signal="file_selected" from="FileDialog" to="." method="_on_FileDialog_file_selected"]
+[connection signal="aspect_ratio_selected" from="shader_select_panel" to="." method="_on_aspect_ratio_selected"]
+[connection signal="pixel_scale_selected" from="shader_select_panel" to="." method="_on_pixel_scale_selected"]
 [connection signal="selected" from="shader_select_panel" to="." method="_on_shader_selected"]
 [connection signal="long_hover" from="HUD/ScopePanel" to="." method="_on_ScopePanel_long_hover"]
 [connection signal="pressed" from="HUD/ScopePanel" to="." method="_on_ScopePanel_pressed"]
