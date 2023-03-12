@@ -8,8 +8,14 @@
 
 config_version=4
 
-_global_script_classes=[  ]
+_global_script_classes=[ {
+"base": "SceneTree",
+"class": "bas2asc",
+"language": "GDScript",
+"path": "res://bas2asc.gd"
+} ]
 _global_script_class_icons={
+"bas2asc": ""
 }
 
 [application]

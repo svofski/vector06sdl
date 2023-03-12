@@ -8,6 +8,7 @@ const WAV : int = 4
 const DIR : int = 5
 const BIN : int = 6 # boot rom
 const BAS : int = 10 # script-supported BASIC file
+const ASC : int = 11 # script-supported BASIC ASCII source
 
 const MIX_SAMPLERATE : int = 48000
 
@@ -339,6 +340,8 @@ func load_file(dev: int, path: String) -> bool:
 			v06x.Mount(dev, path)
 		elif file_kind[dev][0] == BAS:
 			script_basload(path)
+		elif file_kind[dev][0] == ASC:
+			script_ascload(path)
 		else:
 			v06x.LoadAsset(content, korg[0], korg[1])
 		update_load_asses()
@@ -390,6 +393,8 @@ func getKind(path : String):
 		ret = [BIN, 0, false]
 	elif ext == "bas":
 		ret = [BAS, 0, false]
+	elif ext == "asc":
+		ret = [ASC, 0, false]
 	return ret
 
 func _on_blkvvod_pressed():
@@ -689,6 +694,16 @@ func script_basload(path: String) -> void:
 	init_basload_scripts()
 	v06x.AppendScriptArg(path)
 	v06x.ExecuteScript()
+	
+func script_ascload(path: String) -> void:
+	var tmpfile = File.new()
+	var basename = path.get_file().get_basename().to_upper()
+	if tmpfile.open("user://%s.BAS" % basename, File.WRITE) == OK:
+		var basfile = tmpfile.get_path_absolute()
+		tmpfile.close()
+		var tokenizer = bas2asc.new()
+		if tokenizer.asc2bas(path, basfile) == OK:
+			script_basload(basfile)
 
 #==========================================================================
 #
