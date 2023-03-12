@@ -213,7 +213,7 @@ func _on_load_asset_pressed(which: int):
 	dialog_device = which
 	$FileDialog.current_dir = loadedFileDir[dialog_device]
 	$FileDialog.window_title = titles[dialog_device]
-	$FileDialog.filters = ["*.rom,*.r0m,*.vec,*.bin,*.fdd,*.wav,*.bas"]
+	$FileDialog.filters = ["*.rom,*.r0m,*.vec,*.bin,*.fdd,*.wav,*.bas,*.asc"]
 	if dialog_device == DialogDevice.B:
 		$FileDialog.filters = ["*.fdd"]
 	elif dialog_device == DialogDevice.BOOT:
