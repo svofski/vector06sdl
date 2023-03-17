@@ -70,10 +70,8 @@ func _on_aspect_ratio_selected(id):
 	var text = aspect_selector.get_item_text(aspect_selector.selected)
 	var intpart = float(text.substr(0, text.find(":")))
 	var fracpart = float(text.substr(text.find(":") + 1, text.length()))
-	#print("aspect ratio selected: ", text, "=", intpart/fracpart)	
 	for shader_cell in tr_list:
 		shader_cell.aspect = intpart/fracpart
-		shader_cell.call_deferred("resized")
 	emit_signal("aspect_ratio_selected", aspect_selector.selected, intpart/fracpart)
 
 func _on_pixelscale_selected(id):

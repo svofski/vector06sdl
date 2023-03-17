@@ -5,118 +5,127 @@
 
 global basfile
 
-class BASFile {
-	var cas
-	var index
-	var onfinished
-	var next
+class BufferStream {
+    var buffer
+    var next
+    var onfinished
+    var index
 
-	def BASFile(name, next_) {
-		this.next = next_
-		var mem = read_file(name)
-		this.index = 0
-		this.onfinished = fun() {}
+    def BufferStream(contents) {
+        this.buffer = contents
+        this.next = 0
+        this.index = 0
+        this.onfinished = fun() {}
 
-		puts("BASFile: " + name + " size=" + to_string(mem.size()) + "\n")
+        return this
+    }
 
-		this.cas = VectorInt()
-		for (var i = 0; i < 4; ++i) {
-			this.cas.push_back(0xd3)
-		}
+    def nextbyte(sync) {
+        var b = sync
+        if (this.index < this.buffer.size()) {
+            b = this.buffer[this.index]
+            ++this.index
 
-		var namestart = name.rfind("/") + 1
-		if (name.size() - namestart > 13) {
-			namestart = name.size() - 13
-		}
-		var basname = name.substr(namestart, namestart + 13).toUpperCase()
-		for (var i = 0; i < basname.size(); ++i) {
-			this.cas.push_back(int(basname[i]))
-		}
-		this.cas.push_back(0)
-		this.cas.push_back(0)
-		this.cas.push_back(0)
+            if (this.index == this.buffer.size()) {
+                this.onfinished(this.next)
+            }
+        }
+        return b
+    }
+}
 
-		this.cas.push_back(0xd3)
-		this.cas.push_back(0xd3)
-		this.cas.push_back(0xd3)
-		this.cas.push_back(0)
+def BASFile(name)
+{
+    var mem = read_file(name)
 
-		var cs = 0
-		var zeroseq = 3
-		for (var i = 0; i < mem.size(); ++i) {
-			this.cas.push_back(mem[i])
-			cs += mem[i]
-			if (mem[i] == 0) {
-				--zeroseq
-				if (zeroseq == 0) {
-					break
-				}
-			}
-			else {
-				zeroseq = 3
-			}
-		}
-				// pad to 000 if terminal zeroes are missing in .bas file
-				for (var i = zeroseq; i > 0; --i) {
-					this.cas.push_back(0)
-				}
-		cs &= 0xffff
+    puts("BASFile: " + name + " size=" + to_string(mem.size()) + "\n")
 
-		this.cas.push_back(cs & 0xff)
-		this.cas.push_back(cs >> 8)
+    var cas = VectorInt()
+    for (var i = 0; i < 4; ++i) {
+        cas.push_back(0xd3)
+    }
 
-		puts("Loaded, this.cas.size() = " + to_string(this.cas.size()) + " checksum=" + to_string(cs) + "\n")
-	}
+    var namestart = name.rfind("/") + 1
+    if (name.size() - namestart > 13) {
+        namestart = name.size() - 13
+    }
+    var basname = name.substr(namestart, namestart + 13).toUpperCase()
+    for (var i = 0; i < basname.size(); ++i) {
+        cas.push_back(int(basname[i]))
+    }
+    cas.push_back(0)
+    cas.push_back(0)
+    cas.push_back(0)
 
-	def nextbyte(sync) {
-		var b = sync
-		if (this.index < this.cas.size()) {
-			b = this.cas[this.index]
-			++this.index
+    cas.push_back(0xd3)
+    cas.push_back(0xd3)
+    cas.push_back(0xd3)
+    cas.push_back(0)
 
-			if (this.index == this.cas.size()) {
-				this.onfinished(this.next)
-			}
-		}
-		return b
-	}
+    var cs = 0
+    var zeroseq = 3
+    for (var i = 0; i < mem.size(); ++i) {
+        cas.push_back(mem[i])
+        cs += mem[i]
+        if (mem[i] == 0) {
+            --zeroseq
+            if (zeroseq == 0) {
+                break
+            }
+        }
+        else {
+            zeroseq = 3
+        }
+    }
+    // pad to 000 if terminal zeroes are missing in .bas file
+    for (var i = zeroseq; i > 0; --i) {
+        cas.push_back(0)
+    }
+    cs &= 0xffff
+
+    cas.push_back(cs & 0xff)
+    cas.push_back(cs >> 8)
+
+    puts("Loaded, cas.size() = " + to_string(cas.size()) + " checksum=" + to_string(cs) + "\n")
+
+    return BufferStream(cas)
 }
 
 def exit_intercept()
 {
-	// return from the intercepted hook:
-	// load return address from stack
-	var sp = read_register("sp")
-	var ret = read_memory(sp, 1) + read_memory(sp+1, 1) * 256
-	// advance SP
-	sp += 2
-	set_register("sp", sp)
-	// set PC to return address
-	set_register("pc", ret)
-	// continue execution
-	debugger_continue()
+    // return from the intercepted hook:
+    // load return address from stack
+    var sp = read_register("sp")
+    var ret = read_memory(sp, 1) + read_memory(sp+1, 1) * 256
+    // advance SP
+    sp += 2
+    set_register("sp", sp)
+    // set PC to return address
+    set_register("pc", ret)
+    // continue execution
+    debugger_continue()
 }
 
 def breakfunc(dummy)
 {
-	var a = read_register("a")
-
-	// return next byte in A
-	set_register("a", basfile.nextbyte(a))
-
-	// return to the caller
-	exit_intercept()
+    var a = read_register("a")
+    
+    // return next byte in A
+    set_register("a", basfile.nextbyte(a))
+    
+    // return to the caller
+    exit_intercept()
 }
 
 def attach_bas25_hook() {
-	insert_breakpoint(0, 0x2b05, 1) // load byte (see also 0xfb74 for load file)
-	add_callback("breakpoint", breakfunc)
-	debugger_attached()
-	debugger_continue()
+    insert_breakpoint(0, 0x2b05, 1) // load byte (see also 0xfb74 for load file)
+    add_callback("breakpoint", breakfunc)
+    debugger_attached()
+    debugger_continue()
 }
 
 def detach_bas25_hook() {
-	remove_breakpoint(0, 0x2b05, 1)
-	debugger_detached()
+    remove_breakpoint(0, 0x2b05, 1)
+    debugger_detached()
 }
 

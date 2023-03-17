@@ -9,6 +9,7 @@ const DIR : int = 5
 const BIN : int = 6 # boot rom
 const BAS : int = 10 # script-supported BASIC file
 const ASC : int = 11 # script-supported BASIC ASCII source
+const CAS : int = 12 # encapsulated BAS file
 
 const MIX_SAMPLERATE : int = 48000
 
@@ -67,6 +68,9 @@ enum DialogDevice {A = 0, B = 1, BOOT = 2}
 var dialog_device: int = 0 # A: or B: for file dialog
 
 var debug_ui_break = false
+
+var state_stack = [] # temporary saved states
+var about_box_open = false # true when we're showing an about demo
 
 func updateTexture(buttmap : PoolByteArray):
 	if textureImage == null:
@@ -157,6 +161,8 @@ func _notification(what):
 	if what == MainLoop.NOTIFICATION_WM_QUIT_REQUEST:
 		set_process(false)
 		$AudioStreamPlayer.stop()
+		while state_stack.size() > 0:
+			v06x.RestoreState(state_stack.pop_back())
 		save_state()
 	if what == NOTIFICATION_WM_FOCUS_OUT:
 		osk_panel.all_keys_up()
@@ -216,7 +222,7 @@ func _on_load_asset_pressed(which: int):
 	dialog_device = which
 	$FileDialog.current_dir = loadedFileDir[dialog_device]
 	$FileDialog.window_title = titles[dialog_device]
-	$FileDialog.filters = ["*.rom,*.r0m,*.vec,*.bin,*.fdd,*.wav,*.bas,*.asc"]
+	$FileDialog.filters = ["*.rom,*.r0m,*.vec,*.bin,*.fdd,*.wav,*.bas,*.cas,*.asc"]
 	if dialog_device == DialogDevice.B:
 		$FileDialog.filters = ["*.fdd"]
 	elif dialog_device == DialogDevice.BOOT:
@@ -345,7 +351,7 @@ func load_file(dev: int, path: String) -> bool:
 			v06x.InsertBootROM(content)
 		elif file_kind[dev][0] == FDD:
 			v06x.Mount(dev, path)
-		elif file_kind[dev][0] == BAS:
+		elif file_kind[dev][0] == BAS || file_kind[dev][0] == CAS:
 			script_basload(path)
 		elif file_kind[dev][0] == ASC:
 			script_ascload(path)
@@ -366,11 +372,11 @@ func _on_FileDialog_file_selected(path: String):
 	print("File selected: ", path)
 	loadedFilePath[dialog_device] = path
 	loadedFileDir[dialog_device] = $FileDialog.current_dir
+	nice_tooltip.showTooltip(loadass[dialog_device].rect_global_position, 
+		path.get_file())
 	if load_file(dialog_device, path):
 		v06x.Reset(false)
 	
-	nice_tooltip.showTooltip(loadass[dialog_device].rect_global_position, 
-		path.get_file())
 
 func reload_file():
 	if load_file(dialog_device, loadedFilePath[dialog_device]):
@@ -379,9 +385,9 @@ func reload_file():
 func _on_FileDialog_dir_selected(dir):
 	print("Directory selected: ", dir)
 	loadedFilePath[dialog_device] = dir
-	load_file(dialog_device, dir)
 	nice_tooltip.showTooltip(loadass[dialog_device].rect_global_position,
 		dir.get_file())
+	load_file(dialog_device, dir)
 
 func getKind(path : String):
 	var ret = [ROM, 256, true]
@@ -400,6 +406,8 @@ func getKind(path : String):
 		ret = [BIN, 0, false]
 	elif ext == "bas":
 		ret = [BAS, 0, false]
+	elif ext == "cas":
+		ret = [CAS, 0, false]
 	elif ext == "asc":
 		ret = [ASC, 0, false]
 	return ret
@@ -437,14 +445,19 @@ func _input(event: InputEvent):
 				get_tree().set_input_as_handled()
 
 func _on_click_timer():
-	if hud_panel.visible:
-		shader_select_panel.visible = false
-		hud_panel.visible = false
-		hud_panel.rect_position.y = get_viewport_rect().size.y
-		call_deferred("_on_size_changed")
+	if about_box_open:
+		about_box_end()
+	elif hud_panel.visible:
+		hide_hud_panel()
 	else:
 		hud_panel.visible = true
 		call_deferred("_on_size_changed")
+
+func hide_hud_panel():
+	shader_select_panel.visible = false
+	hud_panel.visible = false
+	hud_panel.rect_position.y = get_viewport_rect().size.y
+	call_deferred("_on_size_changed")
 
 func _on_main_gui_input(event):
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
@@ -696,6 +709,25 @@ func _bowser_calm():
 	bowser_button.rect_scale = Vector2(1, 1)
 	bowser_button.rect_position = bowser_centre - bowser_button.rect_size * bowser_button.rect_scale / 2
 
+#
+# About
+#
+func _on_HomeLabel_gui_input(event):
+	if event is InputEventMouseButton and event.pressed and event.button_index == BUTTON_LEFT:
+		hide_hud_panel()
+		state_stack.push_back(v06x.ExportState())
+		about_box_open = true
+		var file = File.new()
+		if file.open("res://about/about.tres", File.READ) == OK:
+			var intro = file.get_buffer(file.get_len())
+			v06x.LoadAsset(intro, ROM, 256)
+			v06x.Reset(false)
+
+func about_box_end():
+	about_box_open = false
+	v06x.Reset(false)
+	v06x.RestoreState(state_stack.pop_back())
+
 # ==========================================================================
 #
 # S C R I P T S
@@ -717,9 +749,11 @@ func init_basload_scripts() -> void:
 			fulltext = fulltext + text
 	v06x.SetScriptText(fulltext)
 	
+# loads bas or cas files (see scripts)	
 func script_basload(path: String) -> void:
 	insert_big_bootrom()
 	init_basload_scripts()
+	path = path.replace("\\", "/")
 	v06x.AppendScriptArg(path)
 	v06x.ExecuteScript()
 	
@@ -732,6 +766,10 @@ func script_ascload(path: String) -> void:
 		var tokenizer = bas2asc.new()
 		if tokenizer.asc2bas(path, basfile) == OK:
 			script_basload(basfile)
+		else:
+			nice_tooltip.hideTooltip()
+			nice_tooltip.showTooltip(loadass[dialog_device].rect_global_position, 
+								'Conversion error, is the file UTF-8?')
 
 #==========================================================================
 #

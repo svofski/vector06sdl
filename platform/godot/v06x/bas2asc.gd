@@ -324,8 +324,10 @@ func enbas(path):
 	var size = 0
 	var addr = 0x4301
 	var fi = File.new()
-	if fi.open(path, File.READ) == OK:		
+	if fi.open(path, File.READ) == OK:
 		var text = fi.get_as_text()
+		if fi.get_error() != OK || text.length() == 0:
+			return null
 		for line in text.split("\n", false):
 			#print("Input=["+line+"]")
 			var ta = tokenize2(line, addr)
@@ -343,6 +345,8 @@ func enbas(path):
 
 func asc2bas(ascfile, basfile: String) -> int:
 	var tokenised = enbas(ascfile)
+	if tokenised == null:
+		return ERR_CANT_OPEN
 	var fo = File.new()
 	fo.open(basfile, File.WRITE)
 	fo.store_buffer(tokenised)

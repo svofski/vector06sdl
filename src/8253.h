@@ -369,6 +369,13 @@ public:
         c1 = this->counters[1].Count(cycles);
         c2 = this->counters[2].Count(cycles);
     }
+
+    void reset()
+    {
+        counters[0] = CounterUnit();
+        counters[1] = CounterUnit();
+        counters[2] = CounterUnit();
+    }
 };
 
 class TimerWrapper
@@ -382,6 +389,15 @@ public:
     TimerWrapper(I8253 & _timer) : timer(_timer),
         sound(0), average_count(0), last_sound(0)
     {
+    }
+
+    // this is non-canon, but it's very useful when emulator resets timer
+    void reset()
+    {
+        //timer.write(3, 0x36);
+        //timer.write(3, 0x76);
+        //timer.write(3, 0xb6);
+        timer.reset();
     }
 
     // step with enable per chan?

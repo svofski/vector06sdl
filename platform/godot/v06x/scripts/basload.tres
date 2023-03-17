@@ -1,9 +1,22 @@
 def load_bas() {
-    basfile = BASFile(scriptargs[0], 1)
+    basfile = BASFile(scriptargs[0])
+    basfile.next = 1
     basfile.onfinished =
         fun(next) {
           detach_bas25_hook()
           finalize()
+        }
+}
+
+def load_cas() {
+    var contents = read_file(scriptargs[0])
+    basfile = BufferStream(contents)
+    print("load_cas: size=" + to_string(contents.size()))
+    basfile.next = 1
+    basfile.onfinished = 
+        fun(next) {
+            detach_bas25_hook()
+            finalize()
         }
 }
 
@@ -15,6 +28,11 @@ def framefunc(frameno) {
 /* Зарегистрировать кадровый колбек */
 add_callback("frame", framefunc)
 
+def ends_with(str, tail) 
+{
+    return str.rfind(tail) == str.size() - tail.size()
+}
+
 if (scriptargs.size() < 1) {
     puts("Specify --scriptargs PROGRAM.BAS\n")
 }
@@ -22,7 +40,17 @@ else {
     /* Прицепляем перехватчик вызова загрузки байта */
     attach_bas25_hook()
     /* Подгружаем первый файл */
-    load_bas()
+    var file = scriptargs[0]
+    if (ends_with(file.toUpperCase(), ".BAS")) {
+        load_bas()
+    }
+    else if (ends_with(file.toUpperCase(), ".CAS")) {
+        load_cas()
+    }
+    else {
+        detach_bas25_hook()
+        finalize()
+    }
     keytyper.types([
         "\001F3", "F11", 50, "\002F3", 50, "F12", 50,
         "C","L","O","A","D","\001Left Shift","2","2","\002Left Shift","Return"])

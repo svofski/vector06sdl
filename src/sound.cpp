@@ -231,5 +231,6 @@ void Soundnik::sample(float samp)
 
 void Soundnik::reset()
 {
+    this->timerwrapper.reset();
     this->aywrapper.reset();
 }
