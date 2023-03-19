@@ -246,6 +246,17 @@ hint_tooltip = "ROM/WAV/FDD A:"
 custom_styles/panel = SubResource( 32 )
 texture = SubResource( 46 )
 
+[node name="LoadAssBashook" parent="HUD" instance=ExtResource( 9 )]
+visible = false
+margin_left = 144.0
+margin_top = 227.0
+margin_right = 176.0
+margin_bottom = 249.0
+rect_min_size = Vector2( 32, 22 )
+hint_tooltip = "ROM/WAV/FDD A:"
+custom_styles/panel = SubResource( 32 )
+texture = SubResource( 46 )
+
 [node name="LoadAss3" parent="HUD" instance=ExtResource( 9 )]
 margin_left = 19.0
 margin_top = 93.0
@@ -292,6 +303,8 @@ visible = false
 [connection signal="gui_input" from="." to="." method="_on_main_gui_input"]
 [connection signal="dir_selected" from="FileDialog" to="." method="_on_FileDialog_dir_selected"]
 [connection signal="file_selected" from="FileDialog" to="." method="_on_FileDialog_file_selected"]
+[connection signal="modal_closed" from="FileDialog" to="." method="_on_FileDialog_modal_closed"]
+[connection signal="popup_hide" from="FileDialog" to="." method="_on_FileDialog_popup_hide"]
 [connection signal="aspect_ratio_selected" from="shader_select_panel" to="." method="_on_aspect_ratio_selected"]
 [connection signal="pixel_scale_selected" from="shader_select_panel" to="." method="_on_pixel_scale_selected"]
 [connection signal="selected" from="shader_select_panel" to="." method="_on_shader_selected"]
@@ -304,5 +317,6 @@ visible = false
 [connection signal="pressed" from="HUD/BowserButton" to="." method="_on_BowserButton_pressed"]
 [connection signal="pressed" from="HUD/LoadAss2" to="." method="_on_load_asset_pressed" binds= [ 0 ]]
 [connection signal="pressed" from="HUD/LoadAssBoot" to="." method="_on_load_asset_pressed" binds= [ 2 ]]
+[connection signal="pressed" from="HUD/LoadAssBashook" to="." method="_on_load_asset_pressed" binds= [ 2 ]]
 [connection signal="pressed" from="HUD/LoadAss3" to="." method="_on_load_asset_pressed" binds= [ 1 ]]
 [connection signal="volumes_changed" from="HUD/SoundPanel" to="." method="_on_SoundPanel_volumes_changed"]

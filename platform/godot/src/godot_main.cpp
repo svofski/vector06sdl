@@ -589,6 +589,60 @@ godot_variant V06X_ExecuteScript(godot_object* p_instance, void* p_method_data,
     return ret;
 }
 
+void godot_print(const std::string & msg)
+{
+    godot_string s;
+    api->godot_string_new(&s);
+    api->godot_string_parse_utf8(&s, msg.c_str());
+    api->godot_print(&s);
+    api->godot_string_destroy(&s);
+}
+
+godot_variant V06X_IsFileDialogRequested(godot_object* p_instance, void* p_method_data, void* p_user_data, int p_num_arg, godot_variant** p_args)
+{
+    // godot_string gs_path = api->godot_variant_as_string(p_args[0]);
+    // godot_char_string cs_path = api->godot_string_ascii(&gs_path);
+
+    // const char* path = api->godot_char_string_get_data(&cpath);
+    //	void (*godot_string_new)(godot_string *r_dest);
+
+    //api->godot_char_string_destroy(&cpath);
+
+    std::string script_path;
+    std::string script_mode("read");
+
+    bool requested = scriptnik && scriptnik->is_file_dialog_requested(script_path, script_mode);
+
+    godot_string file;
+    api->godot_string_new(&file);
+    api->godot_string_parse_utf8(&file, script_path.c_str());
+    api->godot_variant_new_string(p_args[0], &file);
+    api->godot_string_destroy(&file);
+
+    godot_string mode;
+    api->godot_string_new(&mode);
+    api->godot_string_parse_utf8(&mode, script_mode.c_str());
+    api->godot_variant_new_string(p_args[1], &mode);
+    api->godot_string_destroy(&mode);
+
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, static_cast<int>(requested));
+    return ret;
+}
+
+godot_variant V06X_SetFileDialogResult(godot_object* p_instance, void* p_method_data, void* p_user_data, int p_num_arg, godot_variant** p_args)
+{
+    godot_string gstring = api->godot_variant_as_string(p_args[0]);
+    godot_char_string gcstring = api->godot_string_ascii(&gstring);
+    const char* cstr = api->godot_char_string_get_data(&gcstring);
+    std::string path(cstr);
+
+    scriptnik->on_file_dialog_result(path);
+    godot_variant ret;
+    api->godot_variant_new_bool(&ret, true);
+    return ret;
+}
+
 godot_variant debug_break(godot_object* p_instance, void* p_method_data,
   void* p_user_data, int p_num_args, godot_variant** p_args)
 {
@@ -1042,20 +1096,20 @@ void bootstrap_scriptnik()
             board.ioread = -1;
             return board.remove_breakpoint(type, addr, kind);
         };
-        scriptnik->debugger_attached = []() {
+        scriptnik->script_attached = []() {
             board.ioread = -1;
-            return board.debugger_attached();
+            return board.script_attached();
         };
-        scriptnik->debugger_detached = []() {
+        scriptnik->script_detached = []() {
             board.ioread = -1;
-            return board.debugger_detached();
+            return board.script_detached();
         };
-        scriptnik->debugger_break = []() {
+        scriptnik->script_break = []() {
             board.ioread = -1;
-            return board.debugger_break();
+            return board.script_break();
         };
-        scriptnik->debugger_continue = []() {
-            return board.debugger_continue();
+        scriptnik->script_continue = []() {
+            return board.script_continue();
         };
         board.onbreakpoint = []() { scriptnik->onbreakpoint(); };
         scriptnik->read_register = [](const std::string& reg) {
@@ -1110,6 +1164,9 @@ void bootstrap_scriptnik()
         };
         scriptnik->write_memory = [](int addr, int w8, int stackrq) {
             memory.write(addr, w8, stackrq);
+        };
+        scriptnik->console_puts = [](const std::string& msg) {
+            godot_print(msg);
         };
     }
 

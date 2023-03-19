@@ -58,8 +58,12 @@ class Board
     std::vector<uint8_t> boot;
 
     int debugging;
-    int debugger_interrupt;
-    std::vector<Breakpoint> breakpoints;
+    int debugger_interrupt; // debugger interrupted
+
+    // script specific hooks, independent of debugger hooks
+    bool scripting;         // check hooks on every instruction
+    bool script_interrupt;  // paused execution because of script hook
+    std::vector<Breakpoint> breakpoints;  // list of script breakpoints
     std::vector<Watchpoint> memory_watchpoints;
     std::vector<Watchpoint> io_watchpoints;
 
@@ -120,7 +124,7 @@ class Board
     std::string read_registers();
     auto read_registers_b() -> const std::vector<int>;
     void write_registers(uint8_t* regs);
-    int is_break();
+    int is_break() const;
     void set_debugging(const bool _debugging);
     void debugger_attached();
     void debugger_detached();
@@ -130,6 +134,11 @@ class Board
     std::string remove_breakpoint(int type, int addr, int kind);
     bool check_breakpoint();
     void check_watchpoint(uint32_t addr, uint8_t value, int how);
+
+    void script_attached();   // script on, begin checking hooks
+    void script_detached();   // script off
+    void script_break();      // break execution from script
+    void script_continue();   // continue execution from script
 
     void serialize(std::vector<uint8_t>& to);
     bool deserialize(std::vector<uint8_t>& from);

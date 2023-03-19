@@ -35,7 +35,7 @@ onready var osk_panel = find_node("OnScreenKeyboard")
 onready var scope_panel = find_node("ScopePanel")
 onready var debug_view = find_node("DebugView")
 onready var nice_tooltip = find_node("NiceTooltip")
-onready var loadass = [find_node("LoadAss2"), find_node("LoadAss3"), find_node("LoadAssBoot")]
+onready var loadass = [find_node("LoadAss2"), find_node("LoadAss3"), find_node("LoadAssBoot"), find_node("LoadAssBashook")]
 onready var debug_panel = find_node("debug_panel")
 
 onready var tape_texture = loadass[0].texture
@@ -52,10 +52,10 @@ onready var resume_timer: Timer = $ResumeTimer
 onready var click_timer: Timer = $ClickTimer
 
 # for saving / restoring config
-var file_path = ["", "", ""]
-var file_kind = [[ROM, 256, false], [ROM, 256, false], [BIN, 0, false]]
-var loadedFilePath = ["", "", ""]
-var loadedFileDir = ["", "", ""]
+var file_path = ["", "", "", ""]
+var file_kind = [[ROM, 256, false], [ROM, 256, false], [BIN, 0, false], [BIN, 0, false]]
+var loadedFilePath = ["", "", "", ""]
+var loadedFileDir = ["", "", "", ""]
 
 const DYNAMIC_SHADER_LIST = false
 
@@ -64,13 +64,16 @@ const SCOPE_BIG: int = 1
 var scope_state: int = SCOPE_SMALL
 
 # file open dialog target: disk A/tape or B
-enum DialogDevice {A = 0, B = 1, BOOT = 2}
+enum DialogDevice {A = 0, B = 1, BOOT = 2, BASHOOK = 3}
 var dialog_device: int = 0 # A: or B: for file dialog
 
 var debug_ui_break = false
 
 var state_stack = [] # temporary saved states
 var about_box_open = false # true when we're showing an about demo
+
+var emulator_in_coma = false # emulator is paused waiting for FileDialog
+var ftl_mode = false
 
 func updateTexture(buttmap : PoolByteArray):
 	if textureImage == null:
@@ -155,7 +158,9 @@ func _ready():
 		
 	update_load_asses()
 		
-	nice_tooltip.enabled = true	
+	nice_tooltip.enabled = true
+	
+	install_basic_hooks() # generic basic hooks
 
 func _notification(what):
 	if what == MainLoop.NOTIFICATION_WM_QUIT_REQUEST:
@@ -209,6 +214,16 @@ func _physics_process(delta):
 		debug_view.ram = v06x.GetMem(0, 65536*5)
 		debug_view.heatmap = v06x.GetHeatmap(0, 65536*5)
 		debug_view.emit_signal("visibility_changed")
+		
+	script_check_file_dialog()
+
+	if not ftl_mode:	
+		Engine.target_fps = 50
+		Engine.iterations_per_second = 50
+	else:
+		Engine.target_fps = 200
+		Engine.iterations_per_second = 200
+	
 
 # it's impossible to tell where exactly the drop happens,
 # mouse coordinates are all over the place
@@ -218,7 +233,8 @@ func _on_files_dropped(files: PoolStringArray, screen: int):
 		_on_FileDialog_file_selected(files[0])
 
 func _on_load_asset_pressed(which: int):
-	var titles = ["Select ROM image, WAV file, floppy A: image, or directory", "Select floppy B: image or directory", "Boot ROM image"]
+	var titles = ["Select ROM image, WAV file, floppy A: image, or directory", "Select floppy B: image or directory", "Boot ROM image",
+		".CAS, .BAS or .BIN file"]
 	dialog_device = which
 	$FileDialog.current_dir = loadedFileDir[dialog_device]
 	$FileDialog.window_title = titles[dialog_device]
@@ -227,6 +243,8 @@ func _on_load_asset_pressed(which: int):
 		$FileDialog.filters = ["*.fdd"]
 	elif dialog_device == DialogDevice.BOOT:
 		$FileDialog.filters = ["*.bin"]
+	elif dialog_device == DialogDevice.BASHOOK:
+		$FileDialog.filters = ["*.cas,*.bas,*.asc,*.bin"]
 	$FileDialog.popup()
 
 func update_debugger_size():
@@ -347,7 +365,9 @@ func load_file(dev: int, path: String) -> bool:
 		file_kind[dev] = korg
 		file_path[dev] = path
 
-		if dev == DialogDevice.BOOT && file_kind[dev][0] == BIN:
+		if dev == DialogDevice.BASHOOK:
+			v06x.SetFileDialogResult(path)
+		elif dev == DialogDevice.BOOT && file_kind[dev][0] == BIN:
 			v06x.InsertBootROM(content)
 		elif file_kind[dev][0] == FDD:
 			v06x.Mount(dev, path)
@@ -376,7 +396,28 @@ func _on_FileDialog_file_selected(path: String):
 		path.get_file())
 	if load_file(dialog_device, path):
 		v06x.Reset(false)
+	emulator_coma_exit()
 	
+# wake up
+func emulator_coma_exit():
+	emulator_in_coma = false
+
+func _on_FileDialog_popup_hide():
+	if emulator_in_coma:
+		v06x.SetFileDialogResult("")
+		emulator_coma_exit()
+
+func script_check_file_dialog():
+	var requested: bool
+	var path: String
+	var mode: String
+	requested = v06x.IsFileDialogRequested(path, mode)
+	if requested:
+		# Open FileDialog, the emulator is in paused state meanwhile
+		# it will come out of coma either by _on_FileDialog_file_selected, or by _on_FileDialog_popup_hide
+		emulator_in_coma = true
+		osk_panel.all_keys_up()
+		_on_load_asset_pressed(3)
 
 func reload_file():
 	if load_file(dialog_device, loadedFilePath[dialog_device]):
@@ -421,7 +462,7 @@ func _on_blksbr_pressed():
 func _osk_make(scancode):
 	#print("make: ", scancode)
 	v06x.KeyDown(scancode)
-	
+
 func _osk_break(scancode):
 	#print("break: ", scancode)
 	v06x.KeyUp(scancode)
@@ -432,7 +473,9 @@ func _input(event: InputEvent):
 	if event is InputEventKey:
 		if event.pressed:
 			if not event.echo:
-				if event.scancode == KEY_ENTER and event.alt:
+				if event.scancode == KEY_F9:
+					ftl_mode = true
+				elif event.scancode == KEY_ENTER and event.alt:
 					toggle_fullscreen()
 				else:
 					if not debug_ui_break and (not debug_view.visible or event.scancode != KEY_F5):
@@ -440,9 +483,12 @@ func _input(event: InputEvent):
 			if not debug_ui_break and (not debug_view.visible or event.scancode != KEY_F5):
 				get_tree().set_input_as_handled()
 		elif not event.pressed:
-			if not debug_ui_break and (not debug_view.visible or event.scancode != KEY_F5):
-				osk_panel._on_key_break(event.scancode)
-				get_tree().set_input_as_handled()
+			if not debug_ui_break and (not debug_view.visible or event.scancode != KEY_F5):				
+				if event.scancode == KEY_F9:
+					ftl_mode = false
+				else:
+					osk_panel._on_key_break(event.scancode)
+					get_tree().set_input_as_handled()
 
 func _on_click_timer():
 	if about_box_open:
@@ -733,6 +779,10 @@ func about_box_end():
 # S C R I P T S
 #
 # ==========================================================================
+func install_basic_hooks() -> void:
+	init_basload_scripts()
+	v06x.ExecuteScript()
+
 func insert_big_bootrom() -> void:
 	var file = File.new()
 	if file.open("res://boot/boot.tres", File.READ) == OK:

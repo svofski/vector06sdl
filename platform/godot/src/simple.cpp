@@ -41,6 +41,8 @@ V06X_DECL(V06X_SetScriptText);
 V06X_DECL(V06X_AddScriptFile);
 V06X_DECL(V06X_AppendScriptArg);
 V06X_DECL(V06X_ExecuteScript);
+V06X_DECL(V06X_IsFileDialogRequested);
+V06X_DECL(V06X_SetFileDialogResult);
 V06X_DECL(debug_break);
 V06X_DECL(debug_continue);
 V06X_DECL(debug_read_registers);
@@ -125,6 +127,8 @@ extern "C" void GDN_EXPORT godot_nativescript_init(void* p_handle)
     V06X_METHOD("AddScriptFile", V06X_AddScriptFile);
     V06X_METHOD("ExecuteScript", V06X_ExecuteScript);
     V06X_METHOD("AppendScriptArg", V06X_AppendScriptArg);
+    V06X_METHOD("IsFileDialogRequested", V06X_IsFileDialogRequested);
+    V06X_METHOD("SetFileDialogResult", V06X_SetFileDialogResult);
     V06X_METHOD("debug_break", debug_break);
     V06X_METHOD("debug_continue", debug_continue);
     V06X_METHOD("debug_read_registers", debug_read_registers);

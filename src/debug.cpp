@@ -521,8 +521,9 @@ bool Debug::check_break()
 
     auto break_ = check_breakpoints(global_addr);
 
-    if (break_)
+    if (break_) {
         print_watchpoints();
+    }
 
     return break_;
 }

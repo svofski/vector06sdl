@@ -15,6 +15,10 @@ private:
     bool api_registered;
     bool finalizing;
 
+    bool file_dialog_requested;
+    std::string file_dialog_path;
+    std::string file_dialog_mode;
+
 public:
     std::function<int(const std::string &)> loadwav;
     std::function<int(const std::string &)> scancode_from_name;
@@ -23,15 +27,16 @@ public:
 
     std::function<void(int,int,int)> insert_breakpoint;
     std::function<void(int,int,int)> remove_breakpoint;
-    std::function<void()> debugger_attached;
-    std::function<void()> debugger_detached;
-    std::function<void()> debugger_break;
-    std::function<void()> debugger_continue;
+    std::function<void()> script_attached;
+    std::function<void()> script_detached;
+    std::function<void()> script_break;
+    std::function<void()> script_continue;
     std::function<int(const std::string&)> read_register;
     std::function<void(const std::string&, int)> set_register;
     std::function<int(int,int)> read_memory;
     std::function<void(int,int,int)> write_memory;
     std::function<void()> finalize;
+    std::function<void(const std::string&)> console_puts;
 
 public:
     Scriptnik();
@@ -46,6 +51,8 @@ public:
     void start();
 
     bool is_finalizing() const { return finalizing; }
+    bool is_file_dialog_requested(std::string & path, std::string & mode);
+    void on_file_dialog_result(const std::string & path);
 
     void onframe(int frame);
     void onwavfinished(int dummy);

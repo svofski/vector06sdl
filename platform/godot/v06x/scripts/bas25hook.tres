@@ -32,6 +32,10 @@ class BufferStream {
         }
         return b
     }
+
+    def size() {
+        return this.buffer.size()
+    }
 }
 
 def BASFile(name)
@@ -103,7 +107,7 @@ def exit_intercept()
     // set PC to return address
     set_register("pc", ret)
     // continue execution
-    debugger_continue()
+    script_continue()
 }
 
 def breakfunc(dummy)
@@ -120,12 +124,12 @@ def breakfunc(dummy)
 def attach_bas25_hook() {
     insert_breakpoint(0, 0x2b05, 1) // load byte (see also 0xfb74 for load file)
     add_callback("breakpoint", breakfunc)
-    debugger_attached()
-    debugger_continue()
+    script_attached()
+    script_continue()
 }
 
 def detach_bas25_hook() {
     remove_breakpoint(0, 0x2b05, 1)
-    debugger_detached()
+    script_detached()
 }
 

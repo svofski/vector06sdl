@@ -26,6 +26,8 @@ Board::Board(Memory& _memory, IO& _io, PixelFiller& _filler, Soundnik& _snd,
   , tape_player(_tape_player)
   , debugging(0)
   , debugger_interrupt(0)
+  , script_interrupt(false)
+  , scripting(false)
   , debug(_debug)
 {
     this->inte = false;
@@ -130,7 +132,7 @@ int Board::execute_frame(bool update_screen)
         this->hooks.frame(this->frame_no);
     if (this->poll_debugger)
         this->poll_debugger();
-    if (this->debugger_interrupt)
+    if (this->debugger_interrupt || this->script_interrupt)
         return 0;
 
     ++this->frame_no;
@@ -145,17 +147,22 @@ int Board::execute_frame(bool update_screen)
         this->filler.irq = false;
         // DBG_FRM(F1,F2,printf("%05d %04x: ", this->between + this->instr_time,
         // i8080_pc()));
-        if (this->debugging && (debug.check_break() || check_breakpoint())) {
-            this->debugger_interrupt = true;
-            // printf("Board::execute_frame: break \n");
+        // script hook
+        if (this->scripting && check_breakpoint()) {
+            this->script_interrupt = true;
             if (this->onbreakpoint) {
                 this->onbreakpoint(); // a script hook
             }
             // the hook can perform a quick task and continue, no need to pause
-            // frame then
-            if (this->debugger_interrupt) {
+            // frame then; otherwise indeed break
+            if (this->script_interrupt) {
                 break;
             }
+        }
+        // debugger
+        if (this->debugging && debug.check_break()) {
+            this->debugger_interrupt = true;
+            break;
         }
 
         this->single_step(update_screen);
@@ -483,10 +490,36 @@ void Board::write_registers(uint8_t* regs)
     i8080_jump(regs[24] | (regs[25] << 8));
 }
 
-int Board::is_break()
+int Board::is_break() const
 {
     return debugger_interrupt;
 }
+
+// --- scripting hooks
+
+void Board::script_attached()
+{
+    this->scripting = true;
+    this->script_break();
+}
+
+void Board::script_detached()
+{
+    this->scripting = false;
+    this->script_continue();
+}
+
+void Board::script_break()
+{
+    this->script_interrupt = true;
+}
+
+void Board::script_continue()
+{
+    this->script_interrupt = false;
+}
+
+// --- new debugger hooks
 
 void Board::set_debugging(const bool _debugging)
 {

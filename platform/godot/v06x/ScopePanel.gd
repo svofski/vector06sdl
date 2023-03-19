@@ -55,7 +55,8 @@ func update_texture(frame_data: PoolVector2Array):
 	var end: int = len(frame_data)
 	if len(decimated) != frame_length:
 		decimated.resize(frame_length)
-	while i < end:
+
+	while (i < end) && (decimated_pos < frame_length):
 		decimated[decimated_pos] = frame_data[i].x
 		i += 4
 		decimated_pos += 1
