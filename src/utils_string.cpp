@@ -1,12 +1,9 @@
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
-#include "utils_string.h"
+#include <stdlib.h>
 #include <sstream>
 #include <ctype.h>
-//#include <errno.h>
-//#include <limits.h>
-//#include <stdio.h>
-#include <stdlib.h>
+#include <climits>
+
+#include "utils_string.h"
 
 auto utils::split(const std::string& _s, const char _delim)
 ->std::vector<std::string>

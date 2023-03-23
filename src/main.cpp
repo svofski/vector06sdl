@@ -124,19 +124,19 @@ void bootstrap_scriptnik()
             board.ioread = -1;
             return board.insert_breakpoint(type, addr, kind);
         };
-        scriptnik.debugger_attached = []() {
+        scriptnik.script_attached = []() {
             board.ioread = -1;
             return board.debugger_attached();
         };
-        scriptnik.debugger_detached = []() {
+        scriptnik.script_detached = []() {
             board.ioread = -1;
             return board.debugger_detached();
         };
-        scriptnik.debugger_break = []() {
+        scriptnik.script_break = []() {
             board.ioread = -1;
             return board.debugger_break();
         };
-        scriptnik.debugger_continue = []() {
+        scriptnik.script_continue = []() {
             return board.debugger_continue();
         };
         board.onbreakpoint = []() {
