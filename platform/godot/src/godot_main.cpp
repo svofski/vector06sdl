@@ -1174,4 +1174,3 @@ void bootstrap_scriptnik()
         scriptnik->start();
     }
 }
-

@@ -215,7 +215,7 @@ struct scriptnik_engine {
     }
 };
 
-Scriptnik::Scriptnik() : api_registered(false), finalizing(false)
+Scriptnik::Scriptnik() : api_registered(false), finalizing(false), file_dialog_requested(false)
 {
     engine = new scriptnik_engine(*this);
     text = "";

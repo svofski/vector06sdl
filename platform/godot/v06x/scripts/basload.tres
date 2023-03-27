@@ -123,7 +123,14 @@ else {
         detach_bas25_hook()
         finalize()
     }
+
+    if (!check_signature(0x2b05, signature_2b05)) {
+        //puts("BASIC2.5 seems to be already loaded")
+        keytyper.types([
+            "\001F3", "F11", 50, "\002F3", 50])
+    }
+
     keytyper.types([
-        "\001F3", "F11", 50, "\002F3", 50, "F12", 50,
+        "F12", 50,
         "C","L","O","A","D","\001Left Shift","2","2","\002Left Shift","Return"])
 }

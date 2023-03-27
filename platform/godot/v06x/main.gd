@@ -407,6 +407,7 @@ func _on_FileDialog_popup_hide():
 		v06x.SetFileDialogResult("")
 		emulator_coma_exit()
 
+# check when a script requires opening a file dialog, e.g. a basic hook
 func script_check_file_dialog():
 	var requested: bool
 	var path: String

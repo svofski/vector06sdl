@@ -5,6 +5,8 @@
 
 global basfile
 
+global signature_2b05 = [0xc5, 0xd5, 0x0e, 0x00, 0x57, 0xdb, 0x01]
+
 class BufferStream {
     var buffer
     var next
@@ -110,15 +112,32 @@ def exit_intercept()
     script_continue()
 }
 
+
+def check_signature(pc, signature)
+{
+    for (var i = 0; i < signature.size(); ++i) {
+        if (read_memory(pc + i, 0) != signature[i]) {
+            return false
+        }
+    }
+
+    return true
+}
+
 def breakfunc(dummy)
 {
-    var a = read_register("a")
-    
-    // return next byte in A
-    set_register("a", basfile.nextbyte(a))
-    
-    // return to the caller
-    exit_intercept()
+    if (check_signature(0x2b05, signature_2b05)) {
+        var a = read_register("a")
+        
+        // return next byte in A
+        set_register("a", basfile.nextbyte(a))
+        
+        // return to the caller
+        exit_intercept()
+    }
+    else {
+        script_continue()
+    }
 }
 
 def attach_bas25_hook() {
