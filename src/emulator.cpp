@@ -290,7 +290,7 @@ void Emulator::refresh_joysticks()
         }
         joy[i] = SDL_GameControllerOpen(i);
         if (joy[i]) {
-            printf("Detected joystick %d\n", i);
+            printf("Detected joystick %lu\n", i);
         }
     }
 }

@@ -196,8 +196,12 @@ public:
             FILE * copy = fopen(tmp.c_str(), "wb");
             if (copy) {
                 fwrite(&dir.data()[0], 1, dir.data().size(), copy);
+                fclose(copy);
             }
-            fclose(copy);
+            else {
+                fprintf(stderr, "%s: failed to write to %s\n", 
+                        __PRETTY_FUNCTION__, tmp.c_str());
+            }
 
             if (0 == util::careful_rename(tmp, dirimage)) {
                 dirty = false;

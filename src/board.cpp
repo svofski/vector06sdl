@@ -24,11 +24,11 @@ Board::Board(Memory& _memory, IO& _io, PixelFiller& _filler, Soundnik& _snd,
   , soundnik(_snd)
   , tv(_tv)
   , tape_player(_tape_player)
+  , debug(_debug)
   , debugging(0)
   , debugger_interrupt(0)
-  , script_interrupt(false)
   , scripting(false)
-  , debug(_debug)
+  , script_interrupt(false)
 {
     this->inte = false;
 }
@@ -47,8 +47,8 @@ void Board::init_bootrom(const uint8_t* src, size_t size)
 #if !defined(_MSC_VER)
     std::vector<uint8_t> userboot = util::load_binfile(Options.bootromfile);
     if (userboot.size() > 0) {
-        printf("User bootrom: %s (%d bytes)\n", Options.bootromfile.c_str(),
-          (int)userboot.size());
+        printf("User bootrom: %s (%lu bytes)\n", Options.bootromfile.c_str(),
+          userboot.size());
         this->boot = userboot;
     } else
 #endif
@@ -57,15 +57,15 @@ void Board::init_bootrom(const uint8_t* src, size_t size)
         for (unsigned i = 0; i < size; ++i) {
             this->boot[i] = src[i];
         }
-        printf("init_bootrom: size=%d\n", this->boot.size());
+        printf("init_bootrom: size=%lu\n", this->boot.size());
     }
 }
 
 void Board::set_bootrom(const std::vector<uint8_t>& bootbytes)
 {
-    printf("Board::set_bootrom bootbytes.size()=%d\n", bootbytes.size());
+    printf("Board::set_bootrom bootbytes.size()=%lu\n", bootbytes.size());
     this->boot = bootbytes;
-    printf("Board::set_bootrom boot.size()=%d\n", boot.size());
+    printf("Board::set_bootrom boot.size()=%lu\n", boot.size());
 }
 
 void Board::reset(Board::ResetMode mode)
@@ -371,7 +371,7 @@ auto Board::read_stack(const size_t _len) const -> std::vector<uint16_t>
     auto sp = i8080_regs_sp();
     std::vector<uint16_t> out;
 
-    for (int i = 0; i < _len; i++) {
+    for (size_t i = 0; i < _len; i++) {
         uint16_t db_l = memory.get_byte(sp, true);
         sp = (sp + 1) & 0xffff;
         uint16_t db_h = memory.get_byte(sp, true);
@@ -386,7 +386,7 @@ auto Board::debug_read_executed_memory(uint16_t _addr, const size_t _len) const
 {
     std::vector<uint8_t> out;
 
-    for (int i = 0; i < _len; i++) {
+    for (size_t i = 0; i < _len; i++) {
         uint8_t db = memory.get_byte(_addr, false);
         _addr = (_addr + 1) & 0xffff;
         out.push_back(db);
@@ -663,7 +663,7 @@ std::string Board::remove_breakpoint(int type, int addr, int kind)
             Breakpoint needle(addr, kind);
             auto& v = this->breakpoints;
             v.erase(std::remove(v.begin(), v.end(), needle), v.end());
-            printf("deleted breakpoint @%04x, kind=%d, total %d\n", addr, kind,
+            printf("deleted breakpoint @%04x, kind=%d, total %lu\n", addr, kind,
               v.size());
         }
             return "OK";

@@ -2,7 +2,7 @@
 // MSC is only supported for godot so no need to read files
 #if !defined(_MSC_VER)
 
-#include <stdio.h>
+#include <cstdio>
 #include <time.h>
 #include <iostream>
 #include <string>
@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <sstream>
 #include <cstdio>
+#include <cerrno>
 
 namespace util {
 
@@ -29,7 +30,7 @@ std::string read_file(const std::string & filename)
         vsh.seekg(0, std::ios::beg);
         text.assign((std::istreambuf_iterator<char>(vsh)),
                 std::istreambuf_iterator<char>());
-    } 
+    }
     catch (...){
         printf("Failed to load %s\n", filename.c_str());
     }
@@ -102,7 +103,7 @@ std::vector<uint8_t> load_binfile(const std::string path_)
     return bin;
 }
 
-std::tuple<std::string,std::string,std::string> 
+std::tuple<std::string,std::string,std::string>
 split_path(const std::string & path)
 {
     std::string dir, stem, ext;
@@ -146,9 +147,16 @@ std::string tmpname(const std::string & basename)
         std::string name(basename + "$" + rndchars(6));
         FILE * f = std::fopen(name.c_str(), "r");
         if (f == nullptr) {
-            std::fclose(f);
-            return name;
+            // cannot open because no such file, this is good
+            if (errno == ENOENT) {
+                return name;
+            }
+            else {
+                break;
+            }
         }
+
+        std::fclose(f);
     }
     return basename + "$$$";
 }
@@ -162,7 +170,7 @@ void str_toupper(std::string & s)
 
 int careful_rename(std::string const& from, std::string const& to)
 {
-    int res = rename(from.c_str(), to.c_str()); 
+    int res = rename(from.c_str(), to.c_str());
     if (res != 0) {
         // windows can't rename if file exists, no atomic replace
         //printf("%s: cannot rename %s to %s (code %d)\n",

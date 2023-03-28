@@ -531,12 +531,10 @@ func save_state():
 
 func load_state():
 	var file = File.new()
-	if not file.file_exists("user://v06x.savestate"):
-		return false
-	
-	file.open("user://v06x.savestate", File.READ)
-	var buffer = file.get_buffer(file.get_len())
-	var res = v06x.RestoreState(buffer)
+	if file.file_exists("user://v06x.savestate"):
+		file.open("user://v06x.savestate", File.READ)
+		var buffer = file.get_buffer(file.get_len())
+		var res = v06x.RestoreState(buffer)
 
 	load_config()
 	debug_panel.load_debug()
@@ -580,26 +578,26 @@ func load_config():
 	var cfg = ConfigFile.new()
 	var err = cfg.load("user://v06x.settings")
 	if err == OK:
-		var dir = cfg.get_value("FileDialog", "current_dir")
+		var dir = cfg.get_value("FileDialog", "current_dir", loadedFileDir[DialogDevice.A])
 		if dir != null:
 			$FileDialog.current_dir = dir
 			loadedFileDir[DialogDevice.A] = dir
-		var path = cfg.get_value("FileDialog", "current_path")
+		var path = cfg.get_value("FileDialog", "current_path", loadedFilePath[DialogDevice.A])
 		if path != null:
 			$FileDialog.current_path = path
 			loadedFilePath[DialogDevice.A] = path
 
-		dir = cfg.get_value("FileDialog", "current_dir_b")
+		dir = cfg.get_value("FileDialog", "current_dir_b", loadedFileDir[DialogDevice.B])
 		if dir != null:
 			loadedFileDir[DialogDevice.B] = dir
-		path = cfg.get_value("FileDialog", "current_path_b")
+		path = cfg.get_value("FileDialog", "current_path_b", loadedFilePath[DialogDevice.B])
 		if path != null:
 			loadedFilePath[DialogDevice.B] = path
 
-		dir = cfg.get_value("FileDialog", "current_dir_boot")
+		dir = cfg.get_value("FileDialog", "current_dir_boot", loadedFileDir[DialogDevice.BOOT])
 		if dir != null:
 			loadedFileDir[DialogDevice.BOOT] = dir
-		path = cfg.get_value("FileDialog", "current_path_boot")
+		path = cfg.get_value("FileDialog", "current_path_boot", loadedFilePath[DialogDevice.BOOT])
 		if path != null:
 			loadedFilePath[DialogDevice.BOOT] = path
 			

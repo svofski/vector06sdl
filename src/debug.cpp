@@ -14,9 +14,9 @@ Debug::Debug(Memory* _memoryP)
   : mem_runs()
   , mem_reads()
   , mem_writes()
+  , trace_log()
   , memoryP(_memoryP)
   , wp_break(false)
-  , trace_log()
 {
     auto read_func = [this](const uint32_t _addr, const uint8_t _val,
                        const bool _is_opcode) {
@@ -235,7 +235,7 @@ size_t Debug::get_addr(
       (_end_addr - _before_addr_lines * CMD_BYTES_MAX) & 0xffff;
 #define MAX_ATTEMPTS 41
 
-    int lines = 0;
+    size_t lines = 0;
     int addr_diff_max = _before_addr_lines * CMD_BYTES_MAX + 1;
     size_t addr = start_addr & 0xffff;
 
@@ -271,7 +271,7 @@ auto Debug::get_disasm(const size_t _addr, const size_t _lines,
         return out;
 
     size_t addr = _addr;
-    auto pc = i8080cpu::i8080_pc();
+    auto pc = static_cast<size_t>(i8080cpu::i8080_pc());
     int lines = _lines;
 
     if (_before_addr_lines > 0) {
@@ -284,7 +284,7 @@ auto Debug::get_disasm(const size_t _addr, const size_t _lines,
 
             lines = _lines - _before_addr_lines;
 
-            for (int i = 0; i < _before_addr_lines; i++) {
+            for (size_t i = 0; i < _before_addr_lines; i++) {
                 if (addr == pc) {
                     out += ">";
                 } else {
@@ -392,8 +392,6 @@ void Debug::serialize(std::vector<uint8_t>& to)
 
 void Debug::deserialize(std::vector<uint8_t>::iterator it, size_t size)
 {
-    auto begin = it;
-
     auto mem_runs_p = reinterpret_cast<uint8_t*>(mem_runs);
     auto mem_reads_p = reinterpret_cast<uint8_t*>(mem_reads);
     auto mem_writes_p = reinterpret_cast<uint8_t*>(mem_writes);
@@ -493,7 +491,7 @@ bool Debug::check_watchpoint(const Watchpoint::Access _access,
     if (out) {
         auto byte_l = memoryP->get_byte(_global_addr & 0xffff, false);
         auto byte_h = memoryP->get_byte((_global_addr + 1) & 0xffff, false);
-        std::printf("wp break = true. addr: 0x%05x, word: 0x%02x \n",
+        std::printf("wp break = true. addr: 0x%05lx, word: 0x%02x \n",
           _global_addr, byte_l | byte_h << 8);
     }
     return out;
@@ -530,8 +528,8 @@ bool Debug::check_break()
 
 void Debug::trace_log_update(const size_t _global_addr, const uint8_t _val)
 {
-    auto last_global_addr = trace_log[trace_log_idx].global_addr;
-    auto last_opcode = trace_log[trace_log_idx].opcode;
+    //auto last_global_addr = trace_log[trace_log_idx].global_addr;
+    //auto last_opcode = trace_log[trace_log_idx].opcode;
 
     trace_log_idx = (trace_log_idx - 1) % TRACE_LOG_SIZE;
     trace_log[trace_log_idx].global_addr = _global_addr;
@@ -628,7 +626,7 @@ auto Debug::get_trace_log(
 
     std::string out;
 
-    for (int i = 0; i < offset; i++) {
+    for (size_t i = 0; i < offset; i++) {
         trace_log_idx_view_offset =
           trace_log_next_line(trace_log_idx_view_offset, _offset < 0, filter);
     }
@@ -747,7 +745,7 @@ auto Debug::Breakpoint::check() const -> const bool
 
 void Debug::Breakpoint::print() const
 {
-    std::printf("0x%06x, active: %d \n", global_addr, active);
+    std::printf("0x%06lx, active: %d \n", global_addr, active);
 }
 
 auto Debug::Watchpoint::is_active() const -> const bool
@@ -763,7 +761,7 @@ auto Debug::Watchpoint::check(const Watchpoint::Access _access,
     if (access != Access::RW && access != _access)
         return false;
 
-    if (break_l & (value_size == VAL_BYTE_SIZE | break_h))
+    if (break_l && (value_size == VAL_BYTE_SIZE || break_h))
         return true;
 
     bool* break_p;
@@ -803,7 +801,7 @@ auto Debug::Watchpoint::check(const Watchpoint::Access _access,
             return false;
     };
 
-    return break_l & (value_size == VAL_BYTE_SIZE | break_h);
+    return break_l && (value_size == VAL_BYTE_SIZE || break_h);
 }
 
 auto Debug::Watchpoint::get_global_addr() const -> const size_t
@@ -814,7 +812,7 @@ auto Debug::Watchpoint::get_global_addr() const -> const size_t
 auto Debug::Watchpoint::check_addr(const size_t _global_addr) const -> const
   bool
 {
-    return _global_addr == global_addr |
+    return _global_addr == global_addr ||
            (_global_addr == global_addr + 1 && value_size == VAL_WORD_SIZE);
 }
 
@@ -826,7 +824,7 @@ void Debug::Watchpoint::reset()
 
 void Debug::Watchpoint::print() const
 {
-    std::printf("0x%05x, access: %s, cond: %s, value: 0x%04x, value_size: %d, "
+    std::printf("0x%05lx, access: %s, cond: %s, value: 0x%04x, value_size: %ld, "
                 "active: %d \n",
       global_addr, access_s[static_cast<size_t>(access)],
       conditions_s[static_cast<size_t>(cond)], value, value_size, active);
