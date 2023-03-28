@@ -1,8 +1,9 @@
 #pragma once
 
 #include <inttypes.h>
-#include <string.h>
-#include <stdio.h>
+#include <cstring>
+#include <cstdio>
+#include <array>
 #include <vector>
 #include <functional>
 
