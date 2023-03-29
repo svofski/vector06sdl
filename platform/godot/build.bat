@@ -1,1 +1,1 @@
-scons platform=nuwen-mingw64
+rem unsupported scons platform=nuwen-mingw64
