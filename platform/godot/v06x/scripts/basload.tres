@@ -70,7 +70,7 @@ def on_load_file_dialog_result(path)
 
 // first intercept of load byte
 def open_load_dialog(dummy) {
-    if (ignore_frames == 0) {
+    if (ignore_frames == 0 && check_signature(0x2b05, signature_2b05)) {
         puts("open_load_dialog called")
         open_file_dialog("", "read")
         // will pause in script break until resumed by SetFileDialogResult

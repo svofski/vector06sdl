@@ -51,13 +51,17 @@ if env['platform'] == "osx":
         env.Append(CCFLAGS = ['-g','-O3'])
         env.Append(CCFLAGS = ['-arch', 'x86_64', '-arch', 'arm64'])
         env.Append(LINKFLAGS = ['-arch', 'x86_64', '-arch', 'arm64'])
+        env.Append(LINKFLAGS = ['-s']) # strip binary in release version
 
 elif env['platform'] in ('x11', 'linux'):
     env['target_path'] += 'x11/'
     if env['target'] in ('debug', 'd'):
-        env.Append(CCFLAGS = ['-fPIC', '-g3','-Og', '-std=c++17'])
+        env.Append(CXXFLAGS = ['-std=c++17'])
+        env.Append(CCFLAGS = ['-fPIC', '-g3','-Og'])
     else:
-        env.Append(CCFLAGS = ['-fPIC', '-g','-O3', '-std=c++17'])
+        env.Append(CXXFLAGS = ['-std=c++17'])
+        env.Append(CCFLAGS = ['-fPIC', '-g','-O3'])
+        env.Append(LINKFLAGS = ['-s']) # strip binary in release version
 
 elif env['platform'] == "windows":
     env['target_path'] += 'win64/'
@@ -108,11 +112,14 @@ elif env['platform'] == "cross-mingw64":
     env.Append(ENV = os.environ)
 
     if env['target'] in ('debug', 'd'):
+        env.Append(CXXFLAGS = ['-std=c++17'])
         env.Append(CCFLAGS = ['-DWITHOUT_COREDSP=1']) 
-        env.Append(CCFLAGS = ['-fPIC', '-g3','-Og', '-std=c++17'])
+        env.Append(CCFLAGS = ['-fPIC', '-g3','-Og'])
     else:
-        env.Append(CCFLAGS = ['-fPIC', '-g','-O3', '-std=c++17'])
+        env.Append(CXXFLAGS = ['-std=c++17'])
+        env.Append(CCFLAGS = ['-fPIC', '-g','-O3'])
         env.Append(CCFLAGS = ['-DWITHOUT_COREDSP=1']) # scalar implementation of fir is fine, at least on desktop
+        env.Append(LINKFLAGS = ['-s']) # strip binary in release version
 
     env['SHLIBSUFFIX'] = '.dll'
 
