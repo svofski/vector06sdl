@@ -303,7 +303,6 @@ visible = false
 [connection signal="gui_input" from="." to="." method="_on_main_gui_input"]
 [connection signal="dir_selected" from="FileDialog" to="." method="_on_FileDialog_dir_selected"]
 [connection signal="file_selected" from="FileDialog" to="." method="_on_FileDialog_file_selected"]
-[connection signal="modal_closed" from="FileDialog" to="." method="_on_FileDialog_modal_closed"]
 [connection signal="popup_hide" from="FileDialog" to="." method="_on_FileDialog_popup_hide"]
 [connection signal="aspect_ratio_selected" from="shader_select_panel" to="." method="_on_aspect_ratio_selected"]
 [connection signal="pixel_scale_selected" from="shader_select_panel" to="." method="_on_pixel_scale_selected"]

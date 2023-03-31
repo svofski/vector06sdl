@@ -7,6 +7,8 @@ global basfile
 
 global signature_2b05 = [0xc5, 0xd5, 0x0e, 0x00, 0x57, 0xdb, 0x01]
 
+global SYNC = 0xe6
+
 class BufferStream {
     var buffer
     var next
@@ -22,16 +24,27 @@ class BufferStream {
         return this
     }
 
+    // sync & 0x80 -> wait until 0xe6 (and skip it)
     def nextbyte(sync) {
         var b = sync
-        if (this.index < this.buffer.size()) {
+        while (this.index < this.buffer.size()) {
             b = this.buffer[this.index]
             ++this.index
 
-            if (this.index == this.buffer.size()) {
-                this.onfinished(this.next)
+            if ((sync & 0x80) != 0 && this.index > 1) {
+                if (b == SYNC) {
+                    // sync found, continue to return following byte
+                    sync = 0
+                }
+                continue
             }
+            break
         }
+
+        if (this.index >= this.buffer.size()) {
+            this.onfinished(this.next)
+        }
+
         return b
     }
 
@@ -128,7 +141,7 @@ def breakfunc(dummy)
 {
     if (check_signature(0x2b05, signature_2b05)) {
         var a = read_register("a")
-        
+
         // return next byte in A
         set_register("a", basfile.nextbyte(a))
         

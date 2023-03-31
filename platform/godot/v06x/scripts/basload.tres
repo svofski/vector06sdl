@@ -31,7 +31,7 @@ def load_cas(path) {
             attach_bas25_hook()
 
             basfile = BufferStream(contents)
-            print("load_cas: size=" + to_string(contents.size()))
+            puts("load_cas: size=" + to_string(contents.size()))
             basfile.next = 1
             basfile.onfinished = 
                 fun(next) {
@@ -41,7 +41,7 @@ def load_cas(path) {
                 }
         }
         else {
-            pust("load_cas: failed to load CAS " + to_string(path))
+            puts("load_cas: failed to load CAS " + to_string(path))
             ignore_frames = 100
         }
     } catch(e) {
