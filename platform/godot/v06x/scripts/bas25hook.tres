@@ -82,6 +82,11 @@ def BASFile(name)
     cas.push_back(0)
     cas.push_back(0)
 
+    for (var i = 0; i < 256; ++i) {
+        cas.push_back(0x55)
+    }
+    cas.push_back(0xe6)
+
     cas.push_back(0xd3)
     cas.push_back(0xd3)
     cas.push_back(0xd3)
@@ -147,7 +152,7 @@ def check_signature(pc, signature)
 def hook_2b05()
 {
     if (!basfile_loaded) {
-        puts("hook_2b05: basfile == null")
+        puts("hook_2b05: basfile_loaded == false")
         if (!on_first_load_byte.is_var_null()) {
             puts("hook_2b05: on_first_load_byte != null")
             on_first_load_byte()

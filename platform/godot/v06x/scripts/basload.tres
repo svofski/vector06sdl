@@ -9,6 +9,7 @@ def load_bas(path) {
                     basfile_loaded = false
                 }
             basfile_loaded = true
+            puts("load_bas: basfile loaded")
         }
         else {
             puts("load_bas: failed to load BAS " + to_string(path))
@@ -31,6 +32,7 @@ def load_cas(path) {
                     basfile_loaded = false
                 }
             basfile_loaded = true
+            puts("load_cas: casfile loaded")
         }
         else {
             puts("load_cas: failed to load CAS " + to_string(path))
