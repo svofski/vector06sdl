@@ -244,7 +244,7 @@ func _on_load_asset_pressed(which: int):
 	elif dialog_device == DialogDevice.BOOT:
 		$FileDialog.filters = ["*.bin"]
 	elif dialog_device == DialogDevice.BASHOOK:
-		$FileDialog.filters = ["*.cas,*.bas,*.asc,*.bin"]
+		$FileDialog.filters = ["*.cas,*.bas,*.asc,*.bin,*.wav"]
 	$FileDialog.popup()
 
 func update_debugger_size():
@@ -366,7 +366,12 @@ func load_file(dev: int, path: String) -> bool:
 		file_path[dev] = path
 
 		if dev == DialogDevice.BASHOOK:
-			v06x.SetFileDialogResult(path)
+			# WAV is loaded via core LoadAsset
+			if korg[0] in [WAV]: 
+				v06x.SetFileDialogResult("") # to let the script continue as if no file was chosen
+				v06x.LoadAsset(content, korg[0], korg[1])
+			else:
+				v06x.SetFileDialogResult(path)
 		elif dev == DialogDevice.BOOT && file_kind[dev][0] == BIN:
 			v06x.InsertBootROM(content)
 		elif file_kind[dev][0] == FDD:
@@ -376,7 +381,7 @@ func load_file(dev: int, path: String) -> bool:
 		elif file_kind[dev][0] == ASC:
 			script_ascload(path)
 		else:
-			v06x.LoadAsset(content, korg[0], korg[1])
+			v06x.LoadAsset(content, korg[0], korg[1]) # LoadAsset(data, kind, org)
 		update_load_asses()
 		return korg[2]
 	else:
@@ -390,6 +395,7 @@ func load_file(dev: int, path: String) -> bool:
 
 func _on_FileDialog_file_selected(path: String):
 	print("File selected: ", path)
+	
 	loadedFilePath[dialog_device] = path
 	loadedFileDir[dialog_device] = $FileDialog.current_dir
 	nice_tooltip.showTooltip(loadass[dialog_device].rect_global_position, 
@@ -548,6 +554,8 @@ func save_config():
 	cfg.set_value("FileDialog", "current_path_b", loadedFilePath[DialogDevice.B])
 	cfg.set_value("FileDialog", "current_dir_boot", loadedFileDir[DialogDevice.BOOT])
 	cfg.set_value("FileDialog", "current_path_boot", loadedFilePath[DialogDevice.BOOT])
+	cfg.set_value("FileDialog", "current_dir_bashook", loadedFileDir[DialogDevice.BASHOOK])
+	cfg.set_value("FileDialog", "current_path_bashook", loadedFilePath[DialogDevice.BASHOOK])
 	cfg.set_value("asset0", "file", file_path[DialogDevice.A])
 	cfg.set_value("asset0", "kind", file_kind[DialogDevice.A][0])
 	cfg.set_value("asset0", "org", file_kind[DialogDevice.A][1])
@@ -600,7 +608,14 @@ func load_config():
 		path = cfg.get_value("FileDialog", "current_path_boot", loadedFilePath[DialogDevice.BOOT])
 		if path != null:
 			loadedFilePath[DialogDevice.BOOT] = path
-			
+
+		dir = cfg.get_value("FileDialog", "current_dir_bashook", loadedFileDir[DialogDevice.BASHOOK])
+		if dir != null:
+			loadedFileDir[DialogDevice.BASHOOK] = dir
+		path = cfg.get_value("FileDialog", "current_path_bashook", loadedFilePath[DialogDevice.BASHOOK])
+		if path != null:
+			loadedFilePath[DialogDevice.BASHOOK] = path
+
 		shader_index = cfg.get_value("shader", "index", 0)
 		_on_shader_selected(shader_index)
 		

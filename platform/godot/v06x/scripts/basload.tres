@@ -1,22 +1,17 @@
-global ignore_frames = 0
-
 def load_bas(path) {
     try {
-        basfile = BASFile(path)
+        basfile := BASFile(path)
         if (basfile.size() > 0) {
-            /* Прицепляем перехватчик вызова загрузки байта */
-            attach_bas25_hook()
             basfile.next = 1
             basfile.onfinished =
-            fun(next) {
-                //detach_bas25_hook()
-                //finalize()
-                attach_expect_hook()
-            }
+                fun(next) {
+                    puts("load_bas finished")
+                    basfile_loaded = false
+                }
+            basfile_loaded = true
         }
         else {
             puts("load_bas: failed to load BAS " + to_string(path))
-            ignore_frames = 100
         }
     } catch(e) {
         puts("load_bas: error loading " + path + ": " + e.what());
@@ -27,25 +22,21 @@ def load_cas(path) {
     try {
         var contents = read_file(path)
         if (contents.size() > 0) {
-            /* Прицепляем перехватчик вызова загрузки байта */
-            attach_bas25_hook()
-
-            basfile = BufferStream(contents)
+            basfile := BufferStream(contents)
             puts("load_cas: size=" + to_string(contents.size()))
             basfile.next = 1
             basfile.onfinished = 
                 fun(next) {
-                    //detach_bas25_hook()
-                    //finalize()
-                    attach_expect_hook()
+                    puts("load_cas finished")
+                    basfile_loaded = false
                 }
+            basfile_loaded = true
         }
         else {
             puts("load_cas: failed to load CAS " + to_string(path))
-            ignore_frames = 100
         }
     } catch(e) {
-        puts("load_bas: error loading " + path + ": " + e.what());
+        puts("load_cas: error loading " + path + ": " + e.what());
     }
 }
 
@@ -62,31 +53,26 @@ def on_load_file_dialog_result(path)
         load_cas(path)
     }
     else {
+        puts("will try to assign basfile")
+        basfile := BufferStream([])
+        puts("did it work?")
+        basfile_loaded = true // set it to true to prevent dialog spam
         puts("on_load_file_dialog_result: unknown file type ignored")
-        ignore_frames = 100
     }
     script_continue()
 }
 
 // first intercept of load byte
-def open_load_dialog(dummy) {
-    if (ignore_frames == 0 && check_signature(0x2b05, signature_2b05)) {
-        puts("open_load_dialog called")
-        open_file_dialog("", "read")
-        // will pause in script break until resumed by SetFileDialogResult
-        add_callback_string("on_file_dialog_result", on_load_file_dialog_result)
-    }
-    else {
-        script_continue()
-    }
+def open_load_dialog() {
+    puts("open_load_dialog called")
+    open_file_dialog("", "read")
+    // will pause in script break until resumed by SetFileDialogResult
+    add_callback_string("on_file_dialog_result", on_load_file_dialog_result)
 }
 
 /* Эта функция выполняется каждый кадр, callback "frame" */
 def framefunc(frameno) {
     keytyper.onframe()  // дать роботу-машинисту сделать свое дело
-    if (ignore_frames > 0) {
-      --ignore_frames;
-    }
 }
 
 /* Зарегистрировать кадровый колбек */
@@ -97,20 +83,15 @@ def ends_with(str, tail)
     return str.rfind(tail) == str.size() - tail.size()
 }
 
-def attach_expect_hook()
-{
-    // open file dialog on hook
-    insert_breakpoint(0, 0x2b05, 1) // load byte (see also 0xfb74 for load file)
-    add_callback("breakpoint", open_load_dialog)
-    script_attached()
-    script_continue()
-    puts("added load callback to open_load_dialog")
-}
-
+// TODO: instead of reloading the script, have a call from gdscript to here
+// e.g. v06x.CallScriptFunc(...) 
 if (scriptargs.size() < 1) {
-    attach_expect_hook()
+    on_first_load_byte = open_load_dialog
+    attach_bas25_hook()
 }
 else {
+    attach_bas25_hook()
+
     /* Подгружаем первый файл */
     var file = scriptargs[0]
     if (ends_with(file.toUpperCase(), ".BAS")) {

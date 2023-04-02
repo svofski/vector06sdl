@@ -162,7 +162,7 @@ margin_bottom = 250.0
 custom_styles/panel = SubResource( 37 )
 
 [node name="HomeLabel" type="Label" parent="HUD"]
-margin_left = 170.0
+margin_left = 341.0
 margin_top = 231.0
 margin_right = 782.0
 margin_bottom = 244.0

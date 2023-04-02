@@ -5,7 +5,9 @@
 
 global basfile
 
-global signature_2b05 = [0xc5, 0xd5, 0x0e, 0x00, 0x57, 0xdb, 0x01]
+global basfile_loaded = false
+
+global on_first_load_byte
 
 global SYNC = 0xe6
 
@@ -26,6 +28,10 @@ class BufferStream {
 
     // sync & 0x80 -> wait until 0xe6 (and skip it)
     def nextbyte(sync) {
+        if (this.buffer.size() == 0) {
+            return 0  // null buffer stream
+        }
+
         var b = sync
         while (this.index < this.buffer.size()) {
             b = this.buffer[this.index]
@@ -137,9 +143,23 @@ def check_signature(pc, signature)
     return true
 }
 
-def breakfunc(dummy)
+// read byte
+def hook_2b05()
 {
-    if (check_signature(0x2b05, signature_2b05)) {
+    if (!basfile_loaded) {
+        puts("hook_2b05: basfile == null")
+        if (!on_first_load_byte.is_var_null()) {
+            puts("hook_2b05: on_first_load_byte != null")
+            on_first_load_byte()
+            return
+        }
+    }
+
+    // basfile_loaded but zero size --> wav file being played
+    if (basfile_loaded && basfile.size() == 0) {
+        script_continue()
+    }
+    else {
         var a = read_register("a")
 
         // return next byte in A
@@ -148,20 +168,73 @@ def breakfunc(dummy)
         // return to the caller
         exit_intercept()
     }
-    else {
-        script_continue()
+}
+
+// write byte
+def hook_2b60()
+{
+    var a = read_register("a")
+    puts("write_byte: " + to_string(a))
+    exit_intercept()
+}
+
+// (not really) close file
+def hook_2b8e()
+{
+    puts("close file")
+    basfile_loaded = false
+    script_continue()
+}
+
+// called when the core finishes wav playback
+def wavloaded_func(dummy)
+{
+    puts("wavloaded hook")
+    basfile_loaded = false
+    script_continue()
+}
+
+// basic read byte 0x2b05
+global signature_2b05 = [0xc5, 0xd5, 0x0e, 0x00, 0x57, 0xdb, 0x01]
+
+// basic close file 0x2b8e
+global signature_2b8e = [0xc5, 0x06, 0x00, 0x3a, 0x20, 0x3c]
+
+// basic write byte 0x2b60
+global signature_2b60 = [0xc5, 0xd5, 0xf5, 0x57, 0x0e, 0x08]
+
+global hooks = [to_string(0x2b05): [signature_2b05, hook_2b05],
+             to_string(0x2b60): [signature_2b60, hook_2b60],
+             to_string(0x2b8e): [signature_2b8e, hook_2b8e]]
+
+def breakfunc(dummy)
+{
+    var pc = read_register("pc")
+    var key = to_string(pc)
+    if (hooks.count(key) > 0) {
+        var hook = hooks[key]
+        if (check_signature(pc, hook[0])) {
+            hook[1]()
+        }
+        else {
+            script_continue()
+        }
     }
 }
 
 def attach_bas25_hook() {
-    insert_breakpoint(0, 0x2b05, 1) // load byte (see also 0xfb74 for load file)
+    //insert_breakpoint(0, 0x2b05, 1) // load byte (see also 0xfb74 for load file)
+    for (kv : hooks) {
+        insert_breakpoint(0, to_int(kv.first()), 1)
+    }
     add_callback("breakpoint", breakfunc)
+    add_callback("wavloaded", wavloaded_func)
     script_attached()
     script_continue()
 }
 
 def detach_bas25_hook() {
-    remove_breakpoint(0, 0x2b05, 1)
+    //remove_breakpoint(0, 0x2b05, 1)
     script_detached()
 }
 
