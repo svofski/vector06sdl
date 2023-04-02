@@ -38,6 +38,9 @@ onready var nice_tooltip = find_node("NiceTooltip")
 onready var loadass = [find_node("LoadAss2"), find_node("LoadAss3"), find_node("LoadAssBoot"), find_node("LoadAssBashook")]
 onready var debug_panel = find_node("debug_panel")
 
+onready var about_label = find_node("HomeLabel")
+onready var about_label_fancy_material = about_label.material
+
 onready var tape_texture = loadass[0].texture
 onready var floppy_texture = loadass[1].texture
 onready var tape_size = loadass[0].rect_size
@@ -74,6 +77,9 @@ var about_box_open = false # true when we're showing an about demo
 
 var emulator_in_coma = false # emulator is paused waiting for FileDialog
 var ftl_mode = false
+
+const ABOUT_LABEL_DEFAULT_COLOR: Color = Color(0, 0, 0, 0.5)
+const ABOUT_LABEL_HAPPY_COLOR: Color = Color(1, 1, 1, 1)
 
 func updateTexture(buttmap : PoolByteArray):
 	if textureImage == null:
@@ -161,6 +167,8 @@ func _ready():
 	nice_tooltip.enabled = true
 	
 	install_basic_hooks() # generic basic hooks
+	
+	about_label.material = null # undemanding default material
 
 func _notification(what):
 	if what == MainLoop.NOTIFICATION_WM_QUIT_REQUEST:
@@ -504,12 +512,14 @@ func _on_click_timer():
 		hide_hud_panel()
 	else:
 		hud_panel.visible = true
+		about_label_make_boring()
 		call_deferred("_on_size_changed")
 
 func hide_hud_panel():
 	shader_select_panel.visible = false
 	hud_panel.visible = false
 	hud_panel.rect_position.y = get_viewport_rect().size.y
+	about_label_make_boring()
 	call_deferred("_on_size_changed")
 
 func _on_main_gui_input(event):
@@ -772,6 +782,14 @@ func _bowser_calm():
 #
 # About
 #
+func about_label_make_boring():
+	about_label.modulate = ABOUT_LABEL_DEFAULT_COLOR
+	about_label.material = null
+
+func about_label_make_happy():
+	about_label.modulate = ABOUT_LABEL_HAPPY_COLOR
+	about_label.material = about_label_fancy_material
+
 func _on_HomeLabel_gui_input(event):
 	if event is InputEventMouseButton and event.pressed and event.button_index == BUTTON_LEFT:
 		hide_hud_panel()
@@ -782,6 +800,12 @@ func _on_HomeLabel_gui_input(event):
 			var intro = file.get_buffer(file.get_len())
 			v06x.LoadAsset(intro, ROM, 256)
 			v06x.Reset(false)
+
+func _on_HomeLabel_mouse_entered():
+	about_label_make_happy()
+
+func _on_HomeLabel_mouse_exited():
+	about_label_make_boring()
 
 func about_box_end():
 	about_box_open = false
@@ -906,3 +930,5 @@ func debug_get_trace_log(offset, lines, filter):
 	
 func debug_set_labels(labels):
 	return v06x.debug_set_labels(labels)
+
+

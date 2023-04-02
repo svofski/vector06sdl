@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=2]
+[gd_scene load_steps=35 format=2]
 
 [ext_resource path="res://main.gd" type="Script" id=1]
 [ext_resource path="res://theme.theme" type="Theme" id=2]
@@ -40,9 +40,34 @@ bg_color = Color( 0.627451, 0.611765, 0.6, 1 )
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 
-[sub_resource type="DynamicFont" id=38]
-size = 10
-font_data = ExtResource( 7 )
+[sub_resource type="Shader" id=48]
+code = "shader_type canvas_item;
+
+const float PI = 3.1415926535;
+
+uniform float power: hint_range(0., 100.) = 20.0;
+uniform float speed: hint_range(0., 10.) = 0.5;
+
+void fragment() {
+	vec4 color = texture(TEXTURE, UV);
+	float b = sin(mod(0.001 * FRAGCOORD.x - TIME * speed, PI));
+	b = pow(b, power);
+	vec3 r = vec3(b, b, b);
+	COLOR = vec4(r, color.a);
+}"
+
+[sub_resource type="ShaderMaterial" id=47]
+shader = SubResource( 48 )
+shader_param/power = 70.0
+shader_param/speed = 0.878
+
+[sub_resource type="DynamicFontData" id=49]
+font_path = "res://assets/Monoid-Regular.ttf"
+
+[sub_resource type="DynamicFont" id=50]
+size = 8
+extra_spacing_space = -2
+font_data = SubResource( 49 )
 
 [sub_resource type="DynamicFont" id=39]
 size = 12
@@ -162,13 +187,15 @@ margin_bottom = 250.0
 custom_styles/panel = SubResource( 37 )
 
 [node name="HomeLabel" type="Label" parent="HUD"]
-margin_left = 341.0
+modulate = Color( 0, 0, 0, 0.596078 )
+material = SubResource( 47 )
+margin_left = 397.0
 margin_top = 231.0
 margin_right = 782.0
 margin_bottom = 244.0
 mouse_filter = 0
 custom_colors/font_color = Color( 0, 0, 0, 1 )
-custom_fonts/font = SubResource( 38 )
+custom_fonts/font = SubResource( 50 )
 text = "v06x by svofski | debugger by parallelno  https://github.com/svofski/v06x"
 align = 2
 
@@ -308,6 +335,8 @@ visible = false
 [connection signal="pixel_scale_selected" from="shader_select_panel" to="." method="_on_pixel_scale_selected"]
 [connection signal="selected" from="shader_select_panel" to="." method="_on_shader_selected"]
 [connection signal="gui_input" from="HUD/HomeLabel" to="." method="_on_HomeLabel_gui_input"]
+[connection signal="mouse_entered" from="HUD/HomeLabel" to="." method="_on_HomeLabel_mouse_entered"]
+[connection signal="mouse_exited" from="HUD/HomeLabel" to="." method="_on_HomeLabel_mouse_exited"]
 [connection signal="long_hover" from="HUD/ScopePanel" to="." method="_on_ScopePanel_long_hover"]
 [connection signal="pressed" from="HUD/ScopePanel" to="." method="_on_ScopePanel_pressed"]
 [connection signal="pressed" from="HUD/ShaderSelectButton" to="." method="_on_shaderselect_pressed"]
