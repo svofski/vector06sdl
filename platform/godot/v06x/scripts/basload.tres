@@ -64,12 +64,34 @@ def on_load_file_dialog_result(path)
     script_continue()
 }
 
+def on_save_file_dialog_result(path)
+{
+    puts("on_save_file_dialog_result: path=" + path)
+    cas_write_stream := VectorInt()
+    cas_write_path = path
+    if (ends_with(path.toUpperCase(), ".CAS")) {
+        cas_write_mode = 1    // intercept
+    }
+    else {
+        cas_write_mode = 2    // ignore in the hook
+        start_wav_recording(path)
+    }
+    script_continue()
+}
+
 // first intercept of load byte
 def open_load_dialog() {
     puts("open_load_dialog called")
     open_file_dialog("", "read")
     // will pause in script break until resumed by SetFileDialogResult
     add_callback_string("on_file_dialog_result", on_load_file_dialog_result)
+}
+
+def open_save_dialog() {
+    puts("open_save_dialog called")
+    open_file_dialog("", "write")
+    // will pause in script break until resumed by SetFileDialogResult
+    add_callback_string("on_file_dialog_result", on_save_file_dialog_result)
 }
 
 /* Эта функция выполняется каждый кадр, callback "frame" */
@@ -89,6 +111,7 @@ def ends_with(str, tail)
 // e.g. v06x.CallScriptFunc(...) 
 if (scriptargs.size() < 1) {
     on_first_load_byte = open_load_dialog
+    on_first_save_byte = open_save_dialog
     attach_bas25_hook()
 }
 else {

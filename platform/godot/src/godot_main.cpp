@@ -45,6 +45,8 @@ Emulator lator(board);
 Scriptnik* scriptnik = nullptr;
 void bootstrap_scriptnik();
 
+WavRecorder wav_recorder;
+
 // bool scriptnik_bootstrapped = false;
 
 struct LoadKind
@@ -89,16 +91,8 @@ void install_ruslat_handler(v06x_user_data* v)
 godot_variant V06X_Init(godot_object* p_instance, void* p_method_data,
   void* p_user_data, int p_num_args, godot_variant** p_args)
 {
-    WavRecorder rec;
-    WavRecorder* prec = 0;
-
-    if (Options.audio_rec_path.length()) {
-        rec.init(Options.audio_rec_path);
-        prec = &rec;
-    }
-
     filler.init();
-    soundnik.init(prec); // this may switch the audio output off
+    soundnik.init(nullptr); // no recording from the callback recorder
     tv.init();
     board.init();
     fdc.init();
@@ -226,6 +220,10 @@ godot_variant V06X_GetSound(godot_object* p_instance, void* p_method_data,
 
     lator.export_audio_frame(
       reinterpret_cast<float*>(wrptr), (size_t)nsamples * 2);
+
+    if (wav_recorder.recording()) {
+        wav_recorder.record_buffer(reinterpret_cast<float*>(wrptr), nsamples * 2);
+    }
 
     api->godot_pool_vector2_array_write_access_destroy(wraccess);
 
@@ -1068,6 +1066,14 @@ void bootstrap_scriptnik()
             // load_wav(wav, filename);
             throw "load_wav not implemented";
             return 0;
+        };
+
+        scriptnik->start_wav_recording = [](const std::string& path) {
+            wav_recorder.init(path);
+        };
+
+        scriptnik->stop_wav_recording = []() {
+            wav_recorder.close();
         };
 
         board.hooks.frame =

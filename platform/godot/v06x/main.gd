@@ -242,7 +242,7 @@ func _on_files_dropped(files: PoolStringArray, screen: int):
 
 func _on_load_asset_pressed(which: int):
 	var titles = ["Select ROM image, WAV file, floppy A: image, or directory", "Select floppy B: image or directory", "Boot ROM image",
-		".CAS, .BAS or .BIN file"]
+		"Load .CAS, .BAS or .BIN file"]
 	dialog_device = which
 	$FileDialog.current_dir = loadedFileDir[dialog_device]
 	$FileDialog.window_title = titles[dialog_device]
@@ -252,8 +252,24 @@ func _on_load_asset_pressed(which: int):
 	elif dialog_device == DialogDevice.BOOT:
 		$FileDialog.filters = ["*.bin"]
 	elif dialog_device == DialogDevice.BASHOOK:
-		$FileDialog.filters = ["*.cas,*.bas,*.asc,*.bin,*.wav"]
+		$FileDialog.filters = ["*.cas,*.bas,*.asc,*.wav"]
+	$FileDialog.mode = FileDialog.MODE_LOAD_ANY
 	$FileDialog.popup()
+
+func _on_save_asset_pressed(which: int):
+	var titles = ["", "", "", "Save as .CAS or .WAV"]	
+	dialog_device = which
+	
+	if dialog_device != DialogDevice.BASHOOK:
+		_on_FileDialog_popup_hide()
+		return
+	
+	$FileDialog.current_dir = loadedFileDir[dialog_device]
+	$FileDialog.window_title = titles[dialog_device]
+	$FileDialog.filters = ["*.cas", "*.wav"]
+	$FileDialog.mode = FileDialog.MODE_SAVE_FILE
+	$FileDialog.popup()
+	
 
 func update_debugger_size():
 	var vert_available_size = hud_panel.rect_position.y
@@ -403,12 +419,15 @@ func load_file(dev: int, path: String) -> bool:
 
 func _on_FileDialog_file_selected(path: String):
 	print("File selected: ", path)
-	
+		
 	loadedFilePath[dialog_device] = path
 	loadedFileDir[dialog_device] = $FileDialog.current_dir
 	nice_tooltip.showTooltip(loadass[dialog_device].rect_global_position, 
 		path.get_file())
-	if load_file(dialog_device, path):
+		
+	if $FileDialog.mode == FileDialog.MODE_SAVE_FILE:
+		v06x.SetFileDialogResult(path)
+	elif load_file(dialog_device, path):
 		v06x.Reset(false)
 	emulator_coma_exit()
 	
@@ -432,7 +451,10 @@ func script_check_file_dialog():
 		# it will come out of coma either by _on_FileDialog_file_selected, or by _on_FileDialog_popup_hide
 		emulator_in_coma = true
 		osk_panel.all_keys_up()
-		_on_load_asset_pressed(3)
+		if mode == "read":
+			_on_load_asset_pressed(DialogDevice.BASHOOK)
+		elif mode == "write":
+			_on_save_asset_pressed(DialogDevice.BASHOOK)
 
 func reload_file():
 	if load_file(dialog_device, loadedFilePath[dialog_device]):

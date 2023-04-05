@@ -8,6 +8,11 @@ global basfile
 global basfile_loaded = false
 
 global on_first_load_byte
+global on_first_save_byte
+
+global cas_write_stream
+global cas_write_mode = 0 // 0 = off, 1 = write to vector, 2 = ignore (wav)
+global cas_write_path
 
 global SYNC = 0xe6
 
@@ -178,9 +183,23 @@ def hook_2b05()
 // write byte
 def hook_2b60()
 {
-    var a = read_register("a")
-    puts("write_byte: " + to_string(a))
-    exit_intercept()
+    if (cas_write_mode == 0) {
+        puts("hook_2b60: no file")
+        if (!on_first_save_byte.is_var_null()) {
+            on_first_save_byte()
+            return // freeze until dialog closes
+        }
+    }
+
+    if (cas_write_mode == 1) {
+        var a = read_register("a")
+        //puts("write_byte: " + to_string(a))
+        cas_write_stream.push_back(a & 0xff)
+        exit_intercept()
+    }
+    else {
+        script_continue() // wav playback, no intercept
+    }
 }
 
 // (not really) close file
@@ -188,6 +207,14 @@ def hook_2b8e()
 {
     puts("close file")
     basfile_loaded = false
+    if (cas_write_mode == 1 && cas_write_stream.size() > 0) {
+        puts("have cas_write_stream to offload, size=" + to_string(cas_write_stream.size()))
+        write_file(cas_write_path, cas_write_stream)
+    }
+    else if (cas_write_mode == 2) {
+        stop_wav_recording()
+    }
+    cas_write_mode = 0
     script_continue()
 }
 

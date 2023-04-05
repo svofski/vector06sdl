@@ -173,6 +173,7 @@ void Soundnik::pause(int pause)
     this->wrbuf = 0;
 }
 
+// in godot called by Emulator::export_audio_frame()
 void Soundnik::callback(void * userdata, uint8_t * stream, int len)
 {
     Soundnik * that = (Soundnik *)userdata;

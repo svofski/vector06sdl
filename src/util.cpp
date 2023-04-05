@@ -103,6 +103,29 @@ std::vector<uint8_t> load_binfile(const std::string path_)
     return bin;
 }
 
+int save_binfile(const std::string& path_, const std::vector<uint8_t>& data)
+{
+      std::string path = trim_copy(path_);
+      if (path.size() == 0) {
+          return 0;
+      }
+
+      ssize_t written = 0;
+      try {
+          int fd = open(path.c_str(), O_WRONLY | O_BINARY);
+          if (fd < 0) {
+              throw std::runtime_error("cannot open file for writing: " + path);
+          }
+          written = write(fd, (char *)data.data(), data.size());
+          close(fd);
+      }
+      catch (...) {
+          printf("Failed to save file: %s\n", path.c_str());
+      }
+
+      return written;
+}
+
 std::tuple<std::string,std::string,std::string>
 split_path(const std::string & path)
 {

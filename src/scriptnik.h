@@ -38,6 +38,9 @@ public:
     std::function<void()> finalize;
     std::function<void(const std::string&)> console_puts;
 
+    std::function<void(const std::string&)> start_wav_recording;
+    std::function<void()> stop_wav_recording;
+
 public:
     Scriptnik();
     ~Scriptnik();

@@ -31,6 +31,16 @@ std::vector<int> read_intvector(const std::string & path)
     return dst;
 }
 
+int write_intvector(const std::string& path, const std::vector<int>& data)
+{
+    std::vector<uint8_t> bytes;
+    bytes.resize(data.size());
+    for (auto i = 0; i < data.size(); ++i) {
+        bytes[i] = data[i] & 0xff;
+    }
+    return util::save_binfile(path, bytes);
+}
+
 // -- a couple of string utilities from ChaiScript extras
 /**
  * Convert the given string to lowercase letters.
@@ -89,6 +99,14 @@ struct scriptnik_engine {
                     return s.loadwav(name);
                     }),
                 "loadwav");
+        chai.add(fun([this](const string & name) {
+                    s.start_wav_recording(name);
+                    }),
+                "start_wav_recording");
+        chai.add(fun([this]() {
+                    s.stop_wav_recording();
+                    }),
+                "stop_wav_recording");
         chai.add(fun([this](int scancode) { s.keydown(scancode); }), "keydown");
         chai.add(fun([this](int scancode) { s.keyup(scancode); }), "keyup");
         chai.add(fun([this](const string & name) { 
@@ -160,6 +178,9 @@ struct scriptnik_engine {
         chai.add(fun([this](const std::string & filename) {
                     return ::read_intvector(filename);
                     }), "read_file");
+        chai.add(fun([this](const std::string& path, const std::vector<int>& data) {
+                    return ::write_intvector(path, data);
+                    }), "write_file");
         chai.add(fun([this]() {
                     s.finalizing = true;
                     }), "finalize");

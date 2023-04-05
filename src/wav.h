@@ -330,15 +330,24 @@ public:
         return count;
     }
 
-    ~WavRecorder()
-    {
+    void close() {
         if (file.is_open()) {
             if (offset > 0) {
                 file.write((const char *)buffer.data(), sizeof(uint16_t) * offset);
             }
             file.seekp(length_pos);
             file.write((const char *)&data_size, 4);
-            printf("~WavRecorder: data size=%x\n", data_size);
+            printf("WavRecorder.close(): data size=%x\n", data_size);
+            file.close();
         }
+    }
+
+    bool recording() const {
+        return file.is_open();
+    }
+
+    ~WavRecorder()
+    {
+        close();
     }
 };

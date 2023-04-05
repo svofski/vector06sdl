@@ -13,6 +13,7 @@ std::string read_file(const std::string & filename);
 size_t islength(std::ifstream & is);
 size_t filesize(const std::string & filename);
 std::vector<uint8_t> load_binfile(const std::string path);
+int save_binfile(const std::string& path_, const std::vector<uint8_t>& data);
 
 // trim from start (in place)
 static inline void ltrim(std::string& s)
