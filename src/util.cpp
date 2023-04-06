@@ -112,15 +112,15 @@ int save_binfile(const std::string& path_, const std::vector<uint8_t>& data)
 
       ssize_t written = 0;
       try {
-          int fd = open(path.c_str(), O_WRONLY | O_BINARY);
+          int fd = open(path.c_str(), O_CREAT | O_WRONLY | O_BINARY);
           if (fd < 0) {
-              throw std::runtime_error("cannot open file for writing: " + path);
+              throw std::invalid_argument("cannot open file for writing: " + path);
           }
           written = write(fd, (char *)data.data(), data.size());
           close(fd);
       }
-      catch (...) {
-          printf("Failed to save file: %s\n", path.c_str());
+      catch (const std::exception& e) {
+          printf("Failed to save file: %s (%s)\n", path.c_str(), e.what());
       }
 
       return written;
