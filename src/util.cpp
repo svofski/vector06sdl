@@ -112,7 +112,7 @@ int save_binfile(const std::string& path_, const std::vector<uint8_t>& data)
 
       ssize_t written = 0;
       try {
-          int fd = open(path.c_str(), O_CREAT | O_WRONLY | O_BINARY);
+          int fd = open(path.c_str(), O_CREAT | O_WRONLY | O_BINARY, 0600);
           if (fd < 0) {
               throw std::invalid_argument("cannot open file for writing: " + path);
           }
