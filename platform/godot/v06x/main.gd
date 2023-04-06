@@ -253,7 +253,7 @@ func _on_load_asset_pressed(which: int):
 		$FileDialog.filters = ["*.bin"]
 	elif dialog_device == DialogDevice.BASHOOK:
 		$FileDialog.filters = ["*.cas,*.bas,*.asc,*.wav"]
-	$FileDialog.mode = FileDialog.MODE_LOAD_ANY
+	$FileDialog.mode = FileDialog.MODE_OPEN_ANY
 	$FileDialog.popup()
 
 func _on_save_asset_pressed(which: int):
