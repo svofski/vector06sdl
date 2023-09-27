@@ -1,7 +1,9 @@
-FROM docker.io/multiarch/alpine:x86-edge AS test
+#FROM --platform=linux/386 docker.io/multiarch/alpine:3.18.3 AS test
+#FROM --platform=linux/386 docker.io/multiarch/alpine:3.18.3 AS test
+FROM docker.io/multiarch/alpine:i386-v3.11 AS test
 RUN apk add mingw-w64-gcc g++ py3-pip xxd make bash wine zip
-#RUN pip install pypng
-RUN apk add py3-pypng
+RUN pip3 install pypng
+#RUN apk add py3-pypng
 RUN adduser -D devel
 
 # boost
