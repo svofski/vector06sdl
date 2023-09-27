@@ -6,6 +6,7 @@
 #include <algorithm> 
 #include <cctype>
 #include <locale>
+#include <cstdint>
 
 namespace util {
 

@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <memory>
 
 #include "options.h"
 #include "util.h"
