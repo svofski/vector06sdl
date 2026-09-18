@@ -672,7 +672,6 @@ int i8080_execute(int opcode) {
         case 0x37:            /* stc */
             cpu_cycles = 4;
             v_cycles = 4;
-            work8 = RD_BYTE(HL);
             SET(C_FLAG);
             break;
 
